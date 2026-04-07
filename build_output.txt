@@ -1,0 +1,7 @@
+src/components/enterprise/EnhancementRequestWizard.tsx(18,10): error TS6133: 'analyzing' is declared but its value is never read.
+src/components/enterprise/EnhancementStudioTab.tsx(4,61): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/components/enterprise/MergeWorkspaceModal.tsx(3,37): error TS6133: 'Search' is declared but its value is never read.
+src/components/enterprise/MergeWorkspaceModal.tsx(19,10): error TS6133: 'loading' is declared but its value is never read.
+src/components/enterprise/MergeWorkspaceModal.tsx(20,10): error TS6133: 'previewing' is declared but its value is never read.
+src/components/enterprise/MergeWorkspaceModal.tsx(216,75): error TS6133: 'i' is declared but its value is never read.
+src/lib/mergeService.ts(2,25): error TS6133: 'TransferItem' is declared but its value is never read.

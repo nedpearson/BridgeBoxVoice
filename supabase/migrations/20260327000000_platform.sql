@@ -1,0 +1,1 @@
+-- Historical shim to satisfy supabase CLI state hooks.

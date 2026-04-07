@@ -1,0 +1,196 @@
+/* Bridgebox Voice Capture — Floating Button & Panel Styles */
+
+#bridgebox-root {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+/* ── Floating Action Button ── */
+#bridgebox-fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.5);
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+
+#bridgebox-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(37, 99, 235, 0.6);
+}
+
+#bridgebox-fab.bb-active {
+  background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+  transform: scale(0.96);
+}
+
+/* ── Action Panel ── */
+.bb-panel {
+  position: absolute;
+  bottom: 62px;
+  right: 0;
+  width: 220px;
+  background: #0D1526;
+  border: 1px solid #1E293B;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  transform-origin: bottom right;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.bb-hidden {
+  display: none !important;
+}
+
+.bb-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid #1E293B;
+}
+
+.bb-logo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: linear-gradient(90deg, #60A5FA, #A78BFA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-transform: uppercase;
+}
+
+.bb-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1E293B;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  padding: 0;
+}
+
+.bb-close:hover {
+  background: #334155;
+  color: white;
+}
+
+/* ── Action Buttons ── */
+.bb-actions {
+  padding: 8px;
+}
+
+.bb-action-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #CBD5E1;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.12s, color 0.12s;
+  text-align: left;
+}
+
+.bb-action-btn:hover {
+  background: #1E293B;
+  color: white;
+}
+
+.bb-action-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ── Status Bar ── */
+.bb-status {
+  display: none;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #94A3B8;
+  border-top: 1px solid #1E293B;
+  background: #0B0F19;
+  line-height: 1.4;
+}
+
+/* ── Recording Indicator ── */
+#bb-recording-indicator {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(10, 15, 25, 0.95);
+  border: 1px solid #EF4444;
+  border-radius: 24px;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.bb-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EF4444;
+  animation: bb-pulse 1s ease-in-out infinite;
+}
+
+@keyframes bb-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.bb-rec-label {
+  color: #EF4444;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.bb-stop-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #EF4444;
+  border: none;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.bb-stop-btn:hover {
+  background: #DC2626;
+}

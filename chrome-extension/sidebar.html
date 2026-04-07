@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bridgebox Voice Sidebar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0B0F19;
+      color: #F1F5F9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* ── Header ── */
+    .header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #1E293B;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      background: #0D1526;
+    }
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .header-text h2 { font-size: 13px; font-weight: 700; }
+    .header-text p { font-size: 10px; color: #64748B; }
+    .header-actions { margin-left: auto; display: flex; gap: 6px; }
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #1E293B;
+      border: none;
+      cursor: pointer;
+      color: #94A3B8;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+    .icon-btn:hover { background: #334155; color: white; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #1E293B;
+      flex-shrink: 0;
+      background: #0D1526;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 4px;
+      background: transparent;
+      border: none;
+      color: #64748B;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.12s;
+    }
+    .tab-btn.active { color: #60A5FA; border-bottom-color: #60A5FA; }
+    .tab-btn:hover:not(.active) { color: #94A3B8; }
+
+    /* ── Tab Content ── */
+    .tab-content { display: none; flex: 1; overflow-y: auto; }
+    .tab-content.active { display: flex; flex-direction: column; }
+
+    /* ── Domain Info ── */
+    .domain-card {
+      margin: 12px;
+      padding: 10px 12px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+    }
+    .domain-url {
+      font-size: 10px;
+      color: #64748B;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .domain-title { font-size: 12px; font-weight: 600; }
+    .domain-meta { font-size: 10px; color: #64748B; margin-top: 2px; }
+
+    /* ── App cards ── */
+    .section-label {
+      padding: 10px 14px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #475569;
+      flex-shrink: 0;
+    }
+    .apps-list, .captures-list {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .app-card {
+      padding: 10px 12px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.12s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .app-card:hover { background: #1E293B; border-color: #334155; }
+    .app-name { font-size: 12px; font-weight: 600; }
+    .app-meta { font-size: 10px; color: #64748B; margin-top: 2px; }
+    .app-status {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-live { background: #052e16; color: #4ade80; }
+    .status-building { background: #172554; color: #93c5fd; }
+    .status-draft { background: #1c1917; color: #a8a29e; }
+
+    /* ── Capture items ── */
+    .capture-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+    }
+    .cap-icon { font-size: 16px; }
+    .cap-info { flex: 1; min-width: 0; }
+    .cap-name { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cap-time { font-size: 10px; color: #475569; }
+    .cap-analyze {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #172554;
+      color: #93c5fd;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── Empty + loading ── */
+    .empty-state { text-align: center; color: #475569; font-size: 11px; padding: 20px 12px; }
+    .loading { text-align: center; color: #475569; font-size: 11px; padding: 12px; }
+
+    /* ── Floating capture buttons ── */
+    .capture-bar {
+      padding: 10px 12px;
+      border-top: 1px solid #1E293B;
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      background: #0D1526;
+    }
+    .cap-btn {
+      flex: 1;
+      padding: 8px 4px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 9px;
+      color: #CBD5E1;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+      text-align: center;
+    }
+    .cap-btn:hover { background: #1E293B; color: white; }
+    .cap-btn.primary { background: #1e3a8a; border-color: #2563eb; color: #93c5fd; }
+    .cap-btn.primary:hover { background: #1d4ed8; color: white; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-logo">⬡</div>
+    <div class="header-text">
+      <h2>Bridgebox Voice</h2>
+      <p id="domain-label">Loading...</p>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
+      <button class="icon-btn" id="open-platform-btn" title="Open Platform">↗</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="apps">My Apps</button>
+    <button class="tab-btn" data-tab="captures">Captures</button>
+    <button class="tab-btn" data-tab="analyze">AI Analyze</button>
+  </div>
+
+  <!-- Tab: Apps -->
+  <div class="tab-content active" id="tab-apps">
+    <div class="domain-card" id="domain-card">
+      <div class="domain-url" id="current-url">—</div>
+      <div class="domain-title" id="current-title">—</div>
+      <div class="domain-meta" id="current-meta">—</div>
+    </div>
+    <div class="section-label">Your Deployed Apps</div>
+    <div class="apps-list" id="apps-list">
+      <div class="loading">Loading apps...</div>
+    </div>
+  </div>
+
+  <!-- Tab: Captures -->
+  <div class="tab-content" id="tab-captures">
+    <div class="section-label">Recent Captures</div>
+    <div class="captures-list" id="captures-list">
+      <div class="loading">Loading captures...</div>
+    </div>
+  </div>
+
+  <!-- Tab: AI Analyze -->
+  <div class="tab-content" id="tab-analyze">
+    <div style="padding: 16px 14px">
+      <p style="color:#94A3B8; font-size:12px; line-height:1.6; margin-bottom:12px">
+        AI will analyze this page's structure, identify patterns, and suggest how to build a similar app with BridgeBox.
+      </p>
+      <button id="analyze-page-btn" style="width:100%; padding:10px; border-radius:10px; background:linear-gradient(135deg,#1d4ed8,#6d28d9); border:none; color:white; font-size:12px; font-weight:600; cursor:pointer;">
+        ✨ Analyze This Page
+      </button>
+      <div id="analyze-result" style="margin-top:12px; display:none;">
+        <div style="padding:10px 12px; background:#131B2B; border:1px solid #1E293B; border-radius:10px; font-size:11px; color:#CBD5E1; line-height:1.6;" id="analyze-text"></div>
+        <button id="build-from-analysis" style="width:100%; margin-top:8px; padding:9px; border-radius:10px; background:#0f2d1a; border:1px solid #166534; color:#4ade80; font-size:12px; font-weight:600; cursor:pointer;">
+          🚀 Build Similar App
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capture Bar -->
+  <div class="capture-bar">
+    <button class="cap-btn" id="sidebar-screenshot">📸 Shot</button>
+    <button class="cap-btn" id="sidebar-record">🔴 Rec</button>
+    <button class="cap-btn primary" id="sidebar-new-project">+ New Project</button>
+  </div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>

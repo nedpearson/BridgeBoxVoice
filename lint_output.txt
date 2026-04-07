@@ -1,0 +1,394 @@
+
+> bridgebox-voice@2.0.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+C:\dev\github\business\BridgeBox Voice\capacitor.config.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\App.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\Auth.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\CodeViewer.tsx
+    1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  137:7  error  Expected an assignment or function call and instead saw an expression     @typescript-eslint/no-unused-expressions
+
+C:\dev\github\business\BridgeBox Voice\src\components\ErrorBoundary.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\OnboardingWizard.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\ProjectSettings.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\ScreenCaptureManager.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found                                          react-refresh/only-export-components
+  32:40  warning  React Hook useEffect has a missing dependency: 'fetchCaptures'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\dev\github\business\BridgeBox Voice\src\components\TodoItem.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\TodoList.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\builder\BuildConsole.tsx
+   1:1  error    Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                             react-refresh/only-export-components
+  80:6  warning  React Hook useEffect has a missing dependency: 'onComplete'. Either include it or remove the dependency array. If 'onComplete' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+C:\dev\github\business\BridgeBox Voice\src\components\builder\PreviewPane.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\builder\SpecEditor.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\DashboardBuilder.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\DataTableWidget.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\KanbanBoard.tsx
+    1:1   error    Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-refresh/only-export-components
+  139:37  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `findCardColumn`, but the source dependencies were [columns, onUpdate]. Inferred different dependency than source.
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\KanbanBoard.tsx:139:37
+  137 |   const findCardColumn = (cardId: string) => columns.find((col) => col.cards.some((c) => c.id === cardId))
+  138 |
+> 139 |   const handleDragEnd = useCallback((event: DragEndEvent) => {
+      |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 140 |     const { active, over } = event
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 141 |     if (!over) return
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 157 |     })
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 158 |   }, [columns, onUpdate])
+      | ^^^^ Could not preserve existing manual memoization
+  159 |
+  160 |   const handleDragStart = (_e: DragEndEvent) => {}
+  161 |   const handleDragOver = (_e: DragOverEvent) => {}  react-hooks/preserve-manual-memoization
+  158:6   warning  React Hook useCallback has a missing dependency: 'findCardColumn'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+  160:28  warning  '_e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  161:27  warning  '_e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\LineChartWidget.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\MetricCard.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\dashboard\widgets\PieChartWidget.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\deploy\BuildLogs.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  57:14  warning  '_projectId' is defined but never used                                    @typescript-eslint/no-unused-vars
+  58:17  warning  '_deploymentId' is defined but never used                                 @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\components\deploy\DeploymentPanel.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\deploy\VersionHistory.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  79:14  warning  '_projectId' is defined but never used                                    @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\ApiKeyManager.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\AuditLog.tsx
+   1:1   error  Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-refresh/only-export-components
+  50:21  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\AuditLog.tsx:50:21
+  48 |   }, [workspaceId, actionFilter])
+  49 |
+> 50 |   useEffect(() => { fetchLogs() }, [fetchLogs])
+     |                     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |
+  52 |   const verify = async (log: AuditEntry) => {
+  53 |     setVerifying(v => ({ ...v, [log.id]: true }))  react-hooks/set-state-in-effect
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\FeatureFlags.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\RoleBuilder.tsx
+    1:1   error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  143:66  error  Expected an assignment or function call and instead saw an expression     @typescript-eslint/no-unused-expressions
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\SSOConfig.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\SecuritySettings.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\enterprise\WhiteLabel.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\integrations\FieldMapper.tsx
+    1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  138:28  warning  '_e' is defined but never used                                            @typescript-eslint/no-unused-vars
+  139:27  warning  '_e' is defined but never used                                            @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\components\integrations\IntegrationCard.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\integrations\OAuthFlow.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\layout\Layout.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\layout\Sidebar.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\voice\AIAnalysisPanel.tsx
+   1:1  error    Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                             react-refresh/only-export-components
+  70:6  warning  React Hook useEffect has a missing dependency: 'onComplete'. Either include it or remove the dependency array. If 'onComplete' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+C:\dev\github\business\BridgeBox Voice\src\components\voice\AudioUploader.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  15:52  warning  '_projectId' is defined but never used                                    @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\components\voice\ClarifyChat.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\voice\TranscriptViewer.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\components\voice\VoiceRecorder.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\agents\architectAgent.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\agents\designerAgent.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\agents\developerAgent.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\agents\integrationAgent.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\agents\qaAgent.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\anthropic.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\codeGenerator.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\deepgram.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\deploy\github.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\deploy\vercel.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\enterprise\aiGovernance.ts
+   1:1   error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  30:7   error  'sanitized' is never reassigned. Use 'const' instead                      prefer-const
+  56:52  error  Unnecessary escape character: \-                                          no-useless-escape
+  84:7   error  'sanitized' is never reassigned. Use 'const' instead                      prefer-const
+  86:28  error  Unnecessary escape character: \-                                          no-useless-escape
+
+C:\dev\github\business\BridgeBox Voice\src\lib\enterprise\auditLogger.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\enterprise\featureFlags.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\enterprise\sso.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\integrations\googleCalendar.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\integrations\quickbooks.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\integrations\slack.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\integrations\stripe.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\integrations\twilio.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\lib\supabase.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\main.tsx
+   1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  22:3  error  Unnecessary semicolon                                                     no-extra-semi
+
+C:\dev\github\business\BridgeBox Voice\src\pages\Analytics.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\CapturesPage.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\Dashboard.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\EnterprisePage.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  53:17  warning  '_' is defined but never used                                             @typescript-eslint/no-unused-vars
+  58:17  warning  '_' is defined but never used                                             @typescript-eslint/no-unused-vars
+  63:17  warning  '_' is defined but never used                                             @typescript-eslint/no-unused-vars
+  68:17  warning  '_' is defined but never used                                             @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\src\pages\HelpPage.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\Marketplace.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\Pricing.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\ProjectBuilder.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\ProjectDetailPage.tsx
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-refresh/only-export-components
+  47:19  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\dev\github\business\BridgeBox Voice\src\pages\ProjectDetailPage.tsx:47:19
+  45 |     // Try store first (fast), then Supabase
+  46 |     const stored = projects.find(p => p.id === projectId)
+> 47 |     if (stored) { setProject(stored); setNewName(stored.name); setLoading(false) }
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |
+  49 |     if (projectId) {
+  50 |       supabase.from('projects').select('*').eq('id', projectId).single().then(({ data }) => {  react-hooks/set-state-in-effect
+  60:6   warning  React Hook useEffect has a missing dependency: 'setActiveProject'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+
+C:\dev\github\business\BridgeBox Voice\src\pages\Settings.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\StatusPage.tsx
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\pages\TeamPage.tsx
+   1:1  error  Definition for rule 'react-refresh/only-export-components' was not found                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-refresh/only-export-components
+  38:9  error  Error: Cannot access variable before it is declared
+
+`loadMembers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\dev\github\business\BridgeBox Voice\src\pages\TeamPage.tsx:38:9
+  36 |         if (!ws) return
+  37 |         setWorkspaceId(ws.id)
+> 38 |         loadMembers(ws.id)
+     |         ^^^^^^^^^^^ `loadMembers` accessed before it is declared
+  39 |       })
+  40 |     })
+  41 |   }, [])
+
+C:\dev\github\business\BridgeBox Voice\src\pages\TeamPage.tsx:43:3
+  41 |   }, [])
+  42 |
+> 43 |   const loadMembers = async (wsId: string) => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |     setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^
+> 45 |     const { data } = await supabase
+     | ^^^^^^^^^^^^^^^^^^^^
+> 46 |       .from('workspace_members')
+     | ^^^^^^^^^^^^^^^^^^^^
+> 47 |       .select('user_id, role, created_at')
+     | ^^^^^^^^^^^^^^^^^^^^
+> 48 |       .eq('workspace_id', wsId)
+     | ^^^^^^^^^^^^^^^^^^^^
+> 49 |       .order('created_at')
+     | ^^^^^^^^^^^^^^^^^^^^
+> 50 |     setMembers((data ?? []) as Member[])
+     | ^^^^^^^^^^^^^^^^^^^^
+> 51 |     setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^
+> 52 |   }
+     | ^^^^ `loadMembers` is declared here
+  53 |
+  54 |   const invite = async () => {
+  55 |     if (!inviteEmail.trim() || !workspaceId) return  react-hooks/immutability
+
+C:\dev\github\business\BridgeBox Voice\src\store\appStore.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\types\index.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\types\platform.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\src\vite-env.d.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\gdpr\index.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\google-calendar\index.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\quickbooks\index.ts
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+   1:1   error    Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+  16:21  warning  'accessToken' is assigned a value but never used                          @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\scim\index.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\slack\index.ts
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+   1:1   error    Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+  49:13  warning  'color' is assigned a value but never used                                @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\sso-exchange\index.ts
+   1:1   error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+   1:1   error  Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+  48:13  error  Empty block statement                                                     no-empty
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\stripe\index.ts
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+   1:1   error    Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+  16:82  warning  'sessionId' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\tenant-provisioning\index.ts
+  1:1  error  Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+
+C:\dev\github\business\BridgeBox Voice\supabase\functions\twilio\index.ts
+   1:1   error    Definition for rule 'react-refresh/only-export-components' was not found  react-refresh/only-export-components
+   1:1   error    Do not use "@ts-nocheck" because it alters compilation errors             @typescript-eslint/ban-ts-comment
+  19:41  warning  'scheduledTime' is assigned a value but never used                        @typescript-eslint/no-unused-vars
+  19:56  warning  'type' is assigned a value but never used                                 @typescript-eslint/no-unused-vars
+
+Γ£û 128 problems (106 errors, 22 warnings)
+  3 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -1,0 +1,16 @@
+Initialising login role...
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ ΓÇó 20260327000000_platform.sql
+ ΓÇó 20260327011223_enterprise_tables.sql
+ ΓÇó 20260329000000_studio.sql
+
+ [Y/n] Y
+Applying migration 20260327000000_platform.sql...
+ERROR: function uuid_generate_v4() does not exist (SQLSTATE 42883)
+At statement: 1                                                   
+-- Workspaces                                                     
+CREATE TABLE IF NOT EXISTS workspaces (                           
+  id uuid default uuid_generate_v4() primary key,                 
+                  ^                                               
+Try rerunning the command with --debug to troubleshoot the error.

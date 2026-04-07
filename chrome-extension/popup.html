@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bridgebox Voice Capture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      min-height: 480px;
+      background: #0B0F19;
+      color: #F1F5F9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid #1E293B;
+      background: #0D1526;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .logo-text { font-weight: 700; font-size: 14px; }
+    .logo-sub  { color: #64748B; font-size: 10px; }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #EF4444;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .status-dot.online { background: #10B981; }
+
+    /* ── Not connected banner ── */
+    #not-connected {
+      margin: 12px;
+      padding: 10px 12px;
+      background: #1E1226;
+      border: 1px solid #4B1D8A;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #C4B5FD;
+      line-height: 1.5;
+    }
+    #not-connected a {
+      color: #818CF8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* ── Quick Actions ── */
+    .section-label {
+      padding: 10px 14px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+    .qa-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 8px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #CBD5E1;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .qa-btn:hover { background: #1E293B; color: white; border-color: #334155; }
+    .qa-btn:active { transform: scale(0.97); }
+    .qa-icon { font-size: 20px; }
+
+    /* ── Project selector ── */
+    .project-select-wrap {
+      padding: 0 12px 10px;
+    }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+      color: #CBD5E1;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: #3B82F6; }
+    option { background: #131B2B; }
+
+    /* ── Captures List ── */
+    .captures-list {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .capture-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #131B2B;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+      transition: background 0.12s;
+    }
+    .capture-item:hover { background: #1E293B; }
+    .cap-icon { font-size: 16px; flex-shrink: 0; }
+    .cap-info { flex: 1; min-width: 0; }
+    .cap-name {
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cap-time { font-size: 10px; color: #475569; }
+    .cap-view {
+      font-size: 10px;
+      color: #3B82F6;
+      cursor: pointer;
+      flex-shrink: 0;
+      text-decoration: underline;
+    }
+    .empty-state {
+      text-align: center;
+      color: #475569;
+      font-size: 11px;
+      padding: 16px 0;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 10px 14px;
+      border-top: 1px solid #1E293B;
+      background: #0D1526;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .open-platform-btn {
+      font-size: 11px;
+      color: #60A5FA;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .open-platform-btn:hover { color: #93C5FD; }
+    .settings-link {
+      font-size: 10px;
+      color: #475569;
+      cursor: pointer;
+    }
+    .settings-link:hover { color: #94A3B8; }
+
+    /* ── Spinners / Loading ── */
+    .loading { color: #475569; text-align: center; padding: 12px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-icon">⬡</div>
+    <div>
+      <div class="logo-text">Bridgebox Voice</div>
+      <div class="logo-sub">Capture Studio</div>
+    </div>
+    <div class="status-dot" id="status-dot"></div>
+  </div>
+
+  <div id="not-connected" style="display:none">
+    Not connected. <a id="setup-link">Configure Supabase →</a>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section-label">Quick Capture</div>
+  <div class="quick-actions">
+    <button class="qa-btn" id="btn-screenshot">
+      <span class="qa-icon">📸</span>Screenshot
+    </button>
+    <button class="qa-btn" id="btn-record">
+      <span class="qa-icon">🔴</span>Record
+    </button>
+    <button class="qa-btn" id="btn-dom">
+      <span class="qa-icon">🌳</span>Extract DOM
+    </button>
+    <button class="qa-btn" id="btn-sidebar">
+      <span class="qa-icon">⚡</span>Open Sidebar
+    </button>
+  </div>
+
+  <!-- Project -->
+  <div class="section-label">Attach to Project</div>
+  <div class="project-select-wrap">
+    <select id="project-select">
+      <option value="">— Select project —</option>
+    </select>
+  </div>
+
+  <!-- Recent Captures -->
+  <div class="section-label">Recent Captures</div>
+  <div class="captures-list" id="captures-list">
+    <div class="loading">Loading captures...</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <a class="open-platform-btn" id="open-platform">Open Bridgebox Voice ↗</a>
+    <span class="settings-link" id="settings-link">⚙ Settings</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

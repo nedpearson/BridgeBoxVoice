@@ -1,0 +1,26 @@
+Initialising login role...
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ ΓÇó 20260327011223_enterprise_tables.sql
+ ΓÇó 20260328120000_init.sql
+
+ [Y/n] Y
+Applying migration 20260327011223_enterprise_tables.sql...
+NOTICE (42P07): relation "sso_configs" already exists, skipping
+ERROR: relation "workspaces" does not exist (SQLSTATE 42P01)             
+At statement: 1                                                          
+CREATE TABLE IF NOT EXISTS scim_users (                                  
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,                         
+  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE NOT NULL,
+  external_id text NOT NULL,                                             
+  user_id uuid REFERENCES auth.users(id),                                
+  display_name text,                                                     
+  emails jsonb,                                                          
+  active boolean DEFAULT true,                                           
+  groups jsonb,                                                          
+  raw_attributes jsonb,                                                  
+  synced_at timestamptz DEFAULT now(),                                   
+  created_at timestamptz DEFAULT now(),                                  
+  UNIQUE(workspace_id, external_id)                                      
+)                                                                        
+Try rerunning the command with --debug to troubleshoot the error.

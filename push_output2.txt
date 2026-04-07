@@ -1,0 +1,22 @@
+Initialising login role...
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ ΓÇó 20260326000000_initial.sql
+ ΓÇó 20260327000000_platform.sql
+ ΓÇó 20260327011223_enterprise_tables.sql
+ ΓÇó 20260329000000_studio.sql
+
+ [Y/n] Y
+Applying migration 20260326000000_initial.sql...
+NOTICE (42710): extension "uuid-ossp" already exists, skipping
+ERROR: relation "todos" already exists (SQLSTATE 42P07)                            
+At statement: 1                                                                    
+-- Create the todos table                                                          
+create table todos (                                                               
+  id uuid default uuid_generate_v4() primary key,                                  
+  user_id uuid references auth.users(id) on delete cascade not null,               
+  title text not null,                                                             
+  completed boolean default false not null,                                        
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+)                                                                                  
+Try rerunning the command with --debug to troubleshoot the error.

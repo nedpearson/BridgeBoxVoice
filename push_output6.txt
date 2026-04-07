@@ -1,0 +1,26 @@
+Initialising login role...
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ ΓÇó 20260327011223_enterprise_tables.sql
+ ΓÇó 20260329000000_studio.sql
+
+ [Y/n] Y
+Applying migration 20260327011223_enterprise_tables.sql...
+NOTICE (42P07): relation "sso_configs" already exists, skipping
+NOTICE (42P07): relation "custom_roles" already exists, skipping
+NOTICE (42P07): relation "audit_logs" already exists, skipping
+NOTICE (00000): trigger "audit_immutable" for relation "audit_logs" does not exist, skipping
+NOTICE (42P07): relation "ip_allowlists" already exists, skipping
+NOTICE (42P07): relation "session_policies" already exists, skipping
+NOTICE (42P07): relation "feature_flags" already exists, skipping
+NOTICE (42P07): relation "api_keys" already exists, skipping
+NOTICE (42P07): relation "tenant_branding" already exists, skipping
+NOTICE (42P07): relation "backup_jobs" already exists, skipping
+NOTICE (42P07): relation "incidents" already exists, skipping
+NOTICE (42P07): relation "service_status" already exists, skipping
+NOTICE (42P07): relation "support_tickets" already exists, skipping
+NOTICE (42P07): relation "ai_usage_caps" already exists, skipping
+ERROR: policy "incidents_public_read" for table "incidents" already exists (SQLSTATE 42710)      
+At statement: 45                                                                                 
+CREATE POLICY "incidents_public_read" ON incidents FOR SELECT TO anon, authenticated USING (true)
+Try rerunning the command with --debug to troubleshoot the error.
