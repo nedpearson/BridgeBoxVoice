@@ -34,12 +34,22 @@ async function _callClaude(
   systemPrompt: string,
   userMessage: string,
   history: ClarifyMessage[] = [],
-  maxTokens = 4096
+  maxTokens = 4096,
+  imageUrl?: string
 ): Promise<string> {
   if (!ANTHROPIC_API_KEY) throw new Error('VITE_ANTHROPIC_API_KEY is not set')
+  
+  // Format user content based on image presence
+  const userContent = imageUrl 
+    ? [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageUrl.split(',')[1] || imageUrl } },
+        { type: "text", text: userMessage }
+      ]
+    : userMessage
+
   const messages = [
     ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userMessage },
+    { role: 'user', content: userContent as any },
   ]
   const response = await fetch(CLAUDE_API_URL, {
     method: 'POST',
@@ -67,13 +77,22 @@ async function _callOpenAI(
   systemPrompt: string,
   userMessage: string,
   history: ClarifyMessage[] = [],
-  maxTokens = 4096
+  maxTokens = 4096,
+  imageUrl?: string
 ): Promise<string> {
   if (!OPENAI_API_KEY) throw new Error('VITE_OPENAI_API_KEY is not set for fallback')
+  
+  const userContent = imageUrl 
+    ? [
+        { type: "text", text: userMessage },
+        { type: "image_url", image_url: { url: imageUrl.startsWith('data:') ? imageUrl : `data:image/jpeg;base64,${imageUrl}` } }
+      ]
+    : userMessage
+
   const messages = [
     { role: 'system', content: systemPrompt },
     ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userMessage },
+    { role: 'user', content: userContent as any },
   ]
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
@@ -95,14 +114,15 @@ async function _callOpenAI(
   return data.choices?.[0]?.message?.content ?? ''
 }
 
-async function callClaude(
+export async function callClaude(
   systemPrompt: string,
   userMessage: string,
   history: ClarifyMessage[] = [],
-  maxTokens = 4096
+  maxTokens = 4096,
+  imageUrl?: string
 ): Promise<string> {
   try {
-    return await _callClaude(systemPrompt, userMessage, history, maxTokens)
+    return await _callClaude(systemPrompt, userMessage, history, maxTokens, imageUrl)
   } catch (e: any) {
     console.warn('Claude API failed (token/rate limit or error). Falling back to OpenAI chat gpt...', e)
     // Dispatch an event so the UI can show the failover to the user rather than hanging on "Waiting for Claude"
@@ -110,13 +130,13 @@ async function callClaude(
       window.dispatchEvent(new CustomEvent('llm-fallback'))
       import('posthog-js').then(({ default: posthog }) => {
         posthog.capture('llm-fallback-triggered', {
-          original_model: ANTHROPIC_MODEL,
+          original_model: CLAUDE_MODEL,
           fallback_model: OPENAI_MODEL,
           error_message: e.message,
         })
       }).catch(() => {})
     }
-    return await _callOpenAI(systemPrompt, userMessage, history, maxTokens)
+    return await _callOpenAI(systemPrompt, userMessage, history, maxTokens, imageUrl)
   }
 }
 
@@ -312,12 +332,29 @@ Rules:
 
 Return ONLY valid JSON. No markdown. No explanation.`
 
-export async function generateFullApplication(spec: Record<string, unknown>, projectName: string): Promise<{ files: {path: string, content: string}[], readme: string }> {
+export async function generateFullApplication(spec: Record<string, unknown>, projectName: string, retries = 2): Promise<{ files: {path: string, content: string}[], readme: string }> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error('VITE_ANTHROPIC_API_KEY is not configured.')
   }
-  const raw = await callClaude(FULL_APP_SYSTEM, `Project Name: ${projectName}\n\nSpecification:\n${JSON.stringify(spec, null, 2)}`, [], 16000)
-  const cleaned = raw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
-  return JSON.parse(cleaned)
+  
+  let attempts = 0
+  let promptContext = `Project Name: ${projectName}\n\nSpecification:\n${JSON.stringify(spec, null, 2)}`
+  let history: ClarifyMessage[] = []
+
+  while (attempts <= retries) {
+    try {
+      const raw = await callClaude(FULL_APP_SYSTEM, promptContext, history, 16000)
+      const cleaned = raw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
+      return JSON.parse(cleaned)
+    } catch (e: any) {
+      if (attempts === retries) throw new Error(`Agentic loop failed to correct code after ${retries} attempts: ${e.message}`)
+      
+      console.warn(`[Agentic Validator] Generation failed on attempt ${attempts + 1}. Auto-correcting syntax error:`, e.message)
+      history.push({ role: 'assistant', content: "Failed compilation output" })
+      history.push({ role: 'user', content: `CRITICAL ERROR: Your last output crashed the parser with this syntax error: ${e.message}. Please thoroughly check your JSON formatting (missing commas, unescaped quotes) and try regenerating the FULL payload again.` })
+      attempts++
+    }
+  }
+  throw new Error("Generation loop exhausted.")
 }
 

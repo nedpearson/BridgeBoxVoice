@@ -404,7 +404,7 @@ export default function ProjectDetailPage() {
       clearInterval(buildClockTimer)
       setBuildWaiting(false)
       setBuildRemaining('')
-      setBuildPct(95)
+      setBuildPct(90)
       setBuildStage('Packaging files...')
       setBuildProgress('Packaging files...')
       const JSZip = (await import('jszip')).default
@@ -412,6 +412,26 @@ export default function ProjectDetailPage() {
       const folder = zip.folder(project.name.replace(/\s+/g, '-').toLowerCase())!
       result.files.forEach((f: any) => folder.file(f.path, f.content))
       if (result.readme) folder.file('README.md', result.readme)
+      
+      setBuildPct(95)
+      setBuildStage('Syncing to GitHub...')
+      
+      // Feature 2: Auto-Sync to Client GitHub Repos
+      try {
+        const { createAndPushRepo } = await import('../lib/deploy/github')
+        const repo = await createAndPushRepo(
+          project.name, 
+          project.industry ? `BridgeBox generated ${project.industry} application` : 'BridgeBox generated application',
+          result.files.map((f: any) => ({ ...f, language: f.path.split('.').pop() || 'text' })),
+          (msg) => setBuildStage(msg)
+        )
+        if (repo) {
+          toast.success(`Code pushed to GitHub: ${repo.html_url}`)
+        }
+      } catch (ghErr: any) {
+        toast.error(`GitHub Sync Failed: ${ghErr.message}`)
+      }
+
       setBuildPct(99)
       setBuildStage('Creating download...')
       const blob = await zip.generateAsync({ type: 'blob' })
