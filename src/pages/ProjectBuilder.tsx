@@ -27,6 +27,7 @@ export default function ProjectBuilder() {
   const { projects, activeProject, setActiveProject } = useStore()
   const [step, setStep] = useState<Step>('record')
   const [transcript, setTranscript] = useState('')
+  const [visionImage, setVisionImage] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [spec, setSpec] = useState<Specification | null>(null)
 
@@ -37,8 +38,9 @@ export default function ProjectBuilder() {
 
   const stepIndex = STEPS.findIndex(s => s.id === step)
 
-  const handleTranscriptComplete = (t: string) => {
+  const handleTranscriptComplete = (t: string, imageBase64?: string) => {
     setTranscript(t)
+    if (imageBase64) setVisionImage(imageBase64)
     setStep('analyze')
   }
 
@@ -102,6 +104,7 @@ export default function ProjectBuilder() {
               <AIAnalysisPanel
                 transcript={transcript}
                 projectId={projectId!}
+                imageUrl={visionImage || undefined}
                 onComplete={handleAnalysisComplete}
               />
             </div>

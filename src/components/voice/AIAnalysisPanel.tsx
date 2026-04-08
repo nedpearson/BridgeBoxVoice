@@ -5,10 +5,11 @@ import { AIAnalysis } from '../../types/platform'
 interface AIAnalysisPanelProps {
   transcript: string
   projectId: string
+  imageUrl?: string
   onComplete: (analysis: AIAnalysis) => void
 }
 
-export default function AIAnalysisPanel({ onComplete }: AIAnalysisPanelProps) {
+export default function AIAnalysisPanel({ transcript, projectId, imageUrl, onComplete }: AIAnalysisPanelProps) {
   const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [stage, setStage] = useState<string>('Initializing Claude AI...')

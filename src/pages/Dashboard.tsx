@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/appStore'
 import { Project } from '../types/platform'
-import { Mic, Plus, Cpu, Globe, Smartphone, Monitor, ChevronRight, Zap, Clock, Sparkles, LayoutTemplate } from 'lucide-react'
+import { Mic, Plus, Cpu, Globe, Smartphone, Monitor, ChevronRight, Zap, Clock, Sparkles, LayoutTemplate, Search } from 'lucide-react'
 import { enhancePrompt } from '../lib/anthropic'
 import WorkspaceEnhancementCard from '../components/dashboard/WorkspaceEnhancementCard'
 import EnhancementRequestWizard from '../components/enterprise/EnhancementRequestWizard'
@@ -39,6 +39,18 @@ export default function Dashboard() {
   const [showMergeModal, setShowMergeModal] = useState(false)
   const [showGallery, setShowGallery] = useState(false)
   const recognitionRef = useRef<any>(null)
+
+  // Filtering System
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeIndustryFilter, setActiveIndustryFilter] = useState('All')
+  
+  const industries = ['All', ...new Set(projects.map(p => p.industry).filter(Boolean))] as string[]
+
+  const filteredProjects = projects.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.industry?.toLowerCase() ?? '').includes(searchQuery.toLowerCase())
+    const matchesIndustry = activeIndustryFilter === 'All' || p.industry === activeIndustryFilter
+    return matchesSearch && matchesIndustry
+  })
 
   const handleSelectTemplate = (template: AppTemplate) => {
     setShowGallery(false)
@@ -293,14 +305,46 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        <div>
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Your Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {projects.map((project) => (
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-bold text-lg">Your Workspace Projects</h2>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text" 
+                  placeholder="Search projects..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-[#0B0F19] border border-[#1E293B] text-slate-300 text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Industry Tags */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            {industries.map(ind => (
+              <button
+                key={ind}
+                onClick={() => setActiveIndustryFilter(ind)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                  activeIndustryFilter === ind 
+                    ? 'bg-blue-600 border-blue-500 text-white' 
+                    : 'bg-[#131B2B] border-[#1E293B] text-slate-400 hover:text-white hover:border-slate-600'
+                }`}
+              >
+                {ind}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredProjects.map((project) => (
               <div
                 key={project.id}
                 onClick={() => navigate(`/project/${project.id}`)}
-                className="bg-[#131B2B] border border-[#1E293B] hover:border-[#334155] hover:bg-[#1A2235] rounded-2xl p-5 cursor-pointer transition-all group"
+                className="bg-[#131B2B] border border-[#1E293B] hover:border-[#334155] hover:bg-[#1A2235] rounded-2xl p-5 cursor-pointer transition-all group relative overflow-hidden"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center flex-shrink-0">

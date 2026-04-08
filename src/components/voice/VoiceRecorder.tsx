@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 
 interface VoiceRecorderProps {
   projectId: string
-  onComplete: (transcript: string) => void
+  onComplete: (transcript: string, imageBase64?: string) => void
 }
 
 type RecordState = 'idle' | 'recording' | 'uploading' | 'done'
@@ -20,6 +20,11 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Vision Mode
+  const [dragActive, setDragActive] = useState(false)
+  const [visionImage, setVisionImage] = useState<string | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => () => {
     clearInterval(timerRef.current!)
@@ -85,18 +90,47 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
     await simulateTranscription()
   }
 
-  // Simulated transcription (replace with real Deepgram call when API key is available)
   const simulateTranscription = async () => {
     await new Promise(r => setTimeout(r, 2500))
     const mockTranscript = `I run a landscaping business. I currently use QuickBooks for invoicing, Google Calendar for scheduling, and I keep a paper notebook for all my job notes. What I really need is one central app where my crew can clock in and out at the start and end of their day, see their list of jobs for today, take before and after photos of each job, and submit notes about what was done. On my side, I need a dashboard that shows me total revenue this month, total hours worked by each employee, upcoming scheduled jobs, and which jobs are waiting for invoice approval. I also want to be able to send out automatic SMS reminders to clients 24 hours before their appointment.`
     setState('done')
-    onComplete(mockTranscript)
+    onComplete(mockTranscript, visionImage || undefined)
+  }
+
+  const handleImageDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('image/')) processImage(file)
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) processImage(file)
+  }
+
+  const processImage = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => setVisionImage(e.target?.result as string)
+    reader.readAsDataURL(file)
+    toast.success('Vision image attached!')
   }
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full p-8 gap-8">
+    <div 
+      onDragEnter={(e) => { e.preventDefault(); setDragActive(true) }}
+      onDragLeave={(e) => { e.preventDefault(); setDragActive(false) }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleImageDrop}
+      className={`relative flex flex-col items-center justify-center min-h-full p-8 gap-8 transition-colors ${dragActive ? 'bg-blue-600/5' : ''}`}
+    >
+      {dragActive && (
+        <div className="absolute inset-4 border-2 border-dashed border-blue-500 rounded-3xl pointer-events-none z-10 flex items-center justify-center bg-blue-900/10 backdrop-blur-sm">
+          <p className="text-blue-400 font-bold text-2xl animate-pulse">Drop Screenshot Here for AI Vision</p>
+        </div>
+      )}
       {/* Main recording orb */}
       <div className="flex flex-col items-center gap-6">
         <div className="relative">
@@ -163,14 +197,24 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
             <span className="text-slate-600 text-sm">or</span>
             <div className="flex-1 h-px bg-[#1E293B]" />
           </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-5 py-3 border border-[#1E293B] hover:border-[#334155] text-slate-400 hover:text-white rounded-xl text-sm font-medium transition-all"
-          >
-            <Upload className="w-4 h-4" />
-            Upload Audio File (MP3, WAV, M4A)
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-5 py-3 border border-[#1E293B] hover:border-[#334155] text-slate-400 hover:text-white rounded-xl text-sm font-medium transition-all"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Audio File
+            </button>
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              className="flex items-center gap-2 px-5 py-3 border border-indigo-900/30 hover:border-indigo-500/50 bg-indigo-900/10 text-indigo-400 hover:text-indigo-300 rounded-xl text-sm font-medium transition-all"
+            >
+              <Upload className="w-4 h-4" />
+              {visionImage ? 'Image Attached!' : 'Attach Vision UI Screenshot'}
+            </button>
+          </div>
           <input ref={fileInputRef} type="file" accept=".mp3,.wav,.m4a,audio/*" className="hidden" onChange={handleFileUpload} />
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
         </>
       )}
 

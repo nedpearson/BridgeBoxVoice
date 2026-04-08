@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
-import { Maximize2, RefreshCw, Smartphone, Monitor } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Maximize2, RefreshCw, Smartphone, Monitor, Wand2, ArrowRight } from 'lucide-react'
+import { callClaude } from '../../lib/anthropic'
+import toast from 'react-hot-toast'
 
 interface PreviewPaneProps {
   htmlContent: string
@@ -20,6 +21,10 @@ export default function PreviewPane({ htmlContent, title = 'App Preview' }: Prev
   const [viewport, setViewport] = useState<ViewportMode>('desktop')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [key, setKey] = useState(0)
+
+  // Hot Reload Mode
+  const [stylePrompt, setStylePrompt] = useState('')
+  const [isTweaking, setIsTweaking] = useState(false)
 
   useEffect(() => {
     if (iframeRef.current && htmlContent) {
@@ -44,6 +49,32 @@ export default function PreviewPane({ htmlContent, title = 'App Preview' }: Prev
     const url = URL.createObjectURL(blob)
     window.open(url, '_blank')
     setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  }
+
+  const handleApplyTweak = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!stylePrompt.trim() || !iframeRef.current?.contentDocument) return
+    setIsTweaking(true)
+
+    try {
+      const doc = iframeRef.current.contentDocument
+      const sys = `You are a CSS overriding engine. You will be given a user request to style an existing HTML document layout. Return ONLY raw CSS code (no HTML, no JS, no markdown wrapping, no explanation) that accomplishes the requested tweak visually. 
+Return only pure CSS. Example: body { background: red; }`
+      
+      const rawRes = await callClaude(sys, stylePrompt, [], 800)
+      const pureCSS = rawRes.replace(/```css|```/gi, '').trim()
+      
+      const styleNode = doc.createElement('style')
+      styleNode.innerHTML = pureCSS
+      doc.head.appendChild(styleNode)
+      
+      setStylePrompt('')
+      toast.success('Live Tweak Applied!')
+    } catch (err: any) {
+      toast.error(`Tweak failed: ${err.message}`)
+    } finally {
+      setIsTweaking(false)
+    }
   }
 
   return (
@@ -126,6 +157,34 @@ export default function PreviewPane({ htmlContent, title = 'App Preview' }: Prev
           </div>
         )}
       </div>
+
+      {/* Floating Magic Chat Bar */}
+      {htmlContent && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 hidden md:block">
+          <form 
+            onSubmit={handleApplyTweak}
+            className="flex items-center gap-2 bg-[#0C1322]/90 backdrop-blur-md border border-indigo-500/30 p-2 rounded-2xl shadow-2xl transition-all hover:border-indigo-500/60"
+          >
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 ml-1">
+              <Wand2 className="w-4 h-4 text-indigo-400" />
+            </div>
+            <input 
+              value={stylePrompt}
+              onChange={(e) => setStylePrompt(e.target.value)}
+              disabled={isTweaking}
+              placeholder="Magic Tweak (e.g. 'make the header blue and rounded')"
+              className="flex-1 bg-transparent border-0 text-white text-sm focus:outline-none focus:ring-0 placeholder-slate-400 min-w-0 px-2"
+            />
+            <button 
+              type="submit"
+              disabled={isTweaking || !stylePrompt.trim()}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-sm font-semibold flex items-center justify-center transition-colors min-w-[80px]"
+            >
+              {isTweaking ? <div className="spinner" style={{width: 18, height: 18, borderWidth: 2}}/> : <ArrowRight className="w-4 h-4" />}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
