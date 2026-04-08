@@ -106,7 +106,16 @@ async function callClaude(
   } catch (e: any) {
     console.warn('Claude API failed (token/rate limit or error). Falling back to OpenAI chat gpt...', e)
     // Dispatch an event so the UI can show the failover to the user rather than hanging on "Waiting for Claude"
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('llm-fallback'))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('llm-fallback'))
+      import('posthog-js').then(({ default: posthog }) => {
+        posthog.capture('llm-fallback-triggered', {
+          original_model: ANTHROPIC_MODEL,
+          fallback_model: OPENAI_MODEL,
+          error_message: e.message,
+        })
+      }).catch(() => {})
+    }
     return await _callOpenAI(systemPrompt, userMessage, history, maxTokens)
   }
 }

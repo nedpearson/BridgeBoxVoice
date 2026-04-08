@@ -441,12 +441,39 @@ export default function ProjectDetailPage() {
     if (!project) return
     setCompilingPlatform(label)
     
-    // Simulate compilation time
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
-    let updates: any = {}
     const sanitizedName = project.name.replace(/\s+/g, '-').toLowerCase()
     
+    // Feature 3: Live EAS/GitHub Actions Compile Hooks
+    const gitHubToken = import.meta.env.VITE_GITHUB_ACTIONS_TOKEN
+    const easWebhook = import.meta.env.VITE_EAS_WEBHOOK_URL
+    let payloadSent = false
+
+    try {
+      if (label.includes('iOS') || label.includes('Android')) {
+        if (easWebhook) {
+          await fetch(easWebhook, {
+            method: 'POST', body: JSON.stringify({ projectId: project.id, platform: label, name: sanitizedName })
+          })
+          payloadSent = true
+        }
+      } else if (label.includes('Desktop') && gitHubToken) {
+        await fetch('https://api.github.com/repos/nedpearson/BridgeBoxVoice/dispatches', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${gitHubToken}`, 'Accept': 'application/vnd.github.v3+json' },
+          body: JSON.stringify({ event_type: 'build-desktop', client_payload: { projectId: project.id } })
+        })
+        payloadSent = true
+      }
+    } catch (e: any) {
+      console.error('Failed to trigger remote compile hook, falling back to mock...', e)
+    }
+
+    if (!payloadSent) {
+      // Simulate compilation time if hooks aren't deployed or failed
+      await new Promise(resolve => setTimeout(resolve, 3000))
+    }
+    
+    let updates: any = {}
     if (label.includes('iOS')) {
       updates.mobile_app_url = `itms-services://?action=download-manifest&url=https://testflight.apple.com/join/${sanitizedName}-beta`
     } else if (label.includes('Android')) {
