@@ -46,14 +46,20 @@ export default function Marketplace() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).single()
-      if (!ws) return
-      setWorkspaceId(ws.id)
-      // Load already-connected integrations
-      const { data } = await supabase.from('workspace_integrations').select('integration_id').eq('workspace_id', ws.id)
-      if (data) setConnected(new Set(data.map((d: any) => d.integration_id)))
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data: ws } = await supabase.from('workspaces').select('id').limit(1).single()
+        if (!ws) return
+        setWorkspaceId(ws.id)
+        // Load already-connected integrations
+        const { data } = await supabase.from('workspace_integrations').select('integration_id').eq('workspace_id', ws.id)
+        if (data) setConnected(new Set(data.map((d: any) => d.integration_id)))
+      } catch (err) {
+        console.error(err)
+      } finally {
+        // setLoading(false) // Assuming loading state exists or is not required here
+      }
     }
     load()
   }, [])

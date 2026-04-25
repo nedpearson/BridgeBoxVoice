@@ -87,7 +87,7 @@ export default function HelpPage() {
     setTicketSending(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).single()
+      const { data: ws } = await supabase.from('workspaces').select('id').limit(1).single()
       if (ws) {
         await supabase.from('support_tickets').insert({
           workspace_id: ws.id, user_id: user.id,

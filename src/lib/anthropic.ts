@@ -42,7 +42,7 @@ export async function callClaude(
 
     if (error) throw new Error(error.message || 'Unknown Edge Function Error')
     if (data?.error) throw new Error(data.error)
-    
+
     return data?.content ?? ''
   } catch (e: any) {
     console.warn('Claude API failed (token/rate limit or error). Falling back to OpenAI chat gpt...', e)
@@ -54,7 +54,7 @@ export async function callClaude(
           fallback_model: OPENAI_MODEL,
           error_message: e.message,
         })
-      }).catch(() => {})
+      }).catch(() => { })
     }
 
     const { data, error } = await supabase.functions.invoke('ai-generate', {
@@ -70,7 +70,7 @@ export async function callClaude(
 
     if (error) throw new Error(error.message || 'Unknown Edge Function Error')
     if (data?.error) throw new Error(data.error)
-    
+
     return data?.content ?? ''
   }
 }
@@ -215,7 +215,7 @@ Rules:
 
 Return ONLY valid JSON. No markdown. No explanation.`
 
-export async function generateFullApplication(spec: Record<string, unknown>, projectName: string, retries = 2): Promise<{ files: {path: string, content: string}[], readme: string }> {
+export async function generateFullApplication(spec: Record<string, unknown>, projectName: string, retries = 2): Promise<{ files: { path: string, content: string }[], readme: string }> {
   let attempts = 0
   let promptContext = `Project Name: ${projectName}\n\nSpecification:\n${JSON.stringify(spec, null, 2)}`
   let history: ClarifyMessage[] = []
@@ -227,7 +227,7 @@ export async function generateFullApplication(spec: Record<string, unknown>, pro
       return JSON.parse(cleaned)
     } catch (e: any) {
       if (attempts === retries) throw new Error(`Agentic loop failed to correct code after ${retries} attempts: ${e.message}`)
-      
+
       console.warn(`[Agentic Validator] Generation failed on attempt ${attempts + 1}. Auto-correcting syntax error:`, e.message)
       history.push({ role: 'assistant', content: "Failed compilation output" })
       history.push({ role: 'user', content: `CRITICAL ERROR: Your last output crashed the parser with this syntax error: ${e.message}. Please thoroughly check your JSON formatting (missing commas, unescaped quotes) and try regenerating the FULL payload again.` })

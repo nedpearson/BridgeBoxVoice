@@ -18,21 +18,26 @@ export default function Analytics() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).single()
-      if (!ws) return
-      setWorkspaceId(ws.id)
-      const { data: ps } = await supabase
-        .from('projects')
-        .select('id, name, status, created_at, web_app_url, mobile_app_url, desktop_app_url')
-        .eq('workspace_id', ws.id)
-        .order('created_at', { ascending: false })
-      setAllProjects(ps ?? [])
-      setLoading(false)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data: ws } = await supabase.from('workspaces').select('id').limit(1).single()
+        if (!ws) return
+        setWorkspaceId(ws.id)
+        const { data: ps } = await supabase
+          .from('projects')
+          .select('id, name, status, created_at, web_app_url, mobile_app_url, desktop_app_url')
+          .eq('workspace_id', ws.id)
+          .order('created_at', { ascending: false })
+        setAllProjects(ps ?? [])
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
-  }, [workspaceId])
+  }, [])
 
   // Use store projects as real-time source, fall back to fetched
   const ps = projects.length > 0 ? projects : allProjects

@@ -31,13 +31,28 @@ export default function TeamPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      setCurrentUserId(user.id)
-      supabase.from('workspaces').select('id').eq('owner_id', user.id).single().then(({ data: ws }) => {
-        if (!ws) return
-        setWorkspaceId(ws.id)
-        loadMembers(ws.id)
-      })
+      if (user) {
+        setCurrentUserId(user.id)
+        supabase.from('workspaces').select('id').limit(1).single()
+          .then(({ data: ws, error }) => {
+            if (error) {
+              console.error(error)
+              setLoading(false)
+            } else if (ws) {
+              setWorkspaceId(ws.id)
+              loadMembers(ws.id)
+            }
+          })
+          .catch(err => {
+            console.error(err)
+            setLoading(false)
+          })
+      } else {
+        setLoading(false)
+      }
+    }).catch(err => {
+      console.error(err)
+      setLoading(false)
     })
   }, [])
 

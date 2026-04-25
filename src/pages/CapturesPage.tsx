@@ -38,18 +38,36 @@ export default function CapturesPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: ws } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).single()
-      if (!ws) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setLoading(false)
+          return
+        }
+        
+        // Fetch the first available workspace if none is explicitly set
+        const { data: ws } = await supabase
+          .from('workspaces')
+          .select('id')
+          .limit(1)
+          .single()
+          
+        if (!ws) {
+          setLoading(false)
+          return
+        }
 
-      const [{ data: caps }, { data: ps }] = await Promise.all([
-        supabase.from('screen_captures').select('*').eq('workspace_id', ws.id).order('created_at', { ascending: false }),
-        supabase.from('projects').select('id, name').eq('workspace_id', ws.id),
-      ])
-      setCaptures((caps ?? []) as Capture[])
-      setProjects(ps ?? [])
-      setLoading(false)
+        const [{ data: caps }, { data: ps }] = await Promise.all([
+          supabase.from('screen_captures').select('*').eq('workspace_id', ws.id).order('created_at', { ascending: false }),
+          supabase.from('projects').select('id, name').eq('workspace_id', ws.id),
+        ])
+        setCaptures((caps ?? []) as Capture[])
+        setProjects(ps ?? [])
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])
