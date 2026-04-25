@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Settings, Users, CreditCard, AlertTriangle, Save, UserPlus, Trash2, Globe, Mail, Check } from 'lucide-react'
 
@@ -282,7 +283,15 @@ const TAB_DEFS: Array<{ id: Tab; label: string; icon: React.FC<any> }> = [
 ]
 
 export default function ProjectSettings({ projectId, projectName }: ProjectSettingsProps) {
-  const [tab, setTab] = useState<Tab>('general')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = (searchParams.get('settingsTab') as Tab) ?? 'general'
+  const setTab = (newTab: Tab) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('settingsTab', newTab)
+      return next
+    }, { replace: true })
+  }
 
   return (
     <div className="flex h-full">

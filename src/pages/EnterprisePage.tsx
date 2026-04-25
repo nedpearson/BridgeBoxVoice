@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Shield, Key, Users, Flag, Lock, Globe, FileText, Cpu,
   Activity, LifeBuoy, Palette, HelpCircle, ChevronRight, Sparkles
@@ -103,7 +103,19 @@ const SupportPlaceholder = () => (
 interface Props { workspaceId?: string }
 
 export default function EnterprisePage({ workspaceId = 'demo-workspace' }: Props) {
-  const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeSection = searchParams.get('tab')
+  const setActiveSection = (id: string | null) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (id) {
+        next.set('tab', id)
+      } else {
+        next.delete('tab')
+      }
+      return next
+    }, { replace: true })
+  }
   const active = SECTIONS.find(s => s.id === activeSection)
 
   return (

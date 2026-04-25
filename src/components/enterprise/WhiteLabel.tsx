@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Eye, Save, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -14,7 +15,15 @@ interface Props { workspaceId: string }
 
 export default function WhiteLabel({ workspaceId }: Props) {
   const [branding, setBranding] = useState<Branding>(DEFAULT)
-  const [tab, setTab] = useState<'brand' | 'domain' | 'email' | 'css'>('brand')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = (searchParams.get('wlTab') as 'brand' | 'domain' | 'email' | 'css') ?? 'brand'
+  const setTab = (newTab: 'brand' | 'domain' | 'email' | 'css') => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('wlTab', newTab)
+      return next
+    }, { replace: true })
+  }
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [preview, setPreview] = useState(false)

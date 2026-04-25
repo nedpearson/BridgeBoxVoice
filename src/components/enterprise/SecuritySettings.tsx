@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Lock, AlertCircle, Plus, Trash2, Clock, Smartphone } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -16,7 +17,15 @@ export default function SecuritySettings({ workspaceId }: Props) {
   const [newLabel, setNewLabel] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tab, setTab] = useState<'session' | 'ip' | 'mfa'>('session')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = (searchParams.get('secTab') as 'session' | 'ip' | 'mfa') ?? 'session'
+  const setTab = (newTab: 'session' | 'ip' | 'mfa') => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('secTab', newTab)
+      return next
+    }, { replace: true })
+  }
 
   useEffect(() => {
     supabase.from('session_policies').select('*').eq('workspace_id', workspaceId).single().then(({ data }) => {

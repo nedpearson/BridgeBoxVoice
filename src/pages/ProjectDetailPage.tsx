@@ -35,9 +35,18 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
 export default function ProjectDetailPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { projects, updateProject, setActiveProject, removeProject } = useStore()
-  const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) ?? 'overview')
+  const tab = (searchParams.get('tab') as Tab) ?? 'overview'
+  
+  const setTab = (newTab: Tab) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', newTab)
+      return next
+    }, { replace: true })
+  }
+
   const [project, setProject] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Shield, AlertTriangle, CheckCircle, RefreshCw, Copy, ExternalLink } from 'lucide-react'
 import { getSSOConfig, upsertSSOConfig, rotateSCIMToken, getACSUrl, getEntityId, PROVIDER_DOCS, type SSOProvider } from '../../lib/enterprise/sso'
 
@@ -22,7 +23,15 @@ export default function SSOConfig({ workspaceId }: Props) {
   const [scimToken, setScimToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tab, setTab] = useState<'saml' | 'scim' | 'mapping'>('saml')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = (searchParams.get('ssoTab') as 'saml' | 'scim' | 'mapping') ?? 'saml'
+  const setTab = (newTab: 'saml' | 'scim' | 'mapping') => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('ssoTab', newTab)
+      return next
+    }, { replace: true })
+  }
 
   const acsUrl = getACSUrl(workspaceId)
   const entityId = getEntityId(workspaceId)
