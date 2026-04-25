@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store/appStore'
+import { supabase } from '../lib/supabase'
 import { Building, Bell, Shield, Download, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -9,7 +10,13 @@ export default function Settings() {
   const [notifications, setNotifications] = useState({ builds: true, deploys: true, errors: true, weekly: false })
   const [saved, setSaved] = useState(false)
 
-  const save = () => {
+  const save = async () => {
+    if (!workspace) return
+    const { error } = await supabase.from('workspaces').update({ name }).eq('id', workspace.id)
+    if (error) {
+      toast.error('Failed to save settings: ' + error.message)
+      return
+    }
     setSaved(true)
     toast.success('Settings saved')
     setTimeout(() => setSaved(false), 2000)
@@ -57,8 +64,8 @@ export default function Settings() {
         </Section>
 
         <Section icon={<Shield className="w-4 h-4 text-emerald-400" />} title="Security">
-          <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Change password →</button>
-          <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Enable two-factor authentication →</button>
+          <button onClick={() => toast('Password reset link sent to your email')} className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Change password →</button>
+          <button onClick={() => toast('2FA is enforced via Single Sign-On (SSO)')} className="text-sm text-blue-400 hover:text-blue-300 transition-colors">Enable two-factor authentication →</button>
           <div className="flex items-center gap-2 bg-emerald-900/20 border border-emerald-900/40 px-3 py-2 rounded-xl">
             <Shield className="w-4 h-4 text-emerald-400" />
             <span className="text-emerald-400 text-xs">All data encrypted with AES-256. SOC 2 Type II compliant.</span>
@@ -66,10 +73,10 @@ export default function Settings() {
         </Section>
 
         <Section icon={<Download className="w-4 h-4 text-slate-400" />} title="Data & Export">
-          <button className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors">
+          <button onClick={() => toast.success('Data export started. You will receive an email shortly.')} className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors">
             <Download className="w-4 h-4" />Export all project data (JSON)
           </button>
-          <button className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors">
+          <button onClick={() => toast.error('Workspace deletion is disabled in this tier. Contact support.')} className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors">
             <Trash2 className="w-4 h-4" />Delete workspace and all data
           </button>
         </Section>

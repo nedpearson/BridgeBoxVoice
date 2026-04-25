@@ -424,6 +424,21 @@ export default function ProjectDetailPage() {
       if (result.readme) folder.file('README.md', result.readme)
       
       setBuildPct(95)
+      setBuildStage('Deploying to Vercel...')
+      try {
+        const { deployToVercel } = await import('../lib/deploy/vercel')
+        const filesWithLanguage = result.files.map((f: any) => ({ ...f, language: f.path.split('.').pop() || 'text' }))
+        const vercelRes = await deployToVercel(project.name, filesWithLanguage, {}, (msg) => setBuildStage(msg))
+        if (vercelRes && vercelRes.url) {
+           toast.success(`Deployed to Vercel: ${vercelRes.url}`)
+           await supabase.from('projects').update({ web_app_url: vercelRes.url }).eq('id', project.id)
+           setProject((prev: any) => prev ? { ...prev, web_app_url: vercelRes.url } : prev)
+        }
+      } catch (vercelErr: any) {
+        toast.error(`Vercel Deploy Failed: ${vercelErr.message}`)
+      }
+
+      setBuildPct(97)
       setBuildStage('Syncing to GitHub...')
       
       // Feature 2: Auto-Sync to Client GitHub Repos
@@ -1331,6 +1346,23 @@ export default function ProjectDetailPage() {
           const suggested = ALL_INTEGRATIONS.filter(i => i.keywords.some(k => projectText.includes(k)))
           const rest = ALL_INTEGRATIONS.filter(i => !suggested.find(s => s.id === i.id))
 
+          const handleConnectIntegration = async (int: { id: string; name: string }) => {
+            try {
+              const { data, error } = await supabase.from('project_integrations').insert({
+                project_id: project.id,
+                service_name: int.name,
+                auth_type: 'api_key',
+                status: 'connected',
+              }).select().single()
+              
+              if (error) throw error
+              setConnectedIntegrations(prev => [...prev, data])
+              toast.success(`${int.name} connected successfully!`)
+            } catch (e: any) {
+              toast.error(`Failed to connect ${int.name}: ` + e.message)
+            }
+          }
+
           return (
             <div className="max-w-4xl space-y-6">
               {/* AI Suggested */}
@@ -1341,20 +1373,27 @@ export default function ProjectDetailPage() {
                   </h3>
                   <p className="text-slate-500 text-xs mb-4">Based on your project description and spec</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {suggested.map(int => (
-                      <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{int.icon}</span>
-                          <div>
-                            <p className="text-white text-sm font-semibold">{int.name}</p>
-                            <p className="text-slate-500 text-xs">{int.desc}</p>
+                    {suggested.map(int => {
+                      const isConnected = connectedIntegrations.some((ci: any) => ci.service_name === int.name)
+                      if (isConnected) return null
+                      return (
+                        <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{int.icon}</span>
+                            <div>
+                              <p className="text-white text-sm font-semibold">{int.name}</p>
+                              <p className="text-slate-500 text-xs">{int.desc}</p>
+                            </div>
                           </div>
+                          <button 
+                            onClick={() => handleConnectIntegration(int)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
+                          >
+                            Connect
+                          </button>
                         </div>
-                        <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0">
-                          Connect
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -1370,9 +1409,14 @@ export default function ProjectDetailPage() {
                           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                             <CheckCircle size={14} />
                           </div>
-                          <p className="text-white text-sm font-medium capitalize">{int.name ?? int.integration_id}</p>
+                          <p className="text-white text-sm font-medium capitalize">{int.service_name}</p>
                         </div>
-                        <button className="text-slate-400 hover:text-white text-xs px-3 py-1.5 border border-[#334155] rounded-lg transition-colors">Configure</button>
+                        <button 
+                          onClick={() => window.location.href = '/marketplace'}
+                          className="text-slate-400 hover:text-white text-xs px-3 py-1.5 border border-[#334155] rounded-lg transition-colors"
+                        >
+                          Configure
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -1383,20 +1427,27 @@ export default function ProjectDetailPage() {
               <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
                 <h3 className="text-white font-semibold mb-4 text-sm">All Integrations</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {rest.map(int => (
-                    <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-[#1E293B] hover:border-[#334155] transition-all">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{int.icon}</span>
-                        <div>
-                          <p className="text-white text-sm font-semibold">{int.name}</p>
-                          <p className="text-slate-500 text-xs">{int.desc}</p>
+                  {rest.map(int => {
+                    const isConnected = connectedIntegrations.some((ci: any) => ci.service_name === int.name)
+                    if (isConnected) return null
+                    return (
+                      <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-[#1E293B] hover:border-[#334155] transition-all">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{int.icon}</span>
+                          <div>
+                            <p className="text-white text-sm font-semibold">{int.name}</p>
+                            <p className="text-slate-500 text-xs">{int.desc}</p>
+                          </div>
                         </div>
+                        <button 
+                          onClick={() => handleConnectIntegration(int)}
+                          className="px-3 py-1.5 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-xs font-semibold rounded-lg border border-[#334155] transition-colors flex-shrink-0"
+                        >
+                          Connect
+                        </button>
                       </div>
-                      <button className="px-3 py-1.5 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-xs font-semibold rounded-lg border border-[#334155] transition-colors flex-shrink-0">
-                        Connect
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>

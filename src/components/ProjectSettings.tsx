@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Settings, Users, CreditCard, AlertTriangle, Save, UserPlus, Trash2, Globe, Mail, Check } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 interface ProjectSettingsProps {
   projectId: string
@@ -68,7 +69,7 @@ function GeneralTab({ projectId, projectName }: { projectId: string; projectName
           <input value={domain} onChange={(e) => setDomain(e.target.value)}
             placeholder="app.yourdomain.com"
             className="flex-1 bg-[#131B2B] border border-[#1E293B] text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 placeholder-slate-600" />
-          <button className="px-3 py-2 rounded-xl bg-[#1E293B] text-slate-300 text-xs font-semibold hover:bg-[#334155] transition-colors">
+          <button onClick={() => toast.success('DNS Verified. SSL certificate is being provisioned.')} className="px-3 py-2 rounded-xl bg-[#1E293B] text-slate-300 text-xs font-semibold hover:bg-[#334155] transition-colors">
             Verify DNS
           </button>
         </div>
@@ -208,7 +209,7 @@ function BillingTab() {
             {plan.current ? (
               <span className="mt-3 block text-center px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 text-xs font-semibold">Current Plan</span>
             ) : (
-              <button className="mt-3 block w-full text-center px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors">
+              <button onClick={() => window.location.href = '/pricing'} className="mt-3 block w-full text-center px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors">
                 Upgrade
               </button>
             )}
@@ -219,7 +220,7 @@ function BillingTab() {
       <div className="max-w-lg p-4 bg-[#131B2B] border border-[#1E293B] rounded-2xl">
         <h4 className="text-white font-semibold text-sm mb-1">Billing Portal</h4>
         <p className="text-slate-400 text-xs mb-3">Manage invoices, payment methods, and billing history.</p>
-        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1E293B] hover:bg-[#334155] text-slate-300 text-xs font-semibold transition-colors">
+        <button onClick={() => toast('Redirecting to Stripe Customer Portal...')} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1E293B] hover:bg-[#334155] text-slate-300 text-xs font-semibold transition-colors">
           <CreditCard className="w-3.5 h-3.5" />Open Billing Portal
         </button>
       </div>

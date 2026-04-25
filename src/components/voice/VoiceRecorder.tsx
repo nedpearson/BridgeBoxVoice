@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { transcribeFile } from '../../lib/deepgram'
 
 
 interface VoiceRecorderProps {
@@ -80,21 +81,30 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
     setAudioURL(url)
     setState('uploading')
 
-    await simulateTranscription()
+    try {
+      const file = new File([blob], "recording.webm", { type: 'audio/webm' })
+      const result = await transcribeFile(file)
+      setState('done')
+      onComplete(result.transcript, visionImage || undefined)
+    } catch (e: any) {
+      toast.error('Transcription failed. Ensure VITE_DEEPGRAM_API_KEY is set. ' + e.message)
+      setState('idle')
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setState('uploading')
-    await simulateTranscription()
-  }
-
-  const simulateTranscription = async () => {
-    await new Promise(r => setTimeout(r, 2500))
-    const mockTranscript = `I run a landscaping business. I currently use QuickBooks for invoicing, Google Calendar for scheduling, and I keep a paper notebook for all my job notes. What I really need is one central app where my crew can clock in and out at the start and end of their day, see their list of jobs for today, take before and after photos of each job, and submit notes about what was done. On my side, I need a dashboard that shows me total revenue this month, total hours worked by each employee, upcoming scheduled jobs, and which jobs are waiting for invoice approval. I also want to be able to send out automatic SMS reminders to clients 24 hours before their appointment.`
-    setState('done')
-    onComplete(mockTranscript, visionImage || undefined)
+    
+    try {
+      const result = await transcribeFile(file)
+      setState('done')
+      onComplete(result.transcript, visionImage || undefined)
+    } catch (e: any) {
+      toast.error('Transcription failed. Ensure VITE_DEEPGRAM_API_KEY is set. ' + e.message)
+      setState('idle')
+    }
   }
 
   const handleImageDrop = (e: React.DragEvent) => {

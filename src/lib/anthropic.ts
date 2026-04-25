@@ -1,16 +1,7 @@
-// LLM API client (Anthropic Claude with OpenAI Fallback)
-// Handles intent extraction, clarification Q&A, and spec generation from transcripts
+import { supabase } from './supabase'
 
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY as string
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY as string
-
-// Route through Vite proxy to avoid browser CORS restrictions
-const CLAUDE_API_URL = '/anthropic/v1/messages'
 const CLAUDE_MODEL = 'claude-sonnet-4-5'
-
-const OPENAI_API_URL = '/openai/v1/chat/completions'
 const OPENAI_MODEL = 'gpt-4o'
-
 
 export interface AIAnalysis {
   businessType: string
@@ -30,90 +21,6 @@ export interface ClarifyMessage {
   content: string
 }
 
-async function _callClaude(
-  systemPrompt: string,
-  userMessage: string,
-  history: ClarifyMessage[] = [],
-  maxTokens = 4096,
-  imageUrl?: string
-): Promise<string> {
-  if (!ANTHROPIC_API_KEY) throw new Error('VITE_ANTHROPIC_API_KEY is not set')
-  
-  // Format user content based on image presence
-  const userContent = imageUrl 
-    ? [
-        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageUrl.split(',')[1] || imageUrl } },
-        { type: "text", text: userMessage }
-      ]
-    : userMessage
-
-  const messages = [
-    ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userContent as any },
-  ]
-  const response = await fetch(CLAUDE_API_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages,
-    }),
-  })
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`Claude API error ${response.status}: ${err}`)
-  }
-  const data = await response.json()
-  return data.content?.[0]?.text ?? ''
-}
-
-async function _callOpenAI(
-  systemPrompt: string,
-  userMessage: string,
-  history: ClarifyMessage[] = [],
-  maxTokens = 4096,
-  imageUrl?: string
-): Promise<string> {
-  if (!OPENAI_API_KEY) throw new Error('VITE_OPENAI_API_KEY is not set for fallback')
-  
-  const userContent = imageUrl 
-    ? [
-        { type: "text", text: userMessage },
-        { type: "image_url", image_url: { url: imageUrl.startsWith('data:') ? imageUrl : `data:image/jpeg;base64,${imageUrl}` } }
-      ]
-    : userMessage
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userContent as any },
-  ]
-  const response = await fetch(OPENAI_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      max_tokens: maxTokens,
-      messages,
-    }),
-  })
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`OpenAI API error ${response.status}: ${err}`)
-  }
-  const data = await response.json()
-  return data.choices?.[0]?.message?.content ?? ''
-}
-
 export async function callClaude(
   systemPrompt: string,
   userMessage: string,
@@ -122,10 +29,23 @@ export async function callClaude(
   imageUrl?: string
 ): Promise<string> {
   try {
-    return await _callClaude(systemPrompt, userMessage, history, maxTokens, imageUrl)
+    const { data, error } = await supabase.functions.invoke('ai-generate', {
+      body: {
+        model: CLAUDE_MODEL,
+        systemPrompt,
+        userMessage,
+        history,
+        maxTokens,
+        imageUrl
+      }
+    })
+
+    if (error) throw new Error(error.message || 'Unknown Edge Function Error')
+    if (data?.error) throw new Error(data.error)
+    
+    return data?.content ?? ''
   } catch (e: any) {
     console.warn('Claude API failed (token/rate limit or error). Falling back to OpenAI chat gpt...', e)
-    // Dispatch an event so the UI can show the failover to the user rather than hanging on "Waiting for Claude"
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('llm-fallback'))
       import('posthog-js').then(({ default: posthog }) => {
@@ -136,7 +56,22 @@ export async function callClaude(
         })
       }).catch(() => {})
     }
-    return await _callOpenAI(systemPrompt, userMessage, history, maxTokens, imageUrl)
+
+    const { data, error } = await supabase.functions.invoke('ai-generate', {
+      body: {
+        model: OPENAI_MODEL,
+        systemPrompt,
+        userMessage,
+        history,
+        maxTokens,
+        imageUrl
+      }
+    })
+
+    if (error) throw new Error(error.message || 'Unknown Edge Function Error')
+    if (data?.error) throw new Error(data.error)
+    
+    return data?.content ?? ''
   }
 }
 
@@ -159,29 +94,8 @@ Given a voice transcript of someone describing the software application they wan
 Respond ONLY with valid JSON in this exact structure. No markdown, no explanation.`
 
 export async function extractIntent(transcript: string): Promise<AIAnalysis> {
-  try {
-    const raw = await callClaude(EXTRACTION_SYSTEM, `Voice transcript:\n\n${transcript}`)
-    return JSON.parse(raw) as AIAnalysis
-  } catch (e) {
-    console.warn('Anthropic API failed or missing, using mock data for extractIntent.', e)
-    // Return a sensible fallback if JSON parsing fails or API key is missing
-    return {
-      businessType: 'Retail App',
-      industry: 'E-Commerce / Retail',
-      features: ['User authentication', 'Inventory management', 'Shopping cart', 'Admin dashboard', 'Secure checkout'],
-      integrations: ['Stripe', 'SendGrid', 'ElasticSearch'],
-      dataModels: [
-        { name: 'User', fields: ['id', 'email', 'role', 'created_at'] },
-        { name: 'Product', fields: ['id', 'name', 'price', 'stock_count'] },
-        { name: 'Order', fields: ['id', 'user_id', 'total', 'status'] }
-      ],
-      userRoles: ['Admin', 'Customer', 'Support'],
-      deploymentTargets: ['web', 'ios'],
-      clarifyingQuestions: ['Do you need Apple Pay/Google Pay?', 'Will you handle shipping internally?'],
-      summary: 'A comprehensive retail and inventory management application designed to handle multi-faceted purchasing flows.',
-      confidence: 0.85,
-    }
-  }
+  const raw = await callClaude(EXTRACTION_SYSTEM, `Voice transcript:\n\n${transcript}`)
+  return JSON.parse(raw) as AIAnalysis
 }
 
 // ─── Clarifying Q&A ───────────────────────────────────────────────────────────
@@ -217,31 +131,8 @@ Return JSON with:
 Respond only with valid JSON.`
 
 export async function generateSpec(analysis: AIAnalysis): Promise<Record<string, unknown>> {
-  try {
-    const raw = await callClaude(SPEC_SYSTEM, JSON.stringify(analysis, null, 2))
-    return JSON.parse(raw) as Record<string, unknown>
-  } catch (e) {
-    console.warn('Anthropic API failed or missing, using mock data for generateSpec.', e)
-    return { 
-      title: analysis.businessType || 'Custom App', 
-      description: analysis.summary || 'A custom software solution based on your requirements.',
-      techStack: { frontend: "React Toolkit", backend: "Node.js (Express)", database: "PostgreSQL", hosting: "AWS Cloud" },
-      features: analysis.features?.map(f => ({ name: f, description: `Implementation for ${f}`, priority: 'high', complexity: 'moderate' })) || [],
-      dataModels: analysis.dataModels || [],
-      apiEndpoints: [
-        { method: 'GET', path: '/api/v1/health', description: 'Health check endpoint' },
-        { method: 'POST', path: '/api/v1/auth/login', description: 'User login' }
-      ],
-      uiScreens: [
-        { name: 'Dashboard', description: 'Main administrative overview', components: ['StatsCards', 'DataChart', 'ActivityFeed'] }
-      ],
-      timeline: [
-        { phase: 'Planning', description: 'Architecture and DB design', estimatedDays: 3 },
-        { phase: 'Development', description: 'Core features implementation', estimatedDays: 14 },
-        { phase: 'Integration', description: 'Third-party API wiring', estimatedDays: 5 }
-      ]
-    }
-  }
+  const raw = await callClaude(SPEC_SYSTEM, JSON.stringify(analysis, null, 2))
+  return JSON.parse(raw) as Record<string, unknown>
 }
 
 // ─── Prompt Enhancement ───────────────────────────────────────────────────────
@@ -253,17 +144,12 @@ Do NOT just summarize; build upon their idea to make it a robust software descri
 Respond ONLY with the rewritten description. Do not add any conversational filler like "Here is the rewritten description:".`
 
 export async function enhancePrompt(roughPrompt: string): Promise<string> {
-  try {
-    return await callClaude(ENHANCE_SYSTEM, `Original prompt:\n\n${roughPrompt}`)
-  } catch (e) {
-    console.warn('Anthropic API failed or missing, using mock string for enhancePrompt.', e)
-    return `[AI Enhanced Specification]:\n\n${roughPrompt}\n\nKey Requirements extracted:\n- Fully authenticated user and admin roles.\n- Secure database architecture for scalable growth.\n- Elegant, responsive dashboard with real-time syncing mechanisms.\n\n(Note: This is a simulated rewrite because the Anthropic API key is not configured.)`
-  }
+  return await callClaude(ENHANCE_SYSTEM, `Original prompt:\n\n${roughPrompt}`)
 }
 
 // ─── App Preview Generation ────────────────────────────────────────────────────
 
-export const hasAnthropicKey = !!ANTHROPIC_API_KEY
+export const hasAnthropicKey = true // Handled by edge function now
 
 const PREVIEW_SYSTEM = `You are a world-class frontend engineer who builds real, production-quality web applications. 
 Given a detailed software specification, generate a COMPLETE, fully functional, self-contained HTML application.
@@ -288,9 +174,6 @@ CRITICAL RULES:
 Return ONLY the raw HTML starting with <!DOCTYPE html>. No markdown. No code fences. No explanation.`
 
 export async function generateAppPreview(spec: Record<string, unknown>): Promise<string> {
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('VITE_ANTHROPIC_API_KEY is not configured. Add your Anthropic API key to the .env file to generate live previews.')
-  }
   const raw = await callClaude(PREVIEW_SYSTEM, `Build a complete, fully functional web application for this specification:\n\n${JSON.stringify(spec, null, 2)}`, [], 16000)
   return raw.replace(/^```html\n?/i, '').replace(/\n?```$/i, '').trim()
 }
@@ -333,10 +216,6 @@ Rules:
 Return ONLY valid JSON. No markdown. No explanation.`
 
 export async function generateFullApplication(spec: Record<string, unknown>, projectName: string, retries = 2): Promise<{ files: {path: string, content: string}[], readme: string }> {
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('VITE_ANTHROPIC_API_KEY is not configured.')
-  }
-  
   let attempts = 0
   let promptContext = `Project Name: ${projectName}\n\nSpecification:\n${JSON.stringify(spec, null, 2)}`
   let history: ClarifyMessage[] = []

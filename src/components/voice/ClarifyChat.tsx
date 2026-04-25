@@ -1,24 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User } from 'lucide-react'
 import { AIAnalysis } from '../../types/platform'
+import { askClarifying, ClarifyMessage } from '../../lib/anthropic'
+import toast from 'react-hot-toast'
 
 interface ClarifyChatProps {
   analysis: AIAnalysis
   projectId: string
 }
 
-interface Message { role: 'ai' | 'user'; text: string }
-
-const MOCK_RESPONSES: Record<string, string> = {
-  default: "Thanks for that detail! I've added it to the project specification. Any other requirements I should know about before we start building?",
-  crew: "Perfect. I'll design the crew module to support up to 50 concurrent users with individual profiles and role assignments. I'll add a team management screen to the admin dashboard.",
-  client: "Understood — I'll add a client-facing portal as an optional module. Clients will get a secure link where they can view job status, before/after photos, and approve quotes without needing to create an account.",
-  inventory: "Great idea. I'll add an Inventory & Materials module with barcode scanning, low-stock alerts, and automatic cost calculation when a job is completed.",
-}
-
 export default function ClarifyChat({ analysis }: ClarifyChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'ai', text: analysis.clarifying_questions[0] ?? "Is there anything else you'd like to add or change about the specification?" },
+  const [messages, setMessages] = useState<ClarifyMessage[]>([
+    { role: 'assistant', content: analysis.clarifying_questions[0] ?? "Is there anything else you'd like to add or change about the specification?" },
   ])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
@@ -32,16 +25,20 @@ export default function ClarifyChat({ analysis }: ClarifyChatProps) {
     if (!input.trim()) return
     const userMsg = input.trim()
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    
+    const newHistory: ClarifyMessage[] = [...messages, { role: 'user', content: userMsg }]
+    setMessages(newHistory)
     setTyping(true)
-    await new Promise(r => setTimeout(r, 1500))
-    const lower = userMsg.toLowerCase()
-    const resp = lower.includes('crew') ? MOCK_RESPONSES.crew
-      : lower.includes('client') ? MOCK_RESPONSES.client
-      : lower.includes('inventory') ? MOCK_RESPONSES.inventory
-      : MOCK_RESPONSES.default
-    setMessages(prev => [...prev, { role: 'ai', text: resp }])
-    setTyping(false)
+
+    try {
+      // Map the platform AIAnalysis type to match what anthropic.ts expects, or cast it
+      const responseText = await askClarifying(userMsg, messages, analysis as any)
+      setMessages([...newHistory, { role: 'assistant', content: responseText }])
+    } catch (e: any) {
+      toast.error('AI failed to respond: ' + e.message)
+    } finally {
+      setTyping(false)
+    }
   }
 
   return (
@@ -55,11 +52,11 @@ export default function ClarifyChat({ analysis }: ClarifyChatProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${m.role === 'ai' ? 'bg-blue-600/20' : 'bg-[#1E293B]'}`}>
-              {m.role === 'ai' ? <Bot className="w-3.5 h-3.5 text-blue-400" /> : <User className="w-3.5 h-3.5 text-slate-400" />}
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${m.role === 'assistant' ? 'bg-blue-600/20' : 'bg-[#1E293B]'}`}>
+              {m.role === 'assistant' ? <Bot className="w-3.5 h-3.5 text-blue-400" /> : <User className="w-3.5 h-3.5 text-slate-400" />}
             </div>
-            <div className={`rounded-xl px-3 py-2 text-sm max-w-[85%] leading-relaxed ${m.role === 'ai' ? 'bg-[#131B2B] border border-[#1E293B] text-slate-300' : 'bg-blue-600 text-white'}`}>
-              {m.text}
+            <div className={`rounded-xl px-3 py-2 text-sm max-w-[85%] leading-relaxed ${m.role === 'assistant' ? 'bg-[#131B2B] border border-[#1E293B] text-slate-300' : 'bg-blue-600 text-white'}`}>
+              {m.content}
             </div>
           </div>
         ))}

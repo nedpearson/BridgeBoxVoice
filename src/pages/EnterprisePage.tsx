@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import {
   Shield, Key, Users, Flag, Lock, Globe, FileText, Cpu,
-  Activity, LifeBuoy, Palette, HelpCircle, ChevronRight, Sparkles
+  Activity, LifeBuoy, Palette, ChevronRight, Sparkles
 } from 'lucide-react'
 import SSOConfig from '../components/enterprise/SSOConfig'
 import EnhancementStudioTab from '../components/enterprise/EnhancementStudioTab'
@@ -11,6 +11,11 @@ import FeatureFlags from '../components/enterprise/FeatureFlags'
 import ApiKeyManager from '../components/enterprise/ApiKeyManager'
 import SecuritySettings from '../components/enterprise/SecuritySettings'
 import WhiteLabel from '../components/enterprise/WhiteLabel'
+
+import DataResidency from '../components/enterprise/DataResidency'
+import ComplianceReports from '../components/enterprise/ComplianceReports'
+import AIGovernance from '../components/enterprise/AIGovernance'
+import EnterpriseSupport from '../components/enterprise/EnterpriseSupport'
 
 const SECTIONS = [
   {
@@ -56,49 +61,24 @@ const SECTIONS = [
   {
     id: 'data', label: 'Data Residency', icon: <Globe size={18} />, color: '#0EA5E9',
     desc: 'Region selection, geo-fencing, PII masking',
-    component: (_: string) => <DataResidencyPlaceholder />,
+    component: (wid: string) => <DataResidency workspaceId={wid} />,
   },
   {
     id: 'compliance', label: 'Compliance', icon: <Shield size={18} />, color: '#10B981',
     desc: 'SOC 2, GDPR, HIPAA, PCI-DSS reports',
-    component: (_: string) => <CompliancePlaceholder />,
+    component: (wid: string) => <ComplianceReports workspaceId={wid} />,
   },
   {
     id: 'ai', label: 'AI Governance', icon: <Cpu size={18} />, color: '#A855F7',
     desc: 'Usage caps, safety, prompt injection detection',
-    component: (_: string) => <AIGovernancePlaceholder />,
+    component: (wid: string) => <AIGovernance workspaceId={wid} />,
   },
   {
     id: 'support', label: 'Support', icon: <LifeBuoy size={18} />, color: '#F59E0B',
     desc: 'Tickets, priority queues, contact team',
-    component: (_: string) => <SupportPlaceholder />,
+    component: (wid: string) => <EnterpriseSupport workspaceId={wid} />,
   },
 ]
-
-// Placeholder components for sections not yet wired
-const Placeholder = ({ title, desc }: { title: string; desc: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12, color: '#64748B', textAlign: 'center' }}>
-    <HelpCircle size={40} style={{ opacity: 0.3 }} />
-    <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#94A3B8' }}>{title}</p>
-    <p style={{ margin: 0, fontSize: 13 }}>{desc}</p>
-  </div>
-)
-
-const DataResidencyPlaceholder = () => <Placeholder title="Data Residency" desc="Region selection, geo-fencing, and PII classification coming in next phase." />
-const CompliancePlaceholder = () => <Placeholder title="Compliance Reports" desc="SOC 2 Type II, GDPR, HIPAA, and PCI-DSS reports available for Enterprise plans." />
-const AIGovernancePlaceholder = () => <Placeholder title="AI Governance" desc="Usage caps, prompt injection detection, and code safety analysis — managed via aiGovernance.ts service." />
-const SupportPlaceholder = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 20 }}>
-    <div style={{ padding: 20, borderRadius: 12, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', gap: 16 }}>
-      <LifeBuoy size={24} color="#6366F1" style={{ flexShrink: 0 }} />
-      <div>
-        <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#E2E8F0' }}>Enterprise Support</p>
-        <p style={{ margin: 0, fontSize: 13, color: '#94A3B8' }}>24/7 support with &lt;1 hour response SLA for Enterprise customers. Contact your dedicated Customer Success Manager.</p>
-        <a href="mailto:enterprise@bridgebox.ai" style={{ display: 'inline-block', marginTop: 12, padding: '8px 18px', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', borderRadius: 8, color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Contact Support</a>
-      </div>
-    </div>
-  </div>
-)
 
 interface Props { workspaceId?: string }
 

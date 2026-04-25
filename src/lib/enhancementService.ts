@@ -47,8 +47,8 @@ export const enhancementService = {
   },
 
   /**
-   * Simulates an AI background pipeline that transcribes, parses workflows,
-   * and outputs a structured enhancement brief.
+   * AI background pipeline that transcribes, parses workflows,
+   * and outputs a structured enhancement brief using Claude.
    */
   async runAIAnalysis(requestId: string, rawPrompt: string | null): Promise<EnhancementRequest> {
     // 1. Transition to analyzing state
@@ -57,40 +57,51 @@ export const enhancementService = {
       .update({ status: 'analyzing' })
       .eq('id', requestId)
 
-    // 2. Simulate heavy AI processing latency
-    await new Promise(resolve => setTimeout(resolve, 2500))
+    try {
+      const { callClaude } = await import('./anthropic')
+      
+      const SYSTEM_PROMPT = `You are an expert software architect analyzing an enhancement request for a business software platform.
+Given the user's raw prompt describing what they want changed or added, respond ONLY with a JSON object in this exact format:
+{
+  "structured_request": {
+    "detected_entities": ["Dashboard", "Approval Flow", "API Endpoint", ...],
+    "complexity": "low" | "medium" | "high",
+    "estimated_hours": number,
+    "features": [
+      { "name": "Feature Name", "description": "What it does" }
+    ]
+  },
+  "recommendations": {
+    "isolation_risk": "Low" | "Medium" | "High",
+    "architecture_notes": "Notes on how to integrate",
+    "suggested_reusable_assets": ["Asset name 1", "Asset name 2"]
+  },
+  "analysis_summary": "A 1-2 sentence human-readable summary of what you found."
+}
+No markdown, no explanation, only valid JSON.`
 
-    // 3. Generate structured output based on the raw text
-    const structured_request = {
-      detected_entities: ['Dashboard', 'Approval Flow', 'API Endpoint'],
-      complexity: 'medium',
-      estimated_hours: 4.5,
-      features: [
-        { name: 'UI Update', description: 'Adding data cards to the requested view.' },
-        { name: 'Workflow Logic', description: 'Tying the data cards to the approval tables.' }
-      ]
+      const aiResponse = await callClaude(SYSTEM_PROMPT, `User Request:\n\n${rawPrompt || 'No prompt provided'}`)
+      const parsed = JSON.parse(aiResponse)
+
+      const { data, error } = await supabase
+        .from('enhancement_requests')
+        .update({
+          status: 'ready_for_review',
+          structured_request: parsed.structured_request,
+          analysis_summary: parsed.analysis_summary,
+          recommendations: parsed.recommendations,
+        })
+        .eq('id', requestId)
+        .select()
+        .single()
+
+      if (error) throw new Error(`DB update failed: ${error.message}`)
+      return data as EnhancementRequest
+
+    } catch (err: any) {
+      await supabase.from('enhancement_requests').update({ status: 'failed' }).eq('id', requestId)
+      throw new Error(`AI Analysis failed: ${err.message}`)
     }
-    
-    const recommendations = {
-      isolation_risk: 'Low',
-      architecture_notes: 'Will cleanly integrate without touching core RBAC.',
-      suggested_reusable_assets: ['Standard DataTable V2']
-    }
-
-    const { data, error } = await supabase
-      .from('enhancement_requests')
-      .update({
-        status: 'ready_for_review',
-        structured_request,
-        analysis_summary: `AI has successfully parsed your request for "${rawPrompt?.substring(0, 30)}...". Found 2 key features to build.`,
-        recommendations,
-      })
-      .eq('id', requestId)
-      .select()
-      .single()
-
-    if (error) throw new Error(`AI Analysis failed: ${error.message}`)
-    return data as EnhancementRequest
   },
 
   /**

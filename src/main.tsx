@@ -6,11 +6,13 @@ import App from './App.tsx'
 import './index.css'
 
 // ─── PostHog Telemetry & Events ───────────────────────────────────────────────
-const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY || 'phc_mock_key_for_telemetry'
-posthog.init(POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
-  person_profiles: 'identified_only',
-})
+const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY
+if (POSTHOG_KEY) {
+  posthog.init(POSTHOG_KEY, {
+    api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
+    person_profiles: 'identified_only',
+  })
+}
 
 // ─── Sentry Error Tracking ────────────────────────────────────────────────────
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN

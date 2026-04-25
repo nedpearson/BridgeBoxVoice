@@ -28,19 +28,10 @@ export default function MergeWorkspaceModal({ targetWorkspace, onClose }: Props)
     setSourceId(sid)
     try {
       const dbAssets = await mergeService.listAssets(sid)
-      if (dbAssets.length === 0) {
-        // Mocking some assets if the database is empty so the UI doesn't look blank during demo
-        setAssets([
-          { id: 'mock-1', name: 'Auto-Responder Workflow', asset_type: 'workflow', description: 'Triggers templated emails on new intake' },
-          { id: 'mock-2', name: 'Standard Intake Form', asset_type: 'form', description: 'Comprehensive client onboarding schema' },
-          { id: 'mock-3', name: 'Lead Velocity Dashboard', asset_type: 'ui_module', description: 'Analytics for tracking deal closure speeds' }
-        ])
-      } else {
-        setAssets(dbAssets)
-      }
+      setAssets(dbAssets)
       setStep(2)
     } catch {
-      // Optional catch for load asset failures
+      toast.error('Failed to load workspace assets')
     }
   }
 

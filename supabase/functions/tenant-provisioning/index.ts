@@ -70,6 +70,14 @@ serve(async (req) => {
       defaultFlags.map(flag => ({ workspace_id: workspace.id, flag_name: flag, enabled: true, rollout_percentage: 100 }))
     )
 
+    // Seed default workspace assets
+    const defaultAssets = [
+      { workspace_id: workspace.id, name: 'Auto-Responder Workflow', asset_type: 'workflow', description: 'Triggers templated emails on new intake', definition: {} },
+      { workspace_id: workspace.id, name: 'Standard Intake Form', asset_type: 'form', description: 'Comprehensive client onboarding schema', definition: {} },
+      { workspace_id: workspace.id, name: 'Lead Velocity Dashboard', asset_type: 'ui_module', description: 'Analytics for tracking deal closure speeds', definition: {} }
+    ]
+    await adminClient.from('workspace_assets').insert(defaultAssets)
+
     return new Response(JSON.stringify({
       success: true,
       workspace,
