@@ -9,7 +9,7 @@ interface AIAnalysisPanelProps {
   onComplete: (analysis: AIAnalysis) => void
 }
 
-export default function AIAnalysisPanel({ transcript, projectId, imageUrl, onComplete }: AIAnalysisPanelProps) {
+export default function AIAnalysisPanel({ onComplete }: AIAnalysisPanelProps) {
   const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [stage, setStage] = useState<string>('Initializing Claude AI...')

@@ -105,6 +105,66 @@ CREATE TABLE IF NOT EXISTS project_integrations (
   created_at timestamptz default now()
 );
 
+-- Workspace Integrations
+CREATE TABLE IF NOT EXISTS workspace_integrations (
+  id uuid default uuid_generate_v4() primary key,
+  workspace_id uuid references workspaces(id) on delete cascade not null,
+  integration_id text not null,
+  integration_name text not null,
+  auth_type text check (auth_type in ('oauth', 'api_key')),
+  api_key_hash text,
+  connected_at timestamptz default now(),
+  UNIQUE(workspace_id, integration_id)
+);
+
+-- Workspace Members
+CREATE TABLE IF NOT EXISTS workspace_members (
+  id uuid default uuid_generate_v4() primary key,
+  workspace_id uuid references workspaces(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  role text check (role in ('owner', 'admin', 'member')) default 'member',
+  created_at timestamptz default now(),
+  UNIQUE(workspace_id, user_id)
+);
+
+-- Workspace Invitations
+CREATE TABLE IF NOT EXISTS workspace_invitations (
+  id uuid default uuid_generate_v4() primary key,
+  workspace_id uuid references workspaces(id) on delete cascade not null,
+  email text not null,
+  role text check (role in ('admin', 'member')) default 'member',
+  token text,
+  status text default 'pending',
+  created_at timestamptz default now(),
+  UNIQUE(workspace_id, email)
+);
+
+-- Screen Captures (Unassigned / Global captures before assigning to project)
+CREATE TABLE IF NOT EXISTS screen_captures (
+  id uuid default uuid_generate_v4() primary key,
+  workspace_id uuid references workspaces(id) on delete cascade not null,
+  project_id uuid references projects(id) on delete set null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  type text check (type in ('screenshot', 'video', 'flow')),
+  file_path text,
+  url_captured text,
+  dom_snapshot jsonb,
+  network_logs jsonb,
+  ai_analysis jsonb,
+  created_at timestamptz default now()
+);
+
+-- SMS Queue
+CREATE TABLE IF NOT EXISTS sms_queue (
+  id uuid default uuid_generate_v4() primary key,
+  "to" text not null,
+  message text not null,
+  send_at timestamptz not null,
+  appointment_id uuid,
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+
 -- Deployments
 CREATE TABLE IF NOT EXISTS deployments (
   id uuid default uuid_generate_v4() primary key,
@@ -155,6 +215,11 @@ ALTER TABLE project_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deployments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_analytics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_integrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE screen_captures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sms_queue ENABLE ROW LEVEL SECURITY;
 
 -- user_profiles: users can only see/edit their own profile
 CREATE POLICY "Users manage own profile" ON user_profiles
@@ -233,6 +298,34 @@ CREATE POLICY "Subscriptions via workspace" ON subscriptions
   FOR ALL USING (
     workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid())
   );
+
+-- workspace_integrations: access via workspace ownership
+CREATE POLICY "Workspace integrations via workspace" ON workspace_integrations
+  FOR ALL USING (
+    workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid())
+  );
+
+-- workspace_members: access via workspace ownership
+CREATE POLICY "Workspace members via workspace" ON workspace_members
+  FOR ALL USING (
+    workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid())
+  );
+
+-- workspace_invitations: access via workspace ownership
+CREATE POLICY "Workspace invitations via workspace" ON workspace_invitations
+  FOR ALL USING (
+    workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid())
+  );
+
+-- screen_captures: access via workspace ownership
+CREATE POLICY "Screen captures via workspace" ON screen_captures
+  FOR ALL USING (
+    workspace_id IN (SELECT id FROM workspaces WHERE owner_id = auth.uid())
+  );
+
+-- sms_queue: authenticated users can insert and view
+CREATE POLICY "SMS queue accessible by authenticated users" ON sms_queue
+  FOR ALL USING (auth.role() = 'authenticated');
 
 -- ============================================================
 -- AUTO-CREATE WORKSPACE & PROFILE ON SIGNUP

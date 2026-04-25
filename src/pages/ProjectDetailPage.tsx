@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import { extractIntent, generateSpec, generateAppPreview, enhancePrompt, generateFullApplication, hasAnthropicKey } from '../lib/anthropic'
 import TemplateGallery from '../components/templates/TemplateGallery'
 import { AppTemplate } from '../data/templates'
+import VoiceRecorder from '../components/voice/VoiceRecorder'
 
 type Tab = 'overview' | 'spec' | 'preview' | 'deployments' | 'integrations' | 'settings'
 
@@ -1043,12 +1044,16 @@ export default function ProjectDetailPage() {
 
             {/* No spec yet state (not analyzing) */}
             {!spec && !project.transcript && project.status !== 'analyzing' && (
-              <div className="text-center py-16 text-slate-500">
-                <FileText size={32} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No analysis yet. Start a voice recording to generate your app specification.</p>
-                <button onClick={() => navigate(`/project/${projectId}/record`)} className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors">
-                  Start Recording
-                </button>
+              <div className="text-center py-8 text-slate-500">
+                <VoiceRecorder 
+                  projectId={project.id} 
+                  onComplete={async (transcript) => {
+                    const { error } = await supabase.from('projects').update({ transcript, status: 'analyzing' }).eq('id', project.id);
+                    if (error) { toast.error('Failed to save recording'); return; }
+                    updateProject(project.id, { transcript, status: 'analyzing' } as any);
+                    setProject((p: any) => ({ ...p, transcript, status: 'analyzing' }));
+                  }} 
+                />
               </div>
             )}
 

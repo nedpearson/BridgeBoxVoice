@@ -272,7 +272,7 @@ export default function Dashboard() {
           </div>
         </button>
         <button
-          onClick={() => navigate('/integrations')}
+          onClick={() => navigate('/marketplace')}
           className="flex items-center gap-4 p-5 bg-[#131B2B] hover:bg-[#162035] border border-[#1E293B] hover:border-emerald-500/30 rounded-2xl transition-all text-left group"
         >
           <div className="w-10 h-10 rounded-xl bg-emerald-600/10 border border-emerald-600/20 flex items-center justify-center flex-shrink-0">

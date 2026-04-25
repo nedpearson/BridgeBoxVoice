@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import ProjectDetailPage from './pages/ProjectDetailPage'
+import ProjectBuilder from './pages/ProjectBuilder'
 import Marketplace from './pages/Marketplace'
 import Analytics from './pages/Analytics'
 import Pricing from './pages/Pricing'
@@ -61,6 +62,7 @@ function AppRoutes({ session, loading }: { session: Session | null; loading: boo
         <Route path="/" element={<Layout session={session} />}>
           <Route index element={<Dashboard />} />
           <Route path="project/:projectId" element={<ProjectDetailPage />} />
+          <Route path="project/:projectId/record" element={<ProjectBuilder />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="pricing" element={<Pricing />} />
