@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Search, CheckCircle, Link2, Key, X, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useStore } from '../store/appStore'
 import toast from 'react-hot-toast'
 
 interface Integration {
@@ -42,27 +43,22 @@ export default function Marketplace() {
   const [oauthModal, setOauthModal] = useState<Integration | null>(null)
   const [oauthStep, setOauthStep] = useState(0)
   const [saving, setSaving] = useState(false)
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
+  const { workspace } = useStore()
+  const workspaceId = workspace?.id
 
   useEffect(() => {
     const load = async () => {
+      if (!workspaceId) return
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const { data: ws } = await supabase.from('workspaces').select('id').limit(1).single()
-        if (!ws) return
-        setWorkspaceId(ws.id)
         // Load already-connected integrations
-        const { data } = await supabase.from('workspace_integrations').select('integration_id').eq('workspace_id', ws.id)
+        const { data } = await supabase.from('workspace_integrations').select('integration_id').eq('workspace_id', workspaceId)
         if (data) setConnected(new Set(data.map((d: any) => d.integration_id)))
       } catch (err) {
         console.error(err)
-      } finally {
-        // setLoading(false) // Assuming loading state exists or is not required here
       }
     }
     load()
-  }, [])
+  }, [workspaceId])
 
   const handleConnect = (integration: Integration) => {
     if (integration.authType === 'api_key') {

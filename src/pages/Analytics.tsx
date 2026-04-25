@@ -14,7 +14,6 @@ export default function Analytics() {
   const { projects } = useStore()
   const [loading, setLoading] = useState(true)
   const [allProjects, setAllProjects] = useState<any[]>([])
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -23,7 +22,6 @@ export default function Analytics() {
         if (!user) return
         const { data: ws } = await supabase.from('workspaces').select('id').limit(1).single()
         if (!ws) return
-        setWorkspaceId(ws.id)
         const { data: ps } = await supabase
           .from('projects')
           .select('id, name, status, created_at, web_app_url, mobile_app_url, desktop_app_url')

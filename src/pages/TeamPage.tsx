@@ -43,10 +43,6 @@ export default function TeamPage() {
               loadMembers(ws.id)
             }
           })
-          .catch(err => {
-            console.error(err)
-            setLoading(false)
-          })
       } else {
         setLoading(false)
       }
