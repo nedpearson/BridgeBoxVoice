@@ -636,7 +636,7 @@ export default function ProjectDetailPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors"
                   >
-                    <Globe size={14} /> Open App â†-
+                    <Globe size={14} /> Open App <ExternalLink size={12} />
                   </a>
                 )
               }
