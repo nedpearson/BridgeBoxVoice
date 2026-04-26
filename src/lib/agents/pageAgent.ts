@@ -1,9 +1,9 @@
-/**
- * ╔══════════════════════════════════════════════════════════╗
- * ║  PAGE AGENT v6 — Full Retail Boutique Data Engine        ║
- * ║  Cost price, retail price, margins, payment terms        ║
- * ║  Vendor management, layaway, commissions, POS            ║
- * ╚══════════════════════════════════════════════════════════╝
+﻿/**
+ * â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+ * â•‘  PAGE AGENT v6 â€” Full Retail Boutique Data Engine        â•‘
+ * â•‘  Cost price, retail price, margins, payment terms        â•‘
+ * â•‘  Vendor management, layaway, commissions, POS            â•‘
+ * â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
  */
 
 import { callClaude } from '../anthropic'
@@ -11,14 +11,14 @@ import { sanitizeFileContent, generateSafeStub } from './sanitizerAgent'
 import type { SkeletonPage } from './skeletonAgent'
 import { buildPageFromData, type PageData } from './pageTemplate'
 
-// ── Retail-specific data generation prompt ────────────────────────────────────
+// â”€â”€ Retail-specific data generation prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DATA_SYSTEM = `You are a retail boutique business data expert.
-Output ONLY valid JSON matching this schema. Generate REAL, specific values — never use placeholders.
+Output ONLY valid JSON matching this schema. Generate REAL, specific values â€” never use placeholders.
 
 {
   "fields": [...column keys, camelCase, 4-7 items, always include 'id' and a primary name field],
   "records": [...7-9 records with all field keys and realistic retail boutique values],
-  "stats": [...exactly 4 stat objects { "label": string, "value": string|number } — SPECIFIC to this page, never repeat across pages],
+  "stats": [...exactly 4 stat objects { "label": string, "value": string|number } â€” SPECIFIC to this page, never repeat across pages],
   "formFields": [...4-7 form field objects { "key": string, "label": string, "type": "text"|"date"|"select"|"textarea"|"number", "options"?: string[] }],
   "subRecords": [...8-12 child records { "id": number, "parentId": number (matches a record id), "title": string, "date": "YYYY-MM-DD", "status": string }]
 }
@@ -38,7 +38,7 @@ DOMAIN RULES:
 - NEVER use "Record A", "Item 1", or generic placeholders
 - Return ONLY JSON. No markdown. No explanation.`
 
-// ── Full retail boutique page-type hints ──────────────────────────────────────
+// â”€â”€ Full retail boutique page-type hints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getPageTypeHint(pageName: string): string {
   const n = pageName.toLowerCase()
 
@@ -144,13 +144,13 @@ SubRecords: Revenue by location breakdown, Top 5 selling designers, Commission s
     return `Fields: id, category (Store/Tax/Payment/Notifications/Integrations/Staff), settingName, currentValue, lastModifiedBy, lastModifiedDate, status (Active/Inactive/Pending).
 Stats: Locations Configured, Active Integrations, Tax Rate (%), Last Backup Date.
 FormFields: Category (select), Setting Name, Value, Description (textarea).
-SubRecords: Setting changed (old → new value), Integration connected, Tax rate updated, Location added, Notification preference updated, Backup completed.`
+SubRecords: Setting changed (old â†’ new value), Integration connected, Tax rate updated, Location added, Notification preference updated, Backup completed.`
   }
 
   return `Generate comprehensive retail boutique data for the "${pageName}" page including cost pricing, retail pricing, and payment terms where applicable.`
 }
 
-// ── AI: Request data for a page ───────────────────────────────────────────────
+// â”€â”€ AI: Request data for a page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function fetchPageData(
   page: SkeletonPage,
   spec: Record<string, unknown>,
@@ -170,7 +170,7 @@ ${hint}
 REQUIREMENTS:
 - Use actual ${projectName} business context (real location names, realistic staff names)
 - All monetary values as "$X,XXX" formatted strings
-- Stats must be unique to this page — different numbers/labels than any other page
+- Stats must be unique to this page â€” different numbers/labels than any other page
 - Sub-records must reference specific dollar amounts, dates, and names
 - If this page involves products/inventory: ALWAYS include costPrice AND retailPrice AND margin fields`
 
@@ -179,7 +179,7 @@ REQUIREMENTS:
   return JSON.parse(cleaned) as PageData
 }
 
-// ── Validate ──────────────────────────────────────────────────────────────────
+// â”€â”€ Validate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function validatePageData(data: unknown): data is PageData {
   if (!data || typeof data !== 'object') return false
   const d = data as Record<string, unknown>
@@ -191,8 +191,8 @@ function validatePageData(data: unknown): data is PageData {
   return true
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-// ── Settings page: real controls that save to localStorage ────────────────────
+// â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Settings page: real controls that save to localStorage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function generateSettingsPage(pageName: string, projectName: string): string {
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
   return `import React, { useState, useEffect } from 'react';
@@ -360,7 +360,7 @@ export default function ${safe}() {
                       <span className={\`text-xs px-2 py-0.5 rounded-full \${loc.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}\`}>{loc.active ? 'Active' : 'Inactive'}</span>
                     </div>
                     <p className="text-slate-400 text-xs">{loc.address}</p>
-                    <p className="text-slate-400 text-xs">{loc.phone} · {loc.hours}</p>
+                    <p className="text-slate-400 text-xs">{loc.phone} Â· {loc.hours}</p>
                   </div>
                   <div className="flex gap-2 ml-4">
                     <Toggle checked={loc.active} onChange={v => set('locations', s.locations.map(l => l.id === loc.id ? { ...l, active: v } : l))} />
@@ -426,7 +426,7 @@ export default function ${safe}() {
               <div key={method} className="flex items-center justify-between bg-[#0f172a] rounded-xl px-4 py-3 border border-[#334155]">
                 <div>
                   <p className="text-white text-sm font-medium capitalize">{method.replace(/([A-Z])/g, ' $1').trim()}</p>
-                  <p className="text-slate-500 text-xs">{method === 'splitPayment' ? 'Allow combining two payment methods' : method === 'layaway' ? 'Installment payment plan' : `Accept ${method.replace(/([A-Z])/g, ' $1').trim()} payments`}</p>
+                  <p className="text-slate-500 text-xs">{method === 'splitPayment' ? 'Allow combining two payment methods' : method === 'layaway' ? 'Installment payment plan' : ('Accept ' + method.replace(/([A-Z])/g, ' ' + '$' + '1').trim() + ' payments')}</p>
                 </div>
                 <Toggle checked={enabled as boolean} onChange={v => setNested('paymentMethods', method, v)} />
               </div>
@@ -502,7 +502,7 @@ export default function ${safe}() {
             <Field label="Default Appointment Duration" hint="Minutes per appointment slot"><Input value={s.appointmentDuration} onChange={v => set('appointmentDuration', v)} /></Field>
             <Field label="Buffer Between Appointments" hint="Buffer time in minutes between bookings"><Input value={s.appointmentBuffer} onChange={v => set('appointmentBuffer', v)} /></Field>
             <div className="col-span-2">
-              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">Business Hours (per location — edit in Locations tab)</p>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">Business Hours (per location â€” edit in Locations tab)</p>
               <div className="space-y-2">
                 {s.locations.map(loc => (
                   <div key={loc.id} className="flex items-center justify-between bg-[#0f172a] rounded-lg px-4 py-2.5 border border-[#334155]">
@@ -520,7 +520,7 @@ export default function ${safe}() {
 }`
 }
 
-// ── Main: Generate all pages ──────────────────────────────────────────────────
+// â”€â”€ Main: Generate all pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function runPageAgent(
   pages: SkeletonPage[],
   spec: Record<string, unknown>,
@@ -534,7 +534,7 @@ export async function runPageAgent(
     pages.map(async (page) => {
       const n = page.name.toLowerCase()
 
-      // Settings pages get a real functional settings UI — not the generic template
+      // Settings pages get a real functional settings UI â€” not the generic template
       if (n.includes('setting') || n.includes('config') || n.includes('preference')) {
         onStatus(`${page.name}: Building real settings page...`)
         const content = generateSettingsPage(page.name, projectName)
