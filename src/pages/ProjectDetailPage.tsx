@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -421,7 +421,11 @@ export default function ProjectDetailPage() {
         const repairMsg = orchResult.totalRepairs > 0 ? ` (${orchResult.totalRepairs} auto-fix${orchResult.totalRepairs > 1 ? 'es' : ''} applied)` : ''
         toast.success(`âœ… App deployed!${repairMsg}`)
       } else {
-        toast.error('Deploy failed after all agent retries. Check agent panel for details.')
+        // Surface the actual error from the failing agent
+        const failedAgent = orchResult.agents?.find(a => a.status === 'error')
+        const errorDetail = failedAgent?.message || 'Unknown error'
+        setBuildStage(`Failed: ${errorDetail.slice(0, 80)}`)
+        toast.error(`Build failed: ${errorDetail.slice(0, 120)}`)
       }
 
       setBuildPct(100); setBuildStage('Done!')

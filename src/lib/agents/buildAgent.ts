@@ -106,14 +106,20 @@ export async function runBuildAgent(
 
     if (result.state === 'READY' && result.url) {
       const msg = repairs.length > 0
-        ? `✅ Build Agent: Deployed after ${repairs.length} auto-repair(s)!`
-        : '✅ Build Agent: Deployed on first attempt!'
+        ? `Build Agent: Deployed after ${repairs.length} auto-repair(s)!`
+        : 'Build Agent: Deployed on first attempt!'
       onStatus(msg)
       return { url: result.url, state: 'READY', attempts: attempt, repairs }
     }
 
-    // Build failed — analyze logs
-    onStatus('❌ Build Agent: Build failed. Analyzing error...')
+    // If no deployment ID, the upload itself failed — don't retry the same broken upload
+    if (!result.id || result.id === '') {
+      onStatus(`Build Agent: Upload failed - ${result.errorMessage || 'unknown error'}`)
+      return { url: null, state: 'ERROR', attempts: attempt, repairs, errorMessage: result.errorMessage || 'File upload to Vercel failed' }
+    }
+
+    // Build failed — analyze Vercel build logs
+    onStatus('Build Agent: Build failed. Analyzing error...')
     const logs = await fetchBuildLogs(result.id)
     const error = parseBuildError(logs)
 

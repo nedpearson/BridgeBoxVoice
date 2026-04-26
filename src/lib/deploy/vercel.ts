@@ -246,17 +246,17 @@ export async function deployFullReactAppToVercel(
       uploadedFiles.push({ file: safePath, sha, size })
     }
 
-    onProgress?.('🚀 Building React App on Vercel (this takes 1-2 mins)...')
+    onProgress?.('🚀 Sending to Vercel (this takes 1-3 mins)...')
 
-    const deployBody = {
+    const deployBody: Record<string, unknown> = {
       name: safeName,
       target: 'production',
       files: uploadedFiles,
       projectSettings: {
-        framework: null,
-        installCommand: 'npm install',
+        installCommand: 'npm install --legacy-peer-deps',
         buildCommand: 'npm run build',
         outputDirectory: 'dist',
+        devCommand: null,
       },
     }
 
@@ -271,17 +271,20 @@ export async function deployFullReactAppToVercel(
 
     const deployData = await deployRes.json()
     if (!deployRes.ok) {
-      throw new Error(`Deployment create failed: ${deployData?.error?.message ?? JSON.stringify(deployData)}`)
+      const errMsg = deployData?.error?.message ?? deployData?.message ?? JSON.stringify(deployData).slice(0, 200)
+      throw new Error(`Vercel API error (${deployRes.status}): ${errMsg}`)
+    }
+    if (!deployData.id) {
+      throw new Error(`Vercel returned no deployment ID: ${JSON.stringify(deployData).slice(0, 200)}`)
     }
 
     onProgress?.(`⏳ Waiting for Vercel Build... (id: ${deployData.id})`)
-    // Timeout extended to 5 minutes for full dependency install and build
     return await pollDeploymentStatus(deployData.id, onProgress, 300_000)
 
   } catch (err) {
     const msg = (err as Error).message
-    console.error('[Vercel Deploy]', msg)
-    onProgress?.(`❌ ${msg}`)
+    console.error('[Vercel Deploy Full]', msg)
+    onProgress?.(`❌ Deploy error: ${msg}`)
     return { id: '', state: 'ERROR', url: null, errorMessage: msg }
   }
 }
