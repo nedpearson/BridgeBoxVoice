@@ -1,229 +1,381 @@
 /**
- * ╔══════════════════════════════════════════════════════════╗
- * ║  PAGE AGENT — Full CRUD drill-downs enforced             ║
- * ║  Every page: list → detail → edit form → sub-records     ║
- * ╚══════════════════════════════════════════════════════════╝
+ * ╔══════════════════════════════════════════════════════════════════════╗
+ * ║  PAGE AGENT v4 — Data-First Template Architecture                    ║
+ * ║                                                                      ║
+ * ║  AI generates only JSON data (reliable).                            ║
+ * ║  A guaranteed-correct template assembles the React component.        ║
+ * ║  Result: dark theme always correct, drill-downs always work.         ║
+ * ╚══════════════════════════════════════════════════════════════════════╝
  */
 
 import { callClaude } from '../anthropic'
-import { detectCorruption, sanitizeFileContent, generateSafeStub } from './sanitizerAgent'
+import { sanitizeFileContent, generateSafeStub } from './sanitizerAgent'
 import type { SkeletonPage } from './skeletonAgent'
 
-// ─── FULL DRILL-DOWN SYSTEM PROMPT ───────────────────────────────────────────
-const PAGE_SYSTEM = `You are a senior React engineer building a production SaaS page.
-Output ONLY: { "content": "...complete TypeScript React component as a string..." }
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface PageData {
+  fields: string[]          // column headers e.g. ["name","status","date","amount"]
+  records: Record<string, string | number>[]
+  stats: { label: string; value: string | number }[]
+  formFields: { key: string; label: string; type: 'text' | 'date' | 'select' | 'textarea'; options?: string[] }[]
+  subRecords: { id: number; parentId: number; title: string; date: string; status: string }[]
+}
 
-━━━ MANDATORY STRUCTURE (every page must have ALL of these) ━━━
+// ── AI: Data-Only Prompt ──────────────────────────────────────────────────────
+const DATA_SYSTEM = `You are a data generator for a business SaaS application.
+Output ONLY valid JSON matching this exact schema:
+{
+  "fields": ["name", "status", "date"],
+  "records": [
+    { "id": 1, "name": "...", "status": "...", "date": "YYYY-MM-DD", ...other fields... },
+    ...6-8 records...
+  ],
+  "stats": [
+    { "label": "Total", "value": 42 },
+    { "label": "Active", "value": 18 },
+    { "label": "Pending", "value": 7 },
+    { "label": "This Month", "value": "$12,400" }
+  ],
+  "formFields": [
+    { "key": "name", "label": "Full Name", "type": "text" },
+    { "key": "status", "label": "Status", "type": "select", "options": ["Active","Pending","Complete"] },
+    { "key": "date", "label": "Date", "type": "date" }
+  ],
+  "subRecords": [
+    { "id": 1, "parentId": 1, "title": "Activity note", "date": "2024-01-15", "status": "Done" },
+    { "id": 2, "parentId": 1, "title": "Follow-up", "date": "2024-01-20", "status": "Pending" },
+    { "id": 3, "parentId": 2, "title": "Activity note", "date": "2024-01-22", "status": "Done" },
+    ...6-10 sub-records...
+  ]
+}
+Rules:
+- fields: 3-6 column names (camelCase, no spaces), always include "id" and "name"
+- records: 6-8 realistic records with all the fields listed
+- stats: exactly 4 stats with relevant business metrics
+- formFields: form fields to create/edit a record (3-5 fields)
+- subRecords: 6-10 child records spread across 3-4 parent records (parentId matches record ids)
+- Use realistic data appropriate for the business type
+- Return ONLY JSON. No markdown. No explanation.`
 
-1. STAT CARDS — horizontal grid, never vertical stack:
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-  <div className="bg-[#1e293b] rounded-xl p-4 border border-[#334155]">
-    <p className="text-slate-400 text-xs mb-1">Total</p>
-    <p className="text-2xl font-bold text-white">42</p>
-  </div>
-</div>
+// ── Template: Generate the full React component from data ─────────────────────
+function buildPageFromData(pageName: string, _route: string, data: PageData): string {
+  const safeName = pageName.replace(/[^a-zA-Z0-9]/g, '')
+  const fields = data.fields.filter(f => f !== 'id')
+  const statusField = fields.find(f => f.toLowerCase().includes('status')) || fields[1] || fields[0]
+  const statusColors: Record<string, string> = {
+    active: 'bg-emerald-500/20 text-emerald-400',
+    available: 'bg-emerald-500/20 text-emerald-400',
+    complete: 'bg-emerald-500/20 text-emerald-400',
+    completed: 'bg-emerald-500/20 text-emerald-400',
+    done: 'bg-emerald-500/20 text-emerald-400',
+    scheduled: 'bg-blue-500/20 text-blue-400',
+    upcoming: 'bg-blue-500/20 text-blue-400',
+    arrived: 'bg-blue-500/20 text-blue-400',
+    pending: 'bg-amber-500/20 text-amber-400',
+    alteration: 'bg-amber-500/20 text-amber-400',
+    reserved: 'bg-amber-500/20 text-amber-400',
+    cancelled: 'bg-red-500/20 text-red-400',
+    canceled: 'bg-red-500/20 text-red-400',
+    inactive: 'bg-slate-500/20 text-slate-400',
+  }
 
-2. HEADER — flex justify-between with action button:
-<div className="flex items-center justify-between mb-6">
-  <h1 className="text-2xl font-bold text-white">Title</h1>
-  <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors">
-    <Plus size={16} />New Item
-  </button>
-</div>
+  const getStatusClass = (field: string) =>
+    `(() => { const map: Record<string,string> = ${JSON.stringify(statusColors)}; return map[String(row.${field}).toLowerCase()] || 'bg-purple-500/20 text-purple-400'; })()`
 
-3. SEARCH with icon:
-<div className="relative mb-4">
-  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-  <input className="w-full bg-[#1e293b] border border-[#334155] rounded-lg pl-9 pr-4 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-purple-500" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
-</div>
+  const statsGrid = data.stats.slice(0, 4).map(s =>
+    `          <div className="bg-[#1e293b] rounded-xl p-4 border border-[#334155]">
+            <p className="text-slate-400 text-xs mb-1">${s.label}</p>
+            <p className="text-2xl font-bold text-white">${s.value}</p>
+          </div>`
+  ).join('\n')
 
-4. TABLE inside rounded card:
-<div className="bg-[#1e293b] rounded-xl border border-[#334155] overflow-hidden">
-  <table className="w-full">
-    <thead><tr className="border-b border-[#334155] bg-[#0f172a]">
-      <th className="text-left text-xs font-semibold text-slate-400 uppercase px-4 py-3">Col</th>
-    </tr></thead>
-    <tbody>
-      {filtered.map(row => (
-        <tr key={row.id} onClick={() => { setSelected(row); setShowForm(false); }} className="border-b border-[#334155] hover:bg-[#263148] cursor-pointer transition-colors last:border-0">
-          <td className="px-4 py-3 text-sm text-white">{row.name}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+  const tableHeaders = fields.map(f =>
+    `              <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide px-4 py-3">${f.replace(/([A-Z])/g, ' $1').trim()}</th>`
+  ).join('\n')
 
-5. DETAIL PANEL — shown when selected, hidden when showForm:
-{selected && !showForm && (
-  <div className="mt-4 bg-[#1e293b] rounded-xl border border-[#334155] overflow-hidden">
-    <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
-      <h2 className="text-lg font-bold text-white">{selected.name}</h2>
-      <div className="flex gap-2">
-        <button onClick={() => { setForm({...selected}); setShowForm(true); }} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-600/30 transition-colors">
-          <Edit2 size={12} />Edit
-        </button>
-        <button onClick={() => setSelected(null)} className="p-1.5 text-slate-400 hover:text-white transition-colors">
-          <X size={16} />
+  const tableCells = fields.map(f => {
+    if (f === statusField) {
+      return `              <td className="px-4 py-3 text-sm">
+                <span className={\`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium \${${getStatusClass(f)}}\`}>{String(row.${f})}</span>
+              </td>`
+    }
+    if (f.toLowerCase().includes('amount') || f.toLowerCase().includes('price') || f.toLowerCase().includes('value') || f.toLowerCase().includes('cost') || f.toLowerCase().includes('total')) {
+      return `              <td className="px-4 py-3 text-sm text-emerald-400 font-medium">{String(row.${f})}</td>`
+    }
+    if (f.toLowerCase().includes('date')) {
+      return `              <td className="px-4 py-3 text-sm text-slate-400">{String(row.${f})}</td>`
+    }
+    return `              <td className="px-4 py-3 text-sm text-white">{String(row.${f})}</td>`
+  }).join('\n')
+
+  const detailFields = fields.map(f =>
+    `            <div className="bg-[#0f172a] rounded-lg p-3">
+              <p className="text-slate-400 text-xs mb-1">${f.replace(/([A-Z])/g, ' $1').trim()}</p>
+              <p className="text-white text-sm font-medium">{String(selected.${f})}</p>
+            </div>`
+  ).join('\n')
+
+  const formFieldsJSX = data.formFields.map(ff => {
+    if (ff.type === 'select' && ff.options) {
+      return `          <div>
+            <label className="block text-xs text-slate-400 mb-1.5">${ff.label}</label>
+            <select value={form.${ff.key} || ''} onChange={e => setForm((f: any) => ({...f, ${ff.key}: e.target.value}))} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+              ${ff.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>
+          </div>`
+    }
+    if (ff.type === 'textarea') {
+      return `          <div className="col-span-2">
+            <label className="block text-xs text-slate-400 mb-1.5">${ff.label}</label>
+            <textarea value={form.${ff.key} || ''} onChange={e => setForm((f: any) => ({...f, ${ff.key}: e.target.value}))} rows={3} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 resize-none" placeholder="Enter ${ff.label.toLowerCase()}..." />
+          </div>`
+    }
+    return `          <div>
+            <label className="block text-xs text-slate-400 mb-1.5">${ff.label}</label>
+            <input type="${ff.type}" value={form.${ff.key} || ''} onChange={e => setForm((f: any) => ({...f, ${ff.key}: e.target.value}))} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" placeholder="Enter ${ff.label.toLowerCase()}..." />
+          </div>`
+  }).join('\n')
+
+  const emptyForm = `{ ${data.formFields.map(f => `${f.key}: ''`).join(', ')} }`
+
+  const dataJson = JSON.stringify(data.records, null, 2)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
+  const subJson = JSON.stringify(data.subRecords, null, 2)
+
+  return `import React, { useState } from 'react';
+import { BarChart2, Plus, Search, Edit2, X, RefreshCw, ChevronRight, TrendingUp } from 'lucide-react';
+
+const DATA: Record<string, any>[] = ${dataJson};
+
+const SUB_RECORDS: { id: number; parentId: number; title: string; date: string; status: string }[] = ${subJson};
+
+const EMPTY_FORM = ${emptyForm};
+
+export default function ${safeName}() {
+  const [items, setItems] = useState<Record<string, any>[]>(DATA);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Record<string, any> | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<any>(EMPTY_FORM);
+
+  const filtered = items.filter(row =>
+    Object.values(row).some(v => String(v).toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handleSave = () => {
+    if (form.id) {
+      setItems(it => it.map(i => i.id === form.id ? { ...i, ...form } : i));
+      setSelected({ ...form });
+    } else {
+      const newItem = { ...form, id: Date.now() };
+      setItems(it => [...it, newItem]);
+    }
+    setShowForm(false);
+    setForm(EMPTY_FORM);
+  };
+
+  const handleDelete = (id: any) => {
+    setItems(it => it.filter(i => i.id !== id));
+    setSelected(null);
+  };
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center">
+            <BarChart2 size={20} className="text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">${pageName}</h1>
+            <p className="text-slate-400 text-sm">{filtered.length} records</p>
+          </div>
+        </div>
+        <button
+          onClick={() => { setForm(EMPTY_FORM); setSelected(null); setShowForm(true); }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-purple-900/30"
+        >
+          <Plus size={16} />New ${pageName.replace(/s$/, '')}
         </button>
       </div>
-    </div>
-    <div className="p-6 grid grid-cols-2 gap-4">
-      {Object.entries(selected).filter(([k]) => k !== 'id').map(([k, v]) => (
-        <div key={k} className="bg-[#0f172a] rounded-lg p-3">
-          <p className="text-slate-400 text-xs capitalize mb-1">{k.replace(/([A-Z])/g,' $1')}</p>
-          <p className="text-white text-sm font-medium">{String(v)}</p>
-        </div>
-      ))}
-    </div>
-    <div className="px-6 pb-6">
-      <h3 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wide">Related Activity</h3>
-      <div className="space-y-2">
-        {SUB_RECORDS.filter(r => r.parentId === selected.id).map(r => (
-          <div key={r.id} className="flex items-center justify-between bg-[#0f172a] rounded-lg px-4 py-2.5">
-            <div>
-              <p className="text-white text-sm">{r.title}</p>
-              <p className="text-slate-500 text-xs">{r.date}</p>
-            </div>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">{r.status}</span>
-          </div>
-        ))}
-        {SUB_RECORDS.filter(r => r.parentId === selected.id).length === 0 && (
-          <p className="text-slate-500 text-sm">No related records yet.</p>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+${statsGrid}
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search ${pageName.toLowerCase()}..."
+          className="w-full bg-[#1e293b] border border-[#334155] rounded-xl pl-9 pr-4 py-2.5 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+        />
+        {search && (
+          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+            <X size={14} />
+          </button>
         )}
       </div>
+
+      {/* Table */}
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] overflow-hidden mb-4">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[#334155] bg-[#0f172a]">
+              <th className="w-8 px-4 py-3"></th>
+${tableHeaders}
+              <th className="w-16 px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={${fields.length + 2}} className="text-center py-12 text-slate-500">No records found</td></tr>
+            ) : filtered.map(row => (
+              <tr
+                key={row.id}
+                onClick={() => { setSelected(selected?.id === row.id ? null : row); setShowForm(false); }}
+                className={\`border-b border-[#334155] hover:bg-[#263148] cursor-pointer transition-colors last:border-0 \${selected?.id === row.id ? 'bg-purple-900/20 border-l-2 border-l-purple-500' : ''}\`}
+              >
+                <td className="px-4 py-3">
+                  <ChevronRight size={14} className={\`text-slate-500 transition-transform \${selected?.id === row.id ? 'rotate-90 text-purple-400' : ''}\`} />
+                </td>
+${tableCells}
+                <td className="px-4 py-3">
+                  <button
+                    onClick={e => { e.stopPropagation(); setForm({...row}); setSelected(null); setShowForm(true); }}
+                    className="p-1.5 text-slate-500 hover:text-purple-400 transition-colors rounded-lg hover:bg-purple-500/10"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Detail Panel */}
+      {selected && !showForm && (
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155] bg-[#0f172a]">
+            <div className="flex items-center gap-3">
+              <TrendingUp size={18} className="text-purple-400" />
+              <h2 className="text-lg font-bold text-white">{String(selected.name)}</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setForm({...selected}); setShowForm(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 text-purple-400 rounded-lg text-xs font-semibold hover:bg-purple-600/30 transition-colors"
+              >
+                <Edit2 size={12} />Edit
+              </button>
+              <button
+                onClick={() => handleDelete(selected.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-semibold hover:bg-red-500/20 transition-colors"
+              >
+                <X size={12} />Delete
+              </button>
+              <button onClick={() => setSelected(null)} className="p-1.5 text-slate-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Record Details</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+${detailFields}
+            </div>
+
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Related Activity</h3>
+            <div className="space-y-2">
+              {SUB_RECORDS.filter(r => r.parentId === selected.id).length === 0 ? (
+                <p className="text-slate-500 text-sm py-4 text-center">No related activity yet.</p>
+              ) : SUB_RECORDS.filter(r => r.parentId === selected.id).map(r => (
+                <div key={r.id} className="flex items-center justify-between bg-[#0f172a] rounded-xl px-4 py-3 hover:bg-[#263148] transition-colors cursor-pointer">
+                  <div>
+                    <p className="text-white text-sm font-medium">{r.title}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">{r.date}</p>
+                  </div>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 font-medium">{r.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1e293b] rounded-2xl border border-[#334155] w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
+              <h2 className="text-lg font-bold text-white">{form.id ? 'Edit' : 'New'} ${pageName.replace(/s$/, '')}</h2>
+              <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} className="p-1.5 text-slate-400 hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-2 gap-4">
+${formFieldsJSX}
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
+                className="flex-1 px-4 py-2.5 bg-[#0f172a] border border-[#334155] text-slate-300 rounded-xl text-sm font-semibold hover:bg-[#263148] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-purple-900/30"
+              >
+                {form.id ? 'Save Changes' : 'Create ${pageName.replace(/s$/, '')}'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-
-6. ADD/EDIT MODAL — inline overlay form:
-{showForm && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div className="bg-[#1e293b] rounded-2xl border border-[#334155] w-full max-w-lg shadow-2xl">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
-        <h2 className="text-lg font-bold text-white">{form.id ? 'Edit' : 'New'} Item</h2>
-        <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} className="p-1.5 text-slate-400 hover:text-white"><X size={18} /></button>
-      </div>
-      <div className="p-6 grid grid-cols-2 gap-4">
-        <div className="col-span-2">
-          <label className="block text-xs text-slate-400 mb-1.5">Name *</label>
-          <input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" placeholder="Enter name..." />
-        </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Status</label>
-          <select value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
-            <option>Active</option><option>Pending</option><option>Complete</option><option>Cancelled</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Date</label>
-          <input type="date" value={form.date} onChange={e => setForm(f => ({...f, date: e.target.value}))} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" />
-        </div>
-      </div>
-      <div className="flex gap-3 px-6 pb-6">
-        <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} className="flex-1 px-4 py-2.5 bg-[#0f172a] border border-[#334155] text-slate-300 rounded-lg text-sm font-medium hover:bg-[#263148] transition-colors">Cancel</button>
-        <button onClick={() => {
-          if (form.id) { setItems(it => it.map(i => i.id === form.id ? {...i, ...form} : i)); setSelected({...form}); }
-          else { const n = {...form, id: Date.now()}; setItems(it => [...it, n]); }
-          setShowForm(false); setForm(EMPTY_FORM);
-        }} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors">
-          {form.id ? 'Save Changes' : 'Create'}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-━━━ REQUIRED STATE ━━━
-const [items, setItems] = useState(DATA)
-const [search, setSearch] = useState('')
-const [selected, setSelected] = useState<any>(null)
-const [showForm, setShowForm] = useState(false)
-const [form, setForm] = useState<any>(EMPTY_FORM)
-const filtered = items.filter(r => JSON.stringify(r).toLowerCase().includes(search.toLowerCase()))
-
-━━━ REQUIRED DATA ━━━
-Declare SUB_RECORDS array with {id, parentId (matching item ids), title, date, status} - 6-8 entries spread across items.
-Declare EMPTY_FORM object matching DATA fields but with empty values.
-
-━━━ ICON RULES ━━━
-Always use size prop: <Plus size={16} /> <X size={18} /> <Edit2 size={12} /> <Search size={16} />
-ALLOWED: BarChart2, Calendar, Check, CheckCircle, ChevronRight, Clock, DollarSign, Edit2, Eye, FileText, Plus, RefreshCw, Search, Settings, Star, Trash2, TrendingUp, User, Users, X, XCircle
-
-━━━ CODE RULES ━━━
-- Default export, component name letters/numbers only
-- Import ONLY: 'react', 'react-router-dom', 'lucide-react'
-- All data as const arrays BEFORE component
-- Page wrapper: <div className="p-6 max-w-5xl mx-auto">
-- Status badges: inline-flex span, never block div
-- Under 250 lines
-- Return ONLY the JSON. No markdown.`
-
-// ─── SIMPLE FALLBACK ─────────────────────────────────────────────────────────
-const PAGE_SYSTEM_SIMPLE = `You are a React engineer. Generate a simple but complete React page.
-Output ONLY: { "content": "...TypeScript component..." }
-Requirements:
-- Default export, letters/numbers name only
-- Import only: react, lucide-react (Plus, Search, X, Edit2)
-- const DATA array before component with 4-5 realistic items
-- const EMPTY_FORM = { name: '', status: 'Active', date: '' }
-- useState for: items, search, selected, showForm, form
-- Grid stat cards: <div className="grid grid-cols-3 gap-4 mb-6">
-- Table inside bg-[#1e293b] rounded-xl border border-[#334155]
-- Inline modal for add/edit with fixed inset-0 bg-black/60 z-50
-- Detail panel shown below table when selected
-- Under 150 lines. No markdown.`
-
-function validatePageContent(content: string): { valid: boolean; reason: string } {
-  if (!content || typeof content !== 'string') return { valid: false, reason: 'empty content' }
-  if (content.length < 200) return { valid: false, reason: 'content too short' }
-  if (!content.includes('export default')) return { valid: false, reason: 'missing default export' }
-  if (!content.includes('return') || !content.includes('<')) return { valid: false, reason: 'no JSX return' }
-  if (!content.includes('useState')) return { valid: false, reason: 'no state management' }
-  const { broken, reason } = detectCorruption(content)
-  if (broken) return { valid: false, reason }
-  return { valid: true, reason: '' }
+  );
+}`
 }
 
-async function generateOnePage(
+// ── AI: Request data for a page ───────────────────────────────────────────────
+async function fetchPageData(
   page: SkeletonPage,
   spec: Record<string, unknown>,
-  projectName: string,
-  allPageNames: string[],
-  useSimplePrompt = false
-): Promise<string> {
-  const system = useSimplePrompt ? PAGE_SYSTEM_SIMPLE : PAGE_SYSTEM
-  const specStr = JSON.stringify({
-    description: spec.description || spec.type || '',
-    features: spec.features,
-    industry: spec.industry,
-    dataModels: spec.dataModels,
-  }).slice(0, 1000)
-
+  projectName: string
+): Promise<PageData> {
+  const specStr = JSON.stringify(spec).slice(0, 800)
   const prompt = `Project: ${projectName}
-Industry/Type: ${spec.description || spec.type || 'Business application'}
-Spec context: ${specStr}
-Page: ${page.name} (route: ${page.route})
-Other pages: ${allPageNames.filter(n => n !== page.name).join(', ')}
+Industry: ${spec.description || spec.type || 'Business application'}
+Spec: ${specStr}
+Page: ${page.name}
+Generate realistic data for the "${page.name}" page of this ${projectName} application.
+The data should reflect the actual business domain — use real-sounding names/values appropriate for the industry.`
 
-Generate a COMPLETE "${page.name}" page for ${projectName}.
-MUST INCLUDE:
-1. Stat cards in GRID (not vertical) showing relevant counts/totals
-2. Search bar with Search icon (relative/absolute pattern)
-3. Clickable data table (clicking row shows detail panel)
-4. Detail panel below table with ALL record fields + sub-records list
-5. "+ New ${page.name.replace(/s$/, '')}" button that opens an add form modal
-6. Edit button inside detail panel that populates the form with existing data
-7. Save in form updates the items array (useState mutation)
-Use industry-specific realistic mock data appropriate for ${projectName}.
-SUB_RECORDS should represent activity related to the main records (e.g., notes, appointments, orders).`
-
-  const raw = await callClaude(system, prompt, [], useSimplePrompt ? 3000 : 8192)
+  const raw = await callClaude(DATA_SYSTEM, prompt, [], 4096)
   const cleaned = raw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
-  const parsed = JSON.parse(cleaned)
-  return parsed.content as string
+  return JSON.parse(cleaned) as PageData
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Validate page data has required fields ────────────────────────────────────
+function validatePageData(data: unknown): data is PageData {
+  if (!data || typeof data !== 'object') return false
+  const d = data as Record<string, unknown>
+  if (!Array.isArray(d.fields) || d.fields.length < 2) return false
+  if (!Array.isArray(d.records) || d.records.length < 1) return false
+  if (!Array.isArray(d.stats) || d.stats.length < 1) return false
+  if (!Array.isArray(d.formFields) || d.formFields.length < 1) return false
+  if (!Array.isArray(d.subRecords)) return false
+  return true
+}
+
+// ── Main: Generate all pages ──────────────────────────────────────────────────
 export async function runPageAgent(
   pages: SkeletonPage[],
   spec: Record<string, unknown>,
@@ -232,44 +384,35 @@ export async function runPageAgent(
   maxRetriesPerPage = 2
 ): Promise<{ path: string; content: string }[]> {
   onStatus(`Page Agent: Generating ${pages.length} pages with full drill-downs...`)
-  const allPageNames = pages.map(p => p.name)
 
   const results = await Promise.allSettled(
     pages.map(async (page) => {
-      let lastError = ''
+      // Attempt to get AI data
       for (let attempt = 1; attempt <= maxRetriesPerPage; attempt++) {
         try {
-          const content = await generateOnePage(page, spec, projectName, allPageNames, false)
-          const { valid, reason } = validatePageContent(content)
-          if (valid) {
+          onStatus(`${page.name}: Fetching data (attempt ${attempt})...`)
+          const data = await fetchPageData(page, spec, projectName)
+          if (validatePageData(data)) {
+            onStatus(`${page.name}: Building page from template...`)
+            const content = buildPageFromData(page.name, page.route, data)
             const sanitized = sanitizeFileContent(page.path, content)
+            onStatus(`${page.name}: Done`)
             return { path: page.path, content: sanitized }
           }
-          lastError = reason
-          onStatus(`${page.name}: ${reason} (retry ${attempt})`)
+          onStatus(`${page.name}: Data validation failed (attempt ${attempt})`)
         } catch (e: any) {
-          lastError = e.message?.slice(0, 60) || 'unknown'
+          onStatus(`${page.name}: Error - ${e.message?.slice(0, 50)} (attempt ${attempt})`)
         }
       }
-      // Simple prompt fallback
-      try {
-        const content = await generateOnePage(page, spec, projectName, allPageNames, true)
-        const { valid } = validatePageContent(content)
-        if (valid) {
-          const sanitized = sanitizeFileContent(page.path, content)
-          onStatus(`${page.name}: simplified prompt succeeded`)
-          return { path: page.path, content: sanitized }
-        }
-      } catch (_) { /* fall through */ }
 
-      onStatus(`${page.name}: using safe stub (${lastError})`)
+      // Final fallback: guaranteed safe stub
+      onStatus(`${page.name}: Using safe stub`)
       return { path: page.path, content: generateSafeStub(page.name, page.route) }
     })
   )
 
   return results.map((r, i) => {
     if (r.status === 'fulfilled') return r.value
-    onStatus(`${pages[i].name}: fallback stub`)
     return { path: pages[i].path, content: generateSafeStub(pages[i].name, pages[i].route) }
   })
 }

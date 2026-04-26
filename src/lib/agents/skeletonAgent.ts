@@ -34,11 +34,16 @@ Output ONLY valid JSON in this exact structure:
 }
 Rules:
 - "files" must include src/store/index.ts (self-contained, with types and mock data inline) and src/App.tsx
-- "pages" must list ALL pages the app needs (minimum 5, maximum 12)
-- Each page entry: path = src/pages/ComponentName.tsx, name = display name, route = /path
+- "pages" must list EVERY feature the spec mentions — aim for 8-12 pages. Think comprehensively:
+  * Always include: Dashboard, Settings, Reports
+  * Include ALL domain-specific modules from the spec (e.g. for a boutique: Appointments, Customers, Inventory, Alterations, Pickups, Staff, Sales, Vendors)
+  * Include ALL sub-features (e.g. Invoices, Payments, Scheduling, Analytics)
+  * MINIMUM 8 pages. Use your judgment to cover the full business workflow end-to-end.
+- Each page entry: path = src/pages/ComponentName.tsx (no spaces/hyphens in name), name = display name, route = /path
+- Component names: PascalCase, letters and numbers only. e.g. "GownInventory" not "Gown-Inventory"
 - The store must use: import { create } from 'zustand' (NOT default import)
 - App.tsx must use React Router v6 with <BrowserRouter>, <Routes>, <Route> and import Layout from './components/Layout'
-- We are using React Router v6. ONLY use useNavigate, NOT useHistory.
+- ONLY use useNavigate, NOT useHistory.
 - Return ONLY valid JSON. No markdown. No explanation.`
 
 // Validate skeleton has all required fields and reasonable pages
