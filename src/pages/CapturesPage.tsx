@@ -116,13 +116,13 @@ export default function CapturesPage() {
           <p className="text-slate-500 text-sm max-w-sm mb-6">
             Install the Bridgebox Voice Chrome extension to start capturing websites and workflows.
           </p>
-          <div className="flex items-center gap-3 p-4 bg-[#131B2B] border border-[#1E293B] rounded-xl text-left max-w-sm">
+          <a href="/bridgebox-extension.zip" download className="flex items-center gap-3 p-4 bg-[#131B2B] border border-[#1E293B] rounded-xl text-left max-w-sm hover:border-blue-500/50 hover:bg-[#1E293B] transition-all cursor-pointer">
             <Monitor size={20} className="text-blue-400 flex-shrink-0" />
             <div>
-              <p className="text-white text-sm font-semibold">Chrome Extension</p>
+              <p className="text-white text-sm font-semibold">Download Chrome Extension</p>
               <p className="text-slate-500 text-xs">Capture screenshots & videos of any workflow</p>
             </div>
-          </div>
+          </a>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

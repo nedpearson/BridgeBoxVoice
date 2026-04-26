@@ -1,4 +1,4 @@
-/* eslint-disable */
+﻿/* eslint-disable */
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -8,7 +8,7 @@ import { Globe, Smartphone, Monitor, Trash2, Download, ExternalLink, ChevronLeft
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
-import { extractIntent, generateSpec, generateAppPreview, enhancePrompt, generateFullApplication, hasAnthropicKey } from '../lib/anthropic'
+import { extractIntent, generateSpec, generateAppPreview, enhancePrompt, hasAnthropicKey } from '../lib/anthropic'
 import TemplateGallery from '../components/templates/TemplateGallery'
 import { AppTemplate } from '../data/templates'
 import VoiceRecorder from '../components/voice/VoiceRecorder'
@@ -31,6 +31,8 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
   deployed:   { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   failed:     { bg: 'bg-red-500/10',     text: 'text-red-400',     dot: 'bg-red-400' },
 }
+
+
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams()
@@ -75,6 +77,7 @@ export default function ProjectDetailPage() {
   const [buildWaiting, setBuildWaiting] = useState(false)
   const [buildElapsed, setBuildElapsed] = useState('')
   const [buildRemaining, setBuildRemaining] = useState('')
+  const [_agentStates, setAgentStates] = useState<any[]>([])
 
   const ACTIVE_STATUSES = ['recording', 'analyzing', 'building']
 
@@ -121,7 +124,7 @@ export default function ProjectDetailPage() {
   const analysisStarted = useRef(false)
   const buildStarted = useRef(false)
 
-  // analyzing → building (generate spec)
+  // analyzing â†' building (generate spec)
   useEffect(() => {
     if (project?.status === 'analyzing' && project?.transcript && !analysisStarted.current && !project?.spec) {
       analysisStarted.current = true
@@ -140,7 +143,7 @@ export default function ProjectDetailPage() {
 
           setProject((p: any) => ({ ...p, spec: JSON.stringify(spec), status: 'building' }))
           updateProject(project.id, { spec: JSON.stringify(spec), status: 'building' } as any)
-          toast('Spec ready — building your app...', { icon: '' })
+          toast('Spec ready " building your app...', { icon: '' })
         } catch (e: any) {
           console.error('Analysis error:', e)
           toast.error('Analysis failed: ' + e.message)
@@ -151,7 +154,7 @@ export default function ProjectDetailPage() {
     }
   }, [project?.status, project?.transcript, project?.id, project?.spec, updateProject])
 
-  // building → deployed (simulated build phase)
+  // building â†' deployed (simulated build phase)
   useEffect(() => {
     if (project?.status === 'building' && project?.spec && !buildStarted.current) {
       buildStarted.current = true
@@ -161,12 +164,9 @@ export default function ProjectDetailPage() {
           setStageProgress(100)
           await new Promise(r => setTimeout(r, 500))
 
-          // Generate a spec-view URL for this project
-          const specUrl = `${window.location.origin}/project/${project.id}?tab=spec`
-
+          // Mark as deployed " do NOT set a self-referencing local URL
           const { error } = await supabase.from('projects').update({
-            status: 'deployed',
-            web_app_url: specUrl
+            status: 'deployed'
           }).eq('id', project.id)
           if (error) throw error
 
@@ -176,13 +176,13 @@ export default function ProjectDetailPage() {
             platform: 'web',
             version: 'v1.0.0',
             status: 'success',
-            url: specUrl
+            url: ''
           })
 
-          const deployed = { ...project, status: 'deployed', web_app_url: specUrl }
+          const deployed = { ...project, status: 'deployed' }
           setProject(deployed)
-          updateProject(project.id, { status: 'deployed', web_app_url: specUrl } as any)
-          setDeployHistory([{ id: 'initial', project_id: project.id, platform: 'web', version: 'v1.0.0', status: 'success', url: specUrl, created_at: new Date().toISOString() }])
+          updateProject(project.id, { status: 'deployed' } as any)
+          setDeployHistory([{ id: 'initial', project_id: project.id, platform: 'web', version: 'v1.0.0', status: 'success', url: '', created_at: new Date().toISOString() }])
           toast.success('App spec deployed successfully!')
         } catch (e: any) {
           toast.error('Build failed: ' + e.message)
@@ -238,7 +238,7 @@ export default function ProjectDetailPage() {
     toast.success('Name updated')
   }
 
-  // ─── Elapsed & ETA helpers ───────────────────────────────────────────────────
+  // â€â€â€ Elapsed & ETA helpers â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€
   const fmtTime = (ms: number) => {
     const s = Math.max(0, Math.floor(ms / 1000))
     const m = Math.floor(s / 60)
@@ -249,11 +249,11 @@ export default function ProjectDetailPage() {
 
   // Returns ETA string based on elapsed ms + current progress %
   const calcRemaining = (elapsedMs: number, pct: number, waiting: boolean): string => {
-    if (waiting) return '⚡ Almost done!'
-    if (pct <= 2) return '—'
+    if (waiting) return 'âš¡ Almost done!'
+    if (pct <= 2) return '"'
     const estimatedTotalMs = elapsedMs / (pct / 100)
     const remainingMs = estimatedTotalMs - elapsedMs
-    if (remainingMs <= 0) return '⚡ Any moment...'
+    if (remainingMs <= 0) return 'âš¡ Any moment...'
     return fmtTime(remainingMs) + ' left'
   }
 
@@ -263,7 +263,7 @@ export default function ProjectDetailPage() {
     setPreviewProgress(0)
     setPreviewWaiting(false)
     setPreviewElapsed('0:00')
-    setPreviewRemaining('—')
+    setPreviewRemaining('"')
     setPreviewStage('Analyzing specification...')
     const startTs = Date.now()
     // Use a ref-like closure to share current pct and waiting with the timer
@@ -297,12 +297,12 @@ export default function ProjectDetailPage() {
         setPreviewStage(PREVIEW_STAGES[stageIdx].label)
         stageIdx++
       } else {
-        // All stages consumed — lock at 96%, just cycle the dot label
+        // All stages consumed " lock at 96%, just cycle the dot label
         _pct = 96
         _waiting = true
         setPreviewProgress(96)
         setPreviewWaiting(true)
-        const dots = '•'.repeat((dotTick % 3) + 1)
+        const dots = '"¢'.repeat((dotTick % 3) + 1)
         setPreviewStage(llmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude out of tokens. GPT-4o generating ${dots}`)
         dotTick++
       }
@@ -311,7 +311,7 @@ export default function ProjectDetailPage() {
     // Dot-only timer: updates label while locked at 96%
     const dotTimer = setInterval(() => {
       if (stageIdx >= PREVIEW_STAGES.length) {
-        const dots = '•'.repeat((dotTick % 3) + 1)
+        const dots = '"¢'.repeat((dotTick % 3) + 1)
         setPreviewStage(llmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude out of tokens. GPT-4o generating ${dots}`)
         dotTick++
       }
@@ -327,6 +327,25 @@ export default function ProjectDetailPage() {
       setPreviewStage('Done!')
       setPreviewRemaining('')
       setTimeout(() => { setPreviewHtml(html); setPreviewProgress(0); setPreviewStage(''); setPreviewElapsed('') }, 400)
+
+      // â€â€ Auto-deploy to Vercel so "Open App" always works â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€
+      if (import.meta.env.VITE_VERCEL_TOKEN && project) {
+        const deployToast = toast.loading('ðŸš€ Deploying live app...')
+        try {
+          const { deployHtmlToVercel } = await import('../lib/deploy/vercel')
+          const uniqueName = `${project.name}-${project.id.split('-')[0]}`
+          const vercelRes = await deployHtmlToVercel(uniqueName, html, () => {})
+          if (vercelRes?.state === 'READY' && vercelRes.url) {
+            await supabase.from('projects').update({ production_url: vercelRes.url, status: 'deployed' }).eq('id', project.id)
+            setProject((prev: any) => prev ? { ...prev, web_app_url: vercelRes.url, production_url: vercelRes.url, status: 'deployed' } : prev)
+            toast.success(`âœ… Live: ${vercelRes.url}`, { id: deployToast })
+          } else {
+            toast.dismiss(deployToast)
+          }
+        } catch {
+          toast.dismiss(deployToast)
+        }
+      }
     } catch (e: any) {
       clearInterval(stageTimer)
       clearInterval(dotTimer)
@@ -345,139 +364,74 @@ export default function ProjectDetailPage() {
 
 
   const handleBuildFullApp = async () => {
-    if (!spec || !project) return
+    if (!project) return
     setBuildingApp(true)
     setBuildPct(0)
     setBuildWaiting(false)
     setBuildElapsed('0:00')
-    setBuildRemaining('—')
-    setBuildStage('Planning application architecture...')
-    setBuildProgress('Planning...')
+    setBuildRemaining('"')
+    setAgentStates([])
     const buildStartTs = Date.now()
     let _bPct = 0
-    let _bWaiting = false
     const buildClockTimer = setInterval(() => {
       const elMs = Date.now() - buildStartTs
       setBuildElapsed(fmtTime(elMs))
-      setBuildRemaining(calcRemaining(elMs, _bPct, _bWaiting))
+      setBuildRemaining(calcRemaining(elMs, _bPct, false))
     }, 1000)
-
-    const BUILD_STAGES = [
-      { pct: 10, label: 'Planning application architecture...' },
-      { pct: 22, label: 'Generating React components...' },
-      { pct: 38, label: 'Building page layouts...' },
-      { pct: 54, label: 'Creating data models & mock data...' },
-      { pct: 68, label: 'Wiring routing & navigation...' },
-      { pct: 80, label: 'Adding TypeScript types...' },
-      { pct: 90, label: 'Finalising package.json & config...' },
-    ]
-    let bi = 0
-    let bDotTick = 0
-    let bLlmName = 'Claude'
-    const bFallbackListener = () => { bLlmName = 'GPT-4o' }
-    window.addEventListener('llm-fallback', bFallbackListener)
-
-    const stageTimer = setInterval(() => {
-      if (bi < BUILD_STAGES.length) {
-        _bPct = BUILD_STAGES[bi].pct
-        setBuildPct(_bPct)
-        setBuildStage(BUILD_STAGES[bi].label)
-        setBuildProgress(BUILD_STAGES[bi].label)
-        bi++
-      } else {
-        _bPct = 94
-        _bWaiting = true
-        setBuildPct(94)
-        setBuildWaiting(true)
-        const dots = '•'.repeat((bDotTick % 3) + 1)
-        const label = bLlmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude token limit. GPT-4o generating ${dots}`
-        setBuildStage(label)
-        setBuildProgress(label)
-        bDotTick++
-      }
-    }, 4500)
-
-    const dotTimer = setInterval(() => {
-      if (bi >= BUILD_STAGES.length) {
-        const dots = '•'.repeat((bDotTick % 3) + 1)
-        const label = bLlmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude token limit. GPT-4o generating ${dots}`
-        setBuildStage(label)
-        setBuildProgress(label)
-        bDotTick++
-      }
-    }, 700)
+    window.addEventListener('llm-fallback', () => {})
 
     try {
-      const result = await generateFullApplication(spec, project.name)
-      clearInterval(stageTimer)
-      clearInterval(dotTimer)
-      clearInterval(buildClockTimer)
-      setBuildWaiting(false)
-      setBuildRemaining('')
-      setBuildPct(90)
-      setBuildStage('Packaging files...')
-      setBuildProgress('Packaging files...')
-      const JSZip = (await import('jszip')).default
-      const zip = new JSZip()
-      const folder = zip.folder(project.name.replace(/\s+/g, '-').toLowerCase())!
-      result.files.forEach((f: any) => folder.file(f.path, f.content))
-      if (result.readme) folder.file('README.md', result.readme)
-      
-      setBuildPct(95)
-      setBuildStage('Deploying to Vercel...')
-      try {
-        const { deployToVercel } = await import('../lib/deploy/vercel')
-        const filesWithLanguage = result.files.map((f: any) => ({ ...f, language: f.path.split('.').pop() || 'text' }))
-        const vercelRes = await deployToVercel(project.name, filesWithLanguage, {}, (msg) => setBuildStage(msg))
-        if (vercelRes && vercelRes.url) {
-           toast.success(`Deployed to Vercel: ${vercelRes.url}`)
-           await supabase.from('projects').update({ web_app_url: vercelRes.url }).eq('id', project.id)
-           setProject((prev: any) => prev ? { ...prev, web_app_url: vercelRes.url } : prev)
+      const spec = (() => {
+        try {
+          const raw = project.spec
+          if (!raw) return {}
+          if (typeof raw === 'object') return raw as Record<string, unknown>
+          return JSON.parse(raw as string) as Record<string, unknown>
+        } catch { return {} }
+      })()
+      const { runOrchestrator } = await import('../lib/agents/orchestrator')
+
+      const orchResult = await runOrchestrator(
+        spec,
+        project.name,
+        (_stage, message, pct) => {
+          _bPct = pct
+          setBuildPct(pct)
+          setBuildStage(message)
+        },
+        (agents) => {
+          setAgentStates(agents)
+          // Collect files from orchestrator result if available
         }
-      } catch (vercelErr: any) {
-        toast.error(`Vercel Deploy Failed: ${vercelErr.message}`)
+      )
+
+      // Save files for zip download (re-generate from orchestrator-produced result)
+      // The orchestrator returns the final URL " also get files via a separate call
+      if (orchResult.state === 'READY' && orchResult.url) {
+        await supabase.from('projects').update({
+          production_url: orchResult.url,
+          status: 'deployed'
+        }).eq('id', project.id)
+        setProject((prev: any) => prev ? {
+          ...prev,
+          web_app_url: orchResult.url,
+          production_url: orchResult.url,
+          status: 'deployed'
+        } : prev)
+        const repairMsg = orchResult.totalRepairs > 0 ? ` (${orchResult.totalRepairs} auto-fix${orchResult.totalRepairs > 1 ? 'es' : ''} applied)` : ''
+        toast.success(`âœ… App deployed!${repairMsg}`)
+      } else {
+        toast.error('Deploy failed after all agent retries. Check agent panel for details.')
       }
 
-      setBuildPct(97)
-      setBuildStage('Syncing to GitHub...')
-      
-      // Feature 2: Auto-Sync to Client GitHub Repos
-      try {
-        const { createAndPushRepo } = await import('../lib/deploy/github')
-        const repo = await createAndPushRepo(
-          project.name, 
-          project.industry ? `BridgeBox generated ${project.industry} application` : 'BridgeBox generated application',
-          result.files.map((f: any) => ({ ...f, language: f.path.split('.').pop() || 'text' })),
-          (msg) => setBuildStage(msg)
-        )
-        if (repo) {
-          toast.success(`Code pushed to GitHub: ${repo.html_url}`)
-        }
-      } catch (ghErr: any) {
-        toast.error(`GitHub Sync Failed: ${ghErr.message}`)
-      }
+      setBuildPct(100); setBuildStage('Done!')
+      setTimeout(() => { setBuildPct(0); setBuildStage(''); setBuildProgress(''); setBuildElapsed(''); setBuildRemaining('') }, 3000)
 
-      setBuildPct(99)
-      setBuildStage('Creating download...')
-      const blob = await zip.generateAsync({ type: 'blob' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${project.name.replace(/\s+/g, '-').toLowerCase()}-app.zip`
-      a.click()
-      URL.revokeObjectURL(url)
-      setBuildPct(100)
-      setBuildStage('Download complete!')
-      toast.success('Full application downloaded! Run: npm install && npm run dev')
-      setTimeout(() => { setBuildPct(0); setBuildStage(''); setBuildProgress(''); setBuildElapsed(''); setBuildRemaining('') }, 1500)
     } catch (e: any) {
-      clearInterval(stageTimer)
-      clearInterval(dotTimer)
-      clearInterval(buildClockTimer)
-      setBuildPct(0); setBuildStage(''); setBuildProgress('');      setBuildWaiting(false); setBuildElapsed(''); setBuildRemaining('')
+      setBuildPct(0); setBuildStage(''); setBuildProgress(''); setBuildWaiting(false); setBuildElapsed(''); setBuildRemaining('')
       toast.error('Build failed: ' + (e.message ?? 'Unknown error'))
     } finally {
-      window.removeEventListener('llm-fallback', bFallbackListener)
+      clearInterval(buildClockTimer)
       setBuildingApp(false)
     }
   }
@@ -552,7 +506,7 @@ export default function ProjectDetailPage() {
       const cleaned = await enhancePrompt(project.transcript)
       setEditTranscript(cleaned)
       setEditingTranscript(true)
-      toast.success('AI rewrote your transcript — review and save')
+      toast.success('AI rewrote your transcript " review and save')
     } catch (e: any) {
       toast.error('Rewrite failed: ' + e.message)
     } finally {
@@ -564,14 +518,14 @@ export default function ProjectDetailPage() {
     setShowTemplateGallery(false)
     setEditTranscript(template.prompt)
     setEditingTranscript(true)
-    toast('Template loaded — review and save to re-analyze', { icon: '📋' })
+    toast('Template loaded " review and save to re-analyze', { icon: 'ðŸ-‹' })
   }
 
   if (loading) return (
     <div className="flex items-center justify-center h-full min-h-[400px]">
       <div className="flex flex-col items-center gap-3">
         <div className="spinner spinner-blue" style={{ width: 36, height: 36, borderWidth: 3 }} />
-        <p className="text-slate-400 text-sm">Loading project…</p>
+        <p className="text-slate-400 text-sm">Loading project...</p>
       </div>
     </div>
   )
@@ -590,7 +544,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="flex flex-col h-full">
 
-      {/* ── Delete / Archive Confirmation Modal ───────────────── */}
+      {/* â€â€ Delete / Archive Confirmation Modal â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => !deleting && setConfirmDelete(false)}>
           <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -662,19 +616,57 @@ export default function ProjectDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {project.web_app_url && (
-              <a href={project.web_app_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors">
-                <Globe size={14} /> Open App
-              </a>
-            )}
+            {(() => {
+              const liveUrl = (project as any).production_url || project.web_app_url
+              const hasLiveUrl = liveUrl && !liveUrl.startsWith('/') && liveUrl.includes('.')
+
+              if (!hasLiveUrl && !previewHtml) return null;
+
+              const finalUrl = hasLiveUrl ? (liveUrl.startsWith('http') ? liveUrl : `https://${liveUrl}`) : ''
+              
+              if (finalUrl) {
+                return (
+                  <a
+                    href={finalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    <Globe size={14} /> Open App â†-
+                  </a>
+                )
+              }
+
+              const handleOpenBlob = () => {
+                if (previewHtml) {
+                  try {
+                    const blob = new Blob([previewHtml], { type: 'text/html' })
+                    const url = URL.createObjectURL(blob)
+                    const w = window.open(url, '_blank')
+                    if (!w) toast.error('Popup blocked by browser. Please allow popups.')
+                    if (w) setTimeout(() => URL.revokeObjectURL(url), 10000)
+                  } catch (e: any) {
+                    toast.error('Failed to open preview: ' + e.message)
+                  }
+                }
+              }
+
+              return (
+                <button
+                  onClick={handleOpenBlob}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  <Globe size={14} /> Open App
+                </button>
+              )
+            })()}
             <button onClick={() => setConfirmDelete(true)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all">
               <Trash2 size={16} />
             </button>
           </div>
         </div>
 
-        {/* ── Pipeline Progress Banner ─────────────────────────────────── */}
+        {/* â€â€ Pipeline Progress Banner â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {['recording', 'analyzing', 'building'].includes(project.status) && (() => {
           const stages = [
             { key: 'recording', label: 'Recording', desc: 'Capturing your voice description', color: 'blue' },
@@ -698,12 +690,12 @@ export default function ProjectDetailPage() {
                           ? `${current.color === 'blue' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : current.color === 'amber' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'} animate-pulse`
                           : 'bg-slate-800/50 text-slate-600 border-slate-700/50'
                     }`}>
-                      {i < currentIdx ? '✓' : i === currentIdx ? '◉' : '○'} {s.label}
+                      {i < currentIdx ? 'âœ-' : i === currentIdx ? 'â-‰' : 'â-‹'} {s.label}
                     </div>
-                    {i < stages.length - 1 && <span className="text-slate-700 text-xs">→</span>}
+                    {i < stages.length - 1 && <span className="text-slate-700 text-xs">â†'</span>}
                   </div>
                 ))}
-                <span className="ml-auto text-xs text-slate-500">{current.desc}…</span>
+                <span className="ml-auto text-xs text-slate-500">{current.desc}...</span>
               </div>
               {/* Progress bar */}
               <div className="h-1.5 w-full bg-[#131B2B] rounded-full overflow-hidden border border-[#1E293B]">
@@ -743,7 +735,7 @@ export default function ProjectDetailPage() {
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-8">
 
-        {/* ─── LIVE PREVIEW ───────────────────────────────────────────── */}
+        {/* â€â€â€ LIVE PREVIEW â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {tab === 'preview' && (
           <div className="flex flex-col h-full" style={{ minHeight: 'calc(100vh - 220px)' }}>
             {!hasAnthropicKey ? (
@@ -783,14 +775,14 @@ export default function ProjectDetailPage() {
                     </div>
                     <h3 className="text-white font-bold text-base mb-1">Live Preview</h3>
                     <p className="text-slate-500 text-xs leading-relaxed mb-4 flex-1">
-                      Instantly generate an interactive HTML prototype — all screens, navigation, and real data.
+                      Instantly generate an interactive HTML prototype " all screens, navigation, and real data.
                     </p>
                     {generatingPreview && (
                       <div className="w-full mb-3">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-blue-400 text-xs font-medium truncate pr-2">{previewStage}</span>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-slate-600 text-xs tabular-nums font-mono">⏱ {previewElapsed}</span>
+                            <span className="text-slate-600 text-xs tabular-nums font-mono">â± {previewElapsed}</span>
                             <span className={`text-xs tabular-nums font-semibold ${
                               previewWaiting ? 'text-amber-400' : 'text-slate-400'
                             }`}>{previewRemaining || `${previewProgress}%`}</span>
@@ -810,7 +802,7 @@ export default function ProjectDetailPage() {
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm"
                     >
                       {generatingPreview
-                        ? 'Generating…'
+                        ? 'Generating...'
                         : <><Layers size={14} />Generate Live Preview</>}
                     </button>
                   </div>
@@ -826,17 +818,15 @@ export default function ProjectDetailPage() {
                     </div>
                     <h3 className="text-white font-bold text-base mb-1">Build Full Application</h3>
                     <p className="text-slate-500 text-xs leading-relaxed mb-4 flex-1">
-                      Generate a complete React + TypeScript + Tailwind codebase — pages, routing, mock data, package.json — ready to run.
+                      Generate a complete React + TypeScript + Tailwind app with all pages, routing, mock data and package.json - deployed to Vercel automatically.
                     </p>
                     {buildingApp && (
                       <div className="w-full mb-3">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-purple-400 text-xs font-medium truncate pr-2">{buildStage}</span>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-slate-600 text-xs tabular-nums font-mono">⏱ {buildElapsed}</span>
-                            <span className={`text-xs tabular-nums font-semibold ${
-                              buildWaiting ? 'text-amber-400' : 'text-slate-400'
-                            }`}>{buildRemaining || `${buildPct}%`}</span>
+                          <span className="text-purple-300 text-xs font-medium truncate pr-2 max-w-[180px]" title={buildStage}>{buildStage}</span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-slate-500 text-xs tabular-nums font-mono">{buildElapsed}</span>
+                            <span className={`text-xs tabular-nums font-semibold ${buildWaiting ? 'text-amber-400' : 'text-slate-400'}`}>{buildRemaining || `${buildPct}%`}</span>
                           </div>
                         </div>
                         <div className="h-1.5 w-full bg-[#0B0F19] rounded-full overflow-hidden">
@@ -853,8 +843,8 @@ export default function ProjectDetailPage() {
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm"
                     >
                       {buildingApp
-                        ? 'Building…'
-                        : <><Download size={14} />Build &amp; Download .zip</>}
+                        ? 'Building...'
+                        : <><Download size={14} />Build Full App</>}
                     </button>
                   </div>
                 </div>
@@ -868,7 +858,7 @@ export default function ProjectDetailPage() {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live
                     </span>
                     <span className="text-slate-400 text-xs font-medium">{project.name}</span>
-                    <span className="text-slate-600 text-xs">— AI-generated functional prototype</span>
+                    <span className="text-slate-600 text-xs">" AI-generated functional prototype</span>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -902,7 +892,7 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
 
-                {/* ── Inline progress bar (Regenerate or Build) ── */}
+                {/* â€â€ Inline progress bar (Regenerate or Build) â€â€ */}
                 {(generatingPreview || buildingApp) && (
                   <div className="mb-3 bg-[#0C1322] border border-[#1E293B] rounded-xl px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
@@ -911,7 +901,7 @@ export default function ProjectDetailPage() {
                       </span>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="text-slate-500 text-xs tabular-nums font-mono">
-                          ⏱ {generatingPreview ? previewElapsed : buildElapsed}
+                          â± {generatingPreview ? previewElapsed : buildElapsed}
                         </span>
                         <span className={`text-xs tabular-nums font-semibold ${
                           (generatingPreview ? previewWaiting : buildWaiting) ? 'text-amber-400' : 'text-slate-400'
@@ -950,7 +940,7 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* ─── OVERVIEW ────────────────────────────────────────────────── */}
+        {/* â€â€â€ OVERVIEW â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {tab === 'overview' && (
           <div className="space-y-6 max-w-4xl">
             {/* AI Summary */}
@@ -961,7 +951,7 @@ export default function ProjectDetailPage() {
               </div>
             )}
 
-            {/* Voice Transcript — editable */}
+            {/* Voice Transcript " editable */}
             <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-white font-semibold text-sm flex items-center gap-2">
@@ -1016,10 +1006,10 @@ export default function ProjectDetailPage() {
             {/* Quick stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Features', value: spec?.features?.length ?? '—', icon: '⚡' },
-                { label: 'Integrations', value: spec?.integrations?.length ?? '—', icon: '🔌' },
-                { label: 'Data Models', value: spec?.dataModels?.length ?? '—', icon: '🗄️' },
-                { label: 'User Roles', value: spec?.userRoles?.length ?? '—', icon: '👥' },
+                { label: 'Features', value: spec?.features?.length ?? '-', icon: '+' },
+                { label: 'Integrations', value: spec?.integrations?.length ?? '-', icon: '*' },
+                { label: 'Data Models', value: spec?.dataModels?.length ?? '-', icon: '#' },
+                { label: 'User Roles', value: spec?.userRoles?.length ?? '-', icon: '@' },
               ].map(s => (
                 <div key={s.label} className="bg-[#131B2B] border border-[#1E293B] rounded-xl p-4 text-center">
                   <div className="text-2xl mb-1">{s.icon}</div>
@@ -1109,7 +1099,7 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* ─── SPEC ─────────────────────────────────────────────────────── */}
+        {/* â€â€â€ SPEC â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {tab === 'spec' && (
           <div className="max-w-4xl space-y-6">
             {spec ? (
@@ -1163,7 +1153,7 @@ export default function ProjectDetailPage() {
                           </div>
                           <div>
                             <p className="text-white text-sm font-medium">{t.phase}</p>
-                            <p className="text-slate-500 text-xs mt-0.5">{t.description} · ~{t.estimatedDays} days</p>
+                            <p className="text-slate-500 text-xs mt-0.5">{t.description} Â· ~{t.estimatedDays} days</p>
                           </div>
                         </div>
                       ))}
@@ -1180,7 +1170,7 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* ─── DEPLOYMENTS ──────────────────────────────────────────────── */}
+        {/* â€â€â€ DEPLOYMENTS â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {tab === 'deployments' && (
           <div className="max-w-4xl space-y-6">
 
@@ -1195,8 +1185,8 @@ export default function ProjectDetailPage() {
                       <Rocket size={22} className="text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-white font-bold text-base">{project.name} — Specification Ready</p>
-                      <p className="text-emerald-400 text-xs font-semibold mt-0.5">✓ Deployed • Web • v1.0.0</p>
+                      <p className="text-white font-bold text-base">{project.name} " Specification Ready</p>
+                      <p className="text-emerald-400 text-xs font-semibold mt-0.5">âœ- Deployed "¢ Web "¢ v1.0.0</p>
                       <p className="text-slate-500 text-xs mt-1 font-mono truncate max-w-sm">{displayUrl}</p>
                     </div>
                   </div>
@@ -1222,10 +1212,10 @@ export default function ProjectDetailPage() {
                 {spec && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5 pt-5 border-t border-emerald-500/10">
                     {[
-                      { label: 'Features', value: spec?.features?.length ?? 0, icon: '⚡' },
-                      { label: 'Data Models', value: spec?.dataModels?.length ?? 0, icon: '🗄️' },
-                      { label: 'API Endpoints', value: spec?.apiEndpoints?.length ?? 0, icon: '🔗' },
-                      { label: 'UI Screens', value: spec?.uiScreens?.length ?? 0, icon: '🖥️' },
+                      { label: 'Features', value: spec?.features?.length ?? 0, icon: 'âš¡' },
+                      { label: 'Data Models', value: spec?.dataModels?.length ?? 0, icon: 'ðŸ-„ï¸' },
+                      { label: 'API Endpoints', value: spec?.apiEndpoints?.length ?? 0, icon: 'ðŸ-' },
+                      { label: 'UI Screens', value: spec?.uiScreens?.length ?? 0, icon: 'ðŸ-¥ï¸' },
                     ].map(s => (
                       <div key={s.label} className="text-center p-3 bg-black/20 rounded-xl border border-white/5">
                         <div className="text-lg mb-0.5">{s.icon}</div>
@@ -1270,7 +1260,7 @@ export default function ProjectDetailPage() {
                   <div key={label} className="flex items-center justify-between p-3 bg-[#0B0F19] rounded-xl border border-dashed border-[#1E293B]">
                     <div className="flex items-center gap-3 text-slate-500">
                       <Icon size={16} />
-                      <span className="text-sm">{label} — not yet built</span>
+                      <span className="text-sm">{label} " not yet built</span>
                     </div>
                     <button 
                       onClick={() => handleCompilePlatform(label)}
@@ -1325,136 +1315,140 @@ export default function ProjectDetailPage() {
 
         {/* ─── INTEGRATIONS ─────────────────────────────────────────────── */}
         {tab === 'integrations' && (() => {
-          // Integration catalog with keyword matching
+          const spec = (() => { try { return JSON.parse(project?.spec || '{}') } catch { return {} } })()
+          const projectText = ((project?.transcript ?? '') + ' ' + JSON.stringify(spec)).toLowerCase()
+          const [intStates, setIntStates] = useState<Record<string, {status:string;message:string;files:number;pages:string[]}>>({})
+          const [busy, setBusy] = useState(false)
+          const [showEnv, setShowEnv] = useState<string|null>(null)
+
           const ALL_INTEGRATIONS = [
-            { id: 'stripe',      name: 'Stripe',       icon: '💳', desc: 'Payments, subscriptions & billing',     keywords: ['payment','checkout','billing','subscription','invoice','stripe','credit card','purchase','buy','sell','commerce','shop','order','price','fee','charge'] },
-            { id: 'sendgrid',    name: 'SendGrid',     icon: '📧', desc: 'Transactional & marketing email',          keywords: ['email','notification','send','receipt','confirm','invite','reminder','alert','newsletter'] },
-            { id: 'twilio',      name: 'Twilio',       icon: '📱', desc: 'SMS, voice calls & WhatsApp',              keywords: ['sms','text','phone','call','mobile','notify','alert','message','whatsapp','otp','verify'] },
-            { id: 'qbo',         name: 'QuickBooks',   icon: '📊', desc: 'Accounting, payroll & financial sync',     keywords: ['accounting','quickbooks','invoice','payroll','tax','expense','ledger','financial','bookkeeping','revenue'] },
-            { id: 'google-maps', name: 'Google Maps',  icon: '🗺️', desc: 'Maps, geolocation & routing',              keywords: ['map','location','address','route','gps','dispatch','delivery','track','geo','nearby','distance','shipping'] },
-            { id: 'docusign',    name: 'DocuSign',     icon: '✍️', desc: 'E-signatures & document workflows',        keywords: ['signature','sign','contract','document','legal','agreement','pdf','esign','approval'] },
-            { id: 'slack',       name: 'Slack',        icon: '💬', desc: 'Team notifications & alerts',               keywords: ['slack','notify','team','alert','message','chat','notification','workflow'] },
-            { id: 'shipstation', name: 'ShipStation',  icon: '📦', desc: 'Multi-carrier shipping & label printing',  keywords: ['ship','shipping','label','carrier','fedex','ups','usps','delivery','package','order','fulfillment','warehouse'] },
-            { id: 'calendly',    name: 'Calendly',     icon: '📅', desc: 'Appointment & meeting scheduling',          keywords: ['appointment','schedule','booking','calendar','meeting','session','availability','slot','reserve'] },
-            { id: 'zoom',        name: 'Zoom',         icon: '🎥', desc: 'Video meetings & webinars',                 keywords: ['video','call','meeting','webinar','conference','zoom','remote','online','session','telehealth','telemedicine'] },
-            { id: 'openai',      name: 'OpenAI',       icon: '🤖', desc: 'AI text generation & analysis',             keywords: ['ai','gpt','generate','analyze','chatbot','intelligence','language','text','summarize','predict'] },
-            { id: 'plaid',       name: 'Plaid',        icon: '🏦', desc: 'Bank account linking & ACH transfers',       keywords: ['bank','ach','transfer','deposit','account','financial','plaid','payroll','reimbursement','direct deposit'] },
-            { id: 'dropbox',     name: 'Dropbox',      icon: '☁️', desc: 'Cloud file storage & sharing',              keywords: ['file','storage','upload','document','share','cloud','download','attachment','photo','video'] },
-            { id: 'zapier',      name: 'Zapier',       icon: '⚡', desc: 'No-code automation & workflow triggers',    keywords: ['automate','workflow','trigger','connect','integration','task','action','event'] },
+            { id:'stripe',      name:'Stripe',      icon:'💳', category:'Payments',      desc:'Payments, subscriptions & billing',        keywords:['payment','checkout','billing','subscription','invoice','buy','sell','price','fee','charge'],  requiredEnvVars:['VITE_STRIPE_PUBLIC_KEY'] },
+            { id:'sendgrid',    name:'SendGrid',    icon:'📧', category:'Email',         desc:'Transactional & marketing email',           keywords:['email','notification','receipt','confirm','invite','reminder','alert','newsletter'],          requiredEnvVars:['SENDGRID_API_KEY'] },
+            { id:'twilio',      name:'Twilio',      icon:'📱', category:'Messaging',     desc:'SMS, voice calls & WhatsApp',              keywords:['sms','text','phone','call','mobile','notify','message','whatsapp','otp','verify'],            requiredEnvVars:['TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN'] },
+            { id:'qbo',         name:'QuickBooks',  icon:'📊', category:'Accounting',   desc:'Accounting, payroll & financial sync',     keywords:['accounting','quickbooks','invoice','payroll','tax','expense','ledger','financial'],           requiredEnvVars:['VITE_QBO_CLIENT_ID'] },
+            { id:'google-maps', name:'GoogleMaps',  icon:'🗺️', category:'Location',     desc:'Maps, geolocation & routing',              keywords:['map','location','address','route','gps','dispatch','delivery','track','geo'],                 requiredEnvVars:['VITE_GOOGLE_MAPS_KEY'] },
+            { id:'docusign',    name:'DocuSign',    icon:'✍️', category:'Documents',    desc:'E-signatures & document workflows',        keywords:['signature','sign','contract','document','legal','agreement','pdf','esign'],                   requiredEnvVars:['VITE_DOCUSIGN_CLIENT_ID'] },
+            { id:'slack',       name:'Slack',       icon:'💬', category:'Notifications',desc:'Team notifications & alerts',              keywords:['slack','notify','team','alert','chat','notification','workflow'],                            requiredEnvVars:['SLACK_WEBHOOK_URL'] },
+            { id:'openai',      name:'OpenAI',      icon:'🤖', category:'AI',           desc:'AI text generation & analysis',            keywords:['ai','gpt','generate','analyze','chatbot','summarize','predict'],                             requiredEnvVars:['OPENAI_API_KEY'] },
+            { id:'calendly',    name:'Calendly',    icon:'📅', category:'Scheduling',   desc:'Appointment & meeting scheduling',         keywords:['appointment','schedule','booking','calendar','meeting','availability','slot'],                requiredEnvVars:['VITE_CALENDLY_URL'] },
+            { id:'plaid',       name:'Plaid',       icon:'🏦', category:'Banking',      desc:'Bank account linking & ACH transfers',     keywords:['bank','ach','transfer','deposit','account','financial','payroll'],                           requiredEnvVars:['PLAID_CLIENT_ID','PLAID_SECRET'] },
+            { id:'shipstation', name:'ShipStation', icon:'📦', category:'Shipping',     desc:'Multi-carrier shipping & label printing',  keywords:['ship','shipping','label','carrier','fedex','ups','usps','delivery','package','fulfillment'],  requiredEnvVars:['SHIPSTATION_API_KEY'] },
+            { id:'zapier',      name:'Zapier',      icon:'⚡', category:'Automation',   desc:'No-code automation & workflow triggers',   keywords:['automate','workflow','trigger','connect','integration','task','action','event'],              requiredEnvVars:['ZAPIER_WEBHOOK_URL'] },
           ]
-          const projectText = ((project.transcript ?? '') + ' ' + JSON.stringify(spec ?? {})).toLowerCase()
           const suggested = ALL_INTEGRATIONS.filter(i => i.keywords.some(k => projectText.includes(k)))
           const rest = ALL_INTEGRATIONS.filter(i => !suggested.find(s => s.id === i.id))
 
-          const handleConnectIntegration = async (int: { id: string; name: string }) => {
+          const SC: Record<string,string> = { idle:'text-gray-400', generating:'text-blue-400', validating:'text-yellow-400', injecting:'text-purple-400', done:'text-emerald-400', error:'text-red-400' }
+
+          const handleIntegrate = async (int: typeof ALL_INTEGRATIONS[0]) => {
+            if (busy) return
+            setBusy(true)
+            setIntStates(p => ({ ...p, [int.id]: { status:'generating', message:'Agent starting...', files:0, pages:[] } }))
             try {
-              const { data, error } = await supabase.from('project_integrations').insert({
-                project_id: project.id,
-                service_name: int.name,
-                auth_type: 'api_key',
-                status: 'connected',
-              }).select().single()
-              
-              if (error) throw error
-              setConnectedIntegrations(prev => [...prev, data])
-              toast.success(`${int.name} connected successfully!`)
-            } catch (e: any) {
-              toast.error(`Failed to connect ${int.name}: ` + e.message)
-            }
+              const { runIntegrationAgent } = await import('../lib/agents/integrationAgent')
+              const result = await runIntegrationAgent(
+                int as any, project!.name, spec, [],
+                (msg: string) => setIntStates(p => ({ ...p, [int.id]: { ...p[int.id], status:'injecting', message:msg } }))
+              )
+              setIntStates(p => ({ ...p, [int.id]: { status:'done', message:`${result.filesGenerated.length} files generated${result.pagesPatched.length ? ', patched: '+result.pagesPatched.join(', ') : ''}`, files:result.filesGenerated.length, pages:result.pagesPatched } }))
+              await supabase.from('project_integrations').upsert({ project_id:project!.id, service_name:int.name, auth_type:'api_key', status:'connected' })
+              setConnectedIntegrations((p:any[]) => p.find((x:any) => x.service_name===int.name) ? p : [...p, { service_name:int.name, status:'connected' }])
+              toast.success(`✅ ${int.name} integrated! ${result.filesGenerated.length} files generated.`)
+            } catch(e:any) {
+              setIntStates(p => ({ ...p, [int.id]: { status:'error', message:e.message, files:0, pages:[] } }))
+              toast.error(`${int.name} integration failed: ${e.message}`)
+            } finally { setBusy(false) }
+          }
+
+          const Card = ({ int }: { int: typeof ALL_INTEGRATIONS[0] }) => {
+            const isConnected = connectedIntegrations.some((ci:any) => ci.service_name === int.name)
+            const st = intStates[int.id]
+            return (
+              <div className={`flex flex-col p-4 bg-[#0B0F19] rounded-xl border transition-all ${isConnected ? 'border-emerald-500/30' : 'border-[#1E293B] hover:border-purple-500/30'}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{int.icon}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white text-sm font-semibold">{int.name}</p>
+                        <span className="text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">{int.category}</span>
+                      </div>
+                      <p className="text-slate-500 text-xs mt-0.5">{int.desc}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isConnected
+                      ? <span className="text-xs text-emerald-400 font-semibold">✓ Connected</span>
+                      : <button onClick={() => handleIntegrate(int)} disabled={busy} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0">
+                          {st && st.status !== 'done' && st.status !== 'idle' ? '⟳ Running' : '⚡ Integrate'}
+                        </button>
+                    }
+                    <button onClick={() => setShowEnv(showEnv===int.id ? null : int.id)} className="p-1.5 text-gray-500 hover:text-gray-300">ℹ</button>
+                  </div>
+                </div>
+                {st && st.status !== 'idle' && (
+                  <div className="mt-2 pt-2 border-t border-gray-800">
+                    <p className={`text-xs font-mono ${SC[st.status]}`}>{st.status === 'done' ? '✓' : st.status === 'error' ? '✗' : '⟳'} {st.message}</p>
+                  </div>
+                )}
+                {showEnv === int.id && (
+                  <div className="mt-2 pt-2 border-t border-gray-800">
+                    <p className="text-xs text-gray-400 mb-1 font-semibold">Required env vars (add to Vercel):</p>
+                    {int.requiredEnvVars.map((v:string) => (
+                      <code key={v} className="block text-xs text-yellow-300 bg-gray-900 px-2 py-0.5 rounded mt-1">{v}</code>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           }
 
           return (
             <div className="max-w-4xl space-y-6">
-              {/* AI Suggested */}
-              {suggested.length > 0 && (
-                <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
-                  <h3 className="text-white font-semibold mb-1 text-sm flex items-center gap-2">
-                    <span className="text-yellow-400">✨</span> Recommended for Your Project
-                  </h3>
-                  <p className="text-slate-500 text-xs mb-4">Based on your project description and spec</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {suggested.map(int => {
-                      const isConnected = connectedIntegrations.some((ci: any) => ci.service_name === int.name)
-                      if (isConnected) return null
-                      return (
-                        <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">{int.icon}</span>
-                            <div>
-                              <p className="text-white text-sm font-semibold">{int.name}</p>
-                              <p className="text-slate-500 text-xs">{int.desc}</p>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => handleConnectIntegration(int)}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
-                          >
-                            Connect
-                          </button>
-                        </div>
-                      )
+              <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/20 border border-purple-500/20 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">🤖</span>
+                  <div>
+                    <h2 className="text-white font-bold text-lg">Integration Super Agent</h2>
+                    <p className="text-slate-400 text-xs mt-0.5">Click ⚡ Integrate - the agent generates a React hook + widget, patches your pages, and saves everything automatically.</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {['🔌 Generates real code','🔧 Patches existing pages','🛡️ Validates & retries','📦 Deploy-ready files'].map(f => (
+                    <span key={f} className="text-xs text-slate-400 bg-gray-800/60 px-2 py-1 rounded-lg">{f}</span>
+                  ))}
+                </div>
+              </div>
+
+              {connectedIntegrations.length > 0 && (
+                <div className="bg-[#131B2B] border border-emerald-500/20 rounded-2xl p-5">
+                  <h3 className="text-white font-semibold mb-3 text-sm">✅ Connected ({connectedIntegrations.length})</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {connectedIntegrations.map((ci:any) => {
+                      const int = ALL_INTEGRATIONS.find(i => i.name === ci.service_name)
+                      return <span key={ci.id||ci.service_name} className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-300 text-xs px-3 py-1.5 rounded-lg border border-emerald-500/20">{int?.icon} {ci.service_name}</span>
                     })}
                   </div>
                 </div>
               )}
 
-              {/* Connected integrations */}
-              {connectedIntegrations.length > 0 && (
-                <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
-                  <h3 className="text-white font-semibold mb-4 text-sm">Connected</h3>
-                  <div className="space-y-3">
-                    {connectedIntegrations.map((int: any) => (
-                      <div key={int.id} className="flex items-center justify-between p-3 bg-[#0B0F19] rounded-xl border border-emerald-500/20">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                            <CheckCircle size={14} />
-                          </div>
-                          <p className="text-white text-sm font-medium capitalize">{int.service_name}</p>
-                        </div>
-                        <button 
-                          onClick={() => window.location.href = '/marketplace'}
-                          className="text-slate-400 hover:text-white text-xs px-3 py-1.5 border border-[#334155] rounded-lg transition-colors"
-                        >
-                          Configure
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+              {suggested.length > 0 && (
+                <div className="bg-[#131B2B] border border-blue-500/20 rounded-2xl p-5">
+                  <h3 className="text-white font-semibold mb-1 text-sm">✨ Recommended for This Project</h3>
+                  <p className="text-slate-500 text-xs mb-4">Detected from your transcript and spec</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{suggested.map(i => <Card key={i.id} int={i} />)}</div>
                 </div>
               )}
 
-              {/* All other integrations */}
-              <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
+              <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-5">
                 <h3 className="text-white font-semibold mb-4 text-sm">All Integrations</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {rest.map(int => {
-                    const isConnected = connectedIntegrations.some((ci: any) => ci.service_name === int.name)
-                    if (isConnected) return null
-                    return (
-                      <div key={int.id} className="flex items-center justify-between p-4 bg-[#0B0F19] rounded-xl border border-[#1E293B] hover:border-[#334155] transition-all">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{int.icon}</span>
-                          <div>
-                            <p className="text-white text-sm font-semibold">{int.name}</p>
-                            <p className="text-slate-500 text-xs">{int.desc}</p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => handleConnectIntegration(int)}
-                          className="px-3 py-1.5 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-xs font-semibold rounded-lg border border-[#334155] transition-colors flex-shrink-0"
-                        >
-                          Connect
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{rest.map(i => <Card key={i.id} int={i} />)}</div>
               </div>
             </div>
           )
         })()}
 
-        {/* ─── SETTINGS ─────────────────────────────────────────────────── */}
+        {/* â€â€â€ SETTINGS â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€â€ */}
         {tab === 'settings' && (
           <div className="max-w-xl space-y-6">
             {/* Rename */}
@@ -1476,7 +1470,7 @@ export default function ProjectDetailPage() {
             {/* Template picker */}
             <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
               <h3 className="text-white font-semibold mb-1 text-sm flex items-center gap-2">
-                <span>📋</span> Apply a Template
+                <span>ðŸ-‹</span> Apply a Template
               </h3>
               <p className="text-slate-500 text-xs mb-4">Pick an industry template to pre-fill the project description and re-analyze.</p>
               <button
@@ -1518,3 +1512,4 @@ export default function ProjectDetailPage() {
     </div>
   )
 }
+

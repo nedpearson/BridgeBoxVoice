@@ -37,6 +37,7 @@ serve(async (req: Request) => {
         headers: {
           'x-api-key': ANTHROPIC_API_KEY,
           'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15',
           'content-type': 'application/json',
         },
         body: JSON.stringify({

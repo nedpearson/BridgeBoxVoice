@@ -226,6 +226,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // ─── Dev Hot-Reload (auto-reconnects to local WebSocket server) ───────────────
 
+/*
 const HOT_RELOAD_PORT = 58371;
 
 function connectHotReload() {
@@ -239,4 +240,5 @@ function connectHotReload() {
 }
 
 connectHotReload();
+*/
 

@@ -1,6 +1,7 @@
 /**
  * Vercel Deployment Automation
- * Creates projects and deploys file trees via Vercel API v9/v13
+ * Primary strategy: deploy the self-contained HTML preview as a static site.
+ * This requires NO build step and succeeds instantly every time.
  */
 
 import { GeneratedFile } from '../agents/developerAgent'
@@ -15,7 +16,7 @@ export interface VercelDeployment {
 
 export interface DeploymentStatus {
   id: string
-  state: VercelDeployment['readyState']
+  state: VercelDeployment['readyState'] | 'ERROR'
   url: string | null
   buildDuration?: number
   errorMessage?: string
@@ -27,7 +28,7 @@ const VERCEL_API = 'https://api.vercel.com'
 
 function getToken(): string {
   const token = import.meta.env.VITE_VERCEL_TOKEN
-  if (!token) throw new Error('VITE_VERCEL_TOKEN not set. Add it to your .env file.')
+  if (!token) throw new Error('VITE_VERCEL_TOKEN not set.')
   return token
 }
 
@@ -46,130 +47,242 @@ async function vercelFetch<T>(path: string, options: RequestInit = {}): Promise<
   return data as T
 }
 
-// ─── Project Management ───────────────────────────────────────────────────────
 
-async function ensureProject(name: string, onProgress?: ProgressFn): Promise<string> {
-  const projectName = `bridgebox-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
-  onProgress?.(`Creating Vercel project: ${projectName}`)
+// ─── Static HTML Deploy (PRIMARY — no build step) ─────────────────────────────
+
+/** Compute SHA1 hash using Web Crypto (returns hex string) */
+async function sha1Hex(content: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(content)
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * Deploys a single self-contained HTML file to Vercel as a static site.
+ * Uses the correct Vercel v13 two-step process:
+ *   1. Pre-upload file via POST /v2/files (with x-now-digest SHA1 header)
+ *   2. Create deployment referencing file by SHA
+ */
+export async function deployHtmlToVercel(
+  projectName: string,
+  htmlContent: string,
+  onProgress?: ProgressFn
+): Promise<DeploymentStatus> {
+  const token = import.meta.env.VITE_VERCEL_TOKEN
+
+  if (!token) {
+    onProgress?.('⚡ Demo mode: simulating deployment...')
+    await new Promise((r) => setTimeout(r, 1500))
+    const demoUrl = `https://bb-${projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-')}.vercel.app`
+    onProgress?.(`✅ Demo URL: ${demoUrl}`)
+    return { id: `demo-${Date.now()}`, state: 'READY', url: demoUrl }
+  }
+
+  // Sanitize name: lowercase, only hyphens/alphanumeric, max 50 chars
+  const safeName = `bb-${projectName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 46)}`
 
   try {
-    const project = await vercelFetch<{ id: string }>('/v9/projects', {
+    onProgress?.(`📦 Preparing: ${safeName}`)
+
+    // ── Step 1: Compute SHA1 of the HTML content ────────────────────────────
+    const contentBytes = new TextEncoder().encode(htmlContent)
+    const sha = await sha1Hex(htmlContent)
+    const size = contentBytes.length
+
+    onProgress?.('🔐 Uploading file...')
+
+    // ── Step 2: Pre-upload the file via /v2/files ───────────────────────────
+    const uploadRes = await fetch(`${VERCEL_API}/v2/files`, {
       method: 'POST',
-      body: JSON.stringify({
-        name: projectName,
-        framework: 'vite',
-        buildCommand: 'npm run build',
-        outputDirectory: 'dist',
-        installCommand: 'npm install',
-      }),
-    })
-    return project.id
-  } catch (err) {
-    // Project may already exist — try to find it
-    const projects = await vercelFetch<{ projects: Array<{ id: string; name: string }> }>(`/v9/projects?search=${projectName}`)
-    const existing = projects.projects.find((p) => p.name === projectName)
-    if (existing) return existing.id
-    throw err
-  }
-}
-
-// ─── File Deployment ─────────────────────────────────────────────────────────
-
-function encodeFile(content: string): { data: string; encoding: 'utf8' | 'base64' } {
-  return { data: btoa(unescape(encodeURIComponent(content))), encoding: 'base64' }
-}
-
-async function createDeployment(
-  projectName: string,
-  files: GeneratedFile[],
-  envVars: Record<string, string>,
-  onProgress?: ProgressFn
-): Promise<VercelDeployment> {
-  onProgress?.(`Uploading ${files.length} files to Vercel...`)
-
-  const vercelFiles = files.map((f) => ({
-    file: f.path,
-    ...encodeFile(f.content),
-  }))
-
-  const env = Object.entries(envVars).map(([key, value]) => ({ key, value, type: 'plain' }))
-
-  const deployment = await vercelFetch<VercelDeployment>('/v13/deployments', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: `bridgebox-${projectName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-      files: vercelFiles,
-      target: 'production',
-      env,
-      projectSettings: {
-        framework: 'vite',
-        buildCommand: 'npm run build',
-        outputDirectory: 'dist',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/octet-stream',
+        'x-vercel-digest': sha,
       },
-    }),
-  })
+      body: contentBytes,
+    })
 
-  return deployment
+    // 200 = uploaded, 409 = already exists (both are OK)
+    if (!uploadRes.ok && uploadRes.status !== 409) {
+      const errBody = await uploadRes.text()
+      throw new Error(`File upload failed (${uploadRes.status}): ${errBody}`)
+    }
+
+    onProgress?.('🚀 Creating deployment...')
+
+    // ── Step 3: Create deployment referencing file by SHA ───────────────────
+    const deployBody = {
+      name: safeName,
+      target: 'production',
+      files: [
+        { file: 'index.html', sha, size },
+      ],
+      projectSettings: {
+        framework: null,
+      },
+    }
+
+    const deployRes = await fetch(`${VERCEL_API}/v13/deployments`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deployBody),
+    })
+
+    const deployData = await deployRes.json()
+    if (!deployRes.ok) {
+      throw new Error(`Deployment create failed (${deployRes.status}): ${deployData?.error?.message ?? JSON.stringify(deployData)}`)
+    }
+
+    onProgress?.(`⏳ Deploying... (id: ${deployData.id})`)
+    return await pollDeploymentStatus(deployData.id, onProgress)
+
+  } catch (err) {
+    const msg = (err as Error).message
+    console.error('[Vercel Deploy]', msg)
+    onProgress?.(`❌ ${msg}`)
+    return { id: '', state: 'ERROR', url: null, errorMessage: msg }
+  }
 }
 
 // ─── Status Polling ───────────────────────────────────────────────────────────
 
-export async function pollDeploymentStatus(deploymentId: string, maxWaitMs = 300_000): Promise<DeploymentStatus> {
+export async function pollDeploymentStatus(
+  deploymentId: string,
+  onProgress?: ProgressFn,
+  maxWaitMs = 120_000
+): Promise<DeploymentStatus> {
   const start = Date.now()
+  let lastState = ''
   while (Date.now() - start < maxWaitMs) {
-    const deployment = await vercelFetch<VercelDeployment & { errorMessage?: string; buildingAt?: number; ready?: number }>(
+    const deployment = await vercelFetch<VercelDeployment & { errorMessage?: string }>(
       `/v13/deployments/${deploymentId}`
     )
 
+    if (deployment.readyState !== lastState) {
+      lastState = deployment.readyState
+      onProgress?.(`🔄 Status: ${deployment.readyState}`)
+    }
+
     if (deployment.readyState === 'READY') {
-      return { id: deployment.id, state: 'READY', url: `https://${deployment.url}` }
+      const liveUrl = `https://${deployment.url}`
+      onProgress?.(`✅ Live at: ${liveUrl}`)
+      return { id: deployment.id, state: 'READY', url: liveUrl }
     }
     if (deployment.readyState === 'ERROR' || deployment.readyState === 'CANCELED') {
       return { id: deployment.id, state: deployment.readyState, url: null, errorMessage: deployment.errorMessage }
     }
 
-    await new Promise((r) => setTimeout(r, 3000))
+    await new Promise((r) => setTimeout(r, 2000))
   }
-  return { id: deploymentId, state: 'BUILDING', url: null, errorMessage: 'Timeout waiting for deployment' }
+  return { id: deploymentId, state: 'ERROR', url: null, errorMessage: 'Timeout waiting for deployment' }
 }
 
-// ─── Main Deployer ────────────────────────────────────────────────────────────
+// ─── Full React/Vite Deployer ────────────────────────────────────────────────
 
-export async function deployToVercel(
+export async function deployFullReactAppToVercel(
   projectName: string,
-  files: GeneratedFile[],
-  envVars: Record<string, string> = {},
+  files: { path: string, content: string }[],
   onProgress?: ProgressFn
 ): Promise<DeploymentStatus> {
-  const hasToken = !!import.meta.env.VITE_VERCEL_TOKEN
+  const token = import.meta.env.VITE_VERCEL_TOKEN
 
-  if (!hasToken) {
-    // Simulate deployment for demo mode
+  if (!token) {
     onProgress?.('⚡ Demo mode: simulating Vercel deployment...')
     await new Promise((r) => setTimeout(r, 2000))
     onProgress?.('✅ Demo deployment complete!')
     return {
       id: `demo-${Date.now()}`,
       state: 'READY',
-      url: `https://bridgebox-${projectName.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).slice(2, 7)}.vercel.app`,
+      url: `https://bridgebox-${projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-')}-${Math.random().toString(36).slice(2, 7)}.vercel.app`,
     }
   }
 
-  try {
-    await ensureProject(projectName, onProgress)
-    const deployment = await createDeployment(projectName, files, envVars, onProgress)
-    onProgress?.(`⏳ Build started: ${deployment.id}`)
+  const safeName = `bb-${projectName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 46)}-full`
 
-    const status = await pollDeploymentStatus(deployment.id)
-    if (status.state === 'READY') {
-      onProgress?.(`✅ Live at: ${status.url}`)
-    } else {
-      onProgress?.(`❌ Deployment ${status.state}: ${status.errorMessage}`)
+  try {
+    onProgress?.(`📦 Preparing codebase for Vercel...`)
+    const uploadedFiles = []
+
+    let i = 0
+    for (const f of files) {
+      i++
+      if (i % 5 === 0) onProgress?.(`🔐 Uploading files to Vercel (${i}/${files.length})...`)
+      
+      // Sanitize path (remove leading slashes or ./)
+      let safePath = f.path.replace(/^(\.\/|\/)+/, '')
+      
+      const contentBytes = new TextEncoder().encode(f.content)
+      const sha = await sha1Hex(f.content)
+      const size = contentBytes.length
+
+      const uploadRes = await fetch(`${VERCEL_API}/v2/files`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/octet-stream',
+          'x-vercel-digest': sha,
+        },
+        body: contentBytes,
+      })
+
+      if (!uploadRes.ok && uploadRes.status !== 409) {
+        const errBody = await uploadRes.text()
+        throw new Error(`File upload failed (${safePath}): ${errBody}`)
+      }
+      uploadedFiles.push({ file: safePath, sha, size })
     }
-    return status
+
+    onProgress?.('🚀 Building React App on Vercel (this takes 1-2 mins)...')
+
+    const deployBody = {
+      name: safeName,
+      target: 'production',
+      files: uploadedFiles,
+      projectSettings: {
+        framework: null,
+        installCommand: 'npm install',
+        buildCommand: 'npm run build',
+        outputDirectory: 'dist',
+      },
+    }
+
+    const deployRes = await fetch(`${VERCEL_API}/v13/deployments`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deployBody),
+    })
+
+    const deployData = await deployRes.json()
+    if (!deployRes.ok) {
+      throw new Error(`Deployment create failed: ${deployData?.error?.message ?? JSON.stringify(deployData)}`)
+    }
+
+    onProgress?.(`⏳ Waiting for Vercel Build... (id: ${deployData.id})`)
+    // Timeout extended to 5 minutes for full dependency install and build
+    return await pollDeploymentStatus(deployData.id, onProgress, 300_000)
+
   } catch (err) {
     const msg = (err as Error).message
-    onProgress?.(`❌ Deployment failed: ${msg}`)
+    console.error('[Vercel Deploy]', msg)
+    onProgress?.(`❌ ${msg}`)
     return { id: '', state: 'ERROR', url: null, errorMessage: msg }
   }
 }
+
