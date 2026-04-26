@@ -19,7 +19,7 @@ export interface SkeletonOutput {
   readme: string
 }
 
-const SKELETON_SYSTEM = `You are a React architect. Generate a JSON skeleton for a React application.
+const SKELETON_SYSTEM = `You are a React architect generating a full retail boutique management system.
 Output ONLY valid JSON in this exact structure:
 {
   "files": [
@@ -34,13 +34,15 @@ Output ONLY valid JSON in this exact structure:
 }
 Rules:
 - "files" must include src/store/index.ts (self-contained, with types and mock data inline) and src/App.tsx
-- "pages" must list EVERY feature the spec mentions — aim for 8-12 pages. Think comprehensively:
-  * Always include: Dashboard, Settings, Reports
-  * Include ALL domain-specific modules from the spec (e.g. for a boutique: Appointments, Customers, Inventory, Alterations, Pickups, Staff, Sales, Vendors)
-  * Include ALL sub-features (e.g. Invoices, Payments, Scheduling, Analytics)
-  * MINIMUM 8 pages. Use your judgment to cover the full business workflow end-to-end.
-- Each page entry: path = src/pages/ComponentName.tsx (no spaces/hyphens in name), name = display name, route = /path
-- Component names: PascalCase, letters and numbers only. e.g. "GownInventory" not "Gown-Inventory"
+- "pages" MUST include ALL of these retail boutique modules (adapt names to the specific business):
+  CORE: Dashboard, Appointments, Customers, GownInventory (or product inventory)
+  SALES: Sales (POS/transactions with cost + retail pricing), Invoices, Layaway
+  OPERATIONS: Alterations, Pickups, VendorOrders (purchase orders with payment terms)
+  STAFF: EmployeeScheduling, Payroll (with commissions)
+  INSIGHTS: Reports, Settings
+  TOTAL: 12-14 pages minimum. Every retail workflow must be represented.
+- Each page entry: path = src/pages/ComponentName.tsx (no spaces/hyphens), name = display name, route = /path
+- Component names: PascalCase, letters and numbers only
 - The store must use: import { create } from 'zustand' (NOT default import)
 - App.tsx must use React Router v6 with <BrowserRouter>, <Routes>, <Route> and import Layout from './components/Layout'
 - ONLY use useNavigate, NOT useHistory.
