@@ -1,4 +1,4 @@
-/* eslint-disable */
+﻿/* eslint-disable */
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -128,7 +128,7 @@ export default function ProjectDetailPage() {
   const analysisStarted = useRef(false)
   const buildStarted = useRef(false)
 
-  // analyzing Ã¢â€ ' building (generate spec)
+  // analyzing ' building (generate spec)
   useEffect(() => {
     if (project?.status === 'analyzing' && project?.transcript && !analysisStarted.current && !project?.spec) {
       analysisStarted.current = true
@@ -158,7 +158,7 @@ export default function ProjectDetailPage() {
     }
   }, [project?.status, project?.transcript, project?.id, project?.spec, updateProject])
 
-  // building Ã¢â€ ' deployed (simulated build phase)
+  // building ' deployed (simulated build phase)
   useEffect(() => {
     if (project?.status === 'building' && project?.spec && !buildStarted.current) {
       buildStarted.current = true
@@ -242,7 +242,7 @@ export default function ProjectDetailPage() {
     toast.success('Name updated')
   }
 
-  // Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬ Elapsed & ETA helpers Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬
+  //  Elapsed & ETA helpers 
   const fmtTime = (ms: number) => {
     const s = Math.max(0, Math.floor(ms / 1000))
     const m = Math.floor(s / 60)
@@ -253,11 +253,11 @@ export default function ProjectDetailPage() {
 
   // Returns ETA string based on elapsed ms + current progress %
   const calcRemaining = (elapsedMs: number, pct: number, waiting: boolean): string => {
-    if (waiting) return 'Ã¢Å¡Â¡ Almost done!'
+    if (waiting) return 'Almost done!'
     if (pct <= 2) return '"'
     const estimatedTotalMs = elapsedMs / (pct / 100)
     const remainingMs = estimatedTotalMs - elapsedMs
-    if (remainingMs <= 0) return 'Ã¢Å¡Â¡ Any moment...'
+    if (remainingMs <= 0) return 'Any moment...'
     return fmtTime(remainingMs) + ' left'
   }
 
@@ -306,7 +306,7 @@ export default function ProjectDetailPage() {
         _waiting = true
         setPreviewProgress(96)
         setPreviewWaiting(true)
-        const dots = '"Â¢'.repeat((dotTick % 3) + 1)
+        const dots = '"..'.repeat((dotTick % 3) + 1)
         setPreviewStage(llmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude out of tokens. GPT-4o generating ${dots}`)
         dotTick++
       }
@@ -315,7 +315,7 @@ export default function ProjectDetailPage() {
     // Dot-only timer: updates label while locked at 96%
     const dotTimer = setInterval(() => {
       if (stageIdx >= PREVIEW_STAGES.length) {
-        const dots = '"Â¢'.repeat((dotTick % 3) + 1)
+        const dots = '"..'.repeat((dotTick % 3) + 1)
         setPreviewStage(llmName === 'Claude' ? `Waiting for Claude ${dots}` : `Claude out of tokens. GPT-4o generating ${dots}`)
         dotTick++
       }
@@ -528,7 +528,7 @@ export default function ProjectDetailPage() {
     setShowTemplateGallery(false)
     setEditTranscript(template.prompt)
     setEditingTranscript(true)
-    toast('Template loaded " review and save to re-analyze', { icon: 'Ã°Å¸-â€¹' })
+    toast('Template loaded - review and save to re-analyze')
   }
 
   if (loading) return (
@@ -716,9 +716,9 @@ export default function ProjectDetailPage() {
                           ? `${current.color === 'blue' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : current.color === 'amber' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'} animate-pulse`
                           : 'bg-slate-800/50 text-slate-600 border-slate-700/50'
                     }`}>
-                      {i < currentIdx ? 'Ã¢Å“-' : i === currentIdx ? 'Ã¢-â€°' : 'Ã¢-â€¹'} {s.label}
+                      {i < currentIdx ? 'done' : i === currentIdx ? '...' : ''} {s.label}
                     </div>
-                    {i < stages.length - 1 && <span className="text-slate-700 text-xs">Ã¢â€ '</span>}
+                    {i < stages.length - 1 && <span className="text-slate-700 text-xs">&#8250;</span>}
                   </div>
                 ))}
                 <span className="ml-auto text-xs text-slate-500">{current.desc}...</span>
@@ -808,7 +808,7 @@ export default function ProjectDetailPage() {
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-blue-400 text-xs font-medium truncate pr-2">{previewStage}</span>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-slate-600 text-xs tabular-nums font-mono">Ã¢ÂÂ± {previewElapsed}</span>
+                            <span className="text-slate-600 text-xs tabular-nums font-mono">{previewElapsed}</span>
                             <span className={`text-xs tabular-nums font-semibold ${
                               previewWaiting ? 'text-amber-400' : 'text-slate-400'
                             }`}>{previewRemaining || `${previewProgress}%`}</span>
@@ -927,7 +927,7 @@ export default function ProjectDetailPage() {
                       </span>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="text-slate-500 text-xs tabular-nums font-mono">
-                          Ã¢ÂÂ± {generatingPreview ? previewElapsed : buildElapsed}
+                          {generatingPreview ? previewElapsed : buildElapsed}
                         </span>
                         <span className={`text-xs tabular-nums font-semibold ${
                           (generatingPreview ? previewWaiting : buildWaiting) ? 'text-amber-400' : 'text-slate-400'
@@ -1179,7 +1179,7 @@ export default function ProjectDetailPage() {
                           </div>
                           <div>
                             <p className="text-white text-sm font-medium">{t.phase}</p>
-                            <p className="text-slate-500 text-xs mt-0.5">{t.description} Ã‚Â· ~{t.estimatedDays} days</p>
+                            <p className="text-slate-500 text-xs mt-0.5">{t.description} - ~{t.estimatedDays} days</p>
                           </div>
                         </div>
                       ))}
@@ -1213,7 +1213,7 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
                 <button onClick={() => { Object.keys(localStorage).filter(k => k.startsWith('bbv_pg_')).forEach(k => localStorage.removeItem(k)); handleBuildFullApp(); }} disabled={buildingApp || !spec} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl transition-colors text-sm flex-shrink-0">
-                  {buildingApp ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{buildStage ? buildStage.slice(0,28)+'�' : 'Building�'}</> : <><RefreshCw size={14} />Rebuild App</>}
+                  {buildingApp ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{buildStage ? buildStage.slice(0,28)+'...' : 'Building...'}</> : <><RefreshCw size={14} />Rebuild App</>}
                 </button>
               </div>
               {buildingApp && <div className="mt-4"><div className="flex justify-between mb-1.5"><span className="text-indigo-300 text-xs truncate max-w-xs">{buildStage}</span><span className="text-slate-400 text-xs font-mono">{buildPct}%</span></div><div className="h-2 w-full bg-[#0B0F19] rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-600 to-purple-500 rounded-full transition-all duration-700" style={{width:`${buildPct}%`}} /></div></div>}
@@ -1231,7 +1231,7 @@ export default function ProjectDetailPage() {
                     </div>
                     <div>
                       <p className="text-white font-bold text-base">{project.name} " Specification Ready</p>
-                      <p className="text-emerald-400 text-xs font-semibold mt-0.5">Ã¢Å“- Deployed "Â¢ Web "Â¢ v1.0.0</p>
+                      <p className="text-emerald-400 text-xs font-semibold mt-0.5">Deployed &middot; Web &middot; v1.0.0</p>
                       <p className="text-slate-500 text-xs mt-1 font-mono truncate max-w-sm">{displayUrl}</p>
                     </div>
                   </div>
@@ -1257,10 +1257,10 @@ export default function ProjectDetailPage() {
                 {spec && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5 pt-5 border-t border-emerald-500/10">
                     {[
-                      { label: 'Features', value: spec?.features?.length ?? 0, icon: 'Ã¢Å¡Â¡' },
-                      { label: 'Data Models', value: spec?.dataModels?.length ?? 0, icon: 'Ã°Å¸-â€žÃ¯Â¸Â' },
-                      { label: 'API Endpoints', value: spec?.apiEndpoints?.length ?? 0, icon: 'Ã°Å¸-' },
-                      { label: 'UI Screens', value: spec?.uiScreens?.length ?? 0, icon: 'Ã°Å¸-Â¥Ã¯Â¸Â' },
+                      { label: 'Features', value: spec?.features?.length ?? 0, icon: '*' },
+                      { label: 'Data Models', value: spec?.dataModels?.length ?? 0, icon: '#' },
+                      { label: 'API Endpoints', value: spec?.apiEndpoints?.length ?? 0, icon: '~' },
+                      { label: 'UI Screens', value: spec?.uiScreens?.length ?? 0, icon: '[]' },
                     ].map(s => (
                       <div key={s.label} className="text-center p-3 bg-black/20 rounded-xl border border-white/5">
                         <div className="text-lg mb-0.5">{s.icon}</div>
@@ -1389,7 +1389,7 @@ export default function ProjectDetailPage() {
             {/* Template picker */}
             <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
               <h3 className="text-white font-semibold mb-1 text-sm flex items-center gap-2">
-                <span>Ã°Å¸-â€¹</span> Apply a Template
+                 Apply a Template
               </h3>
               <p className="text-slate-500 text-xs mb-4">Pick an industry template to pre-fill the project description and re-analyze.</p>
               <button
@@ -1510,7 +1510,7 @@ export default function ProjectDetailPage() {
                 <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>9:41</span>
                 <div style={{ width: '120px', height: '28px', background: '#000', borderRadius: '14px', border: '2px solid #2d3748' }} />
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ color: '#fff', fontSize: '10px' }}>●●●</span>
+                  <span style={{ color: '#fff', fontSize: '10px' }}></span>
                   <span style={{ color: '#fff', fontSize: '10px' }}>WiFi</span>
                   <span style={{ color: '#fff', fontSize: '10px' }}>100%</span>
                 </div>
