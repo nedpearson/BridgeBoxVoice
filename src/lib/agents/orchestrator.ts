@@ -93,32 +93,31 @@ ${pageRoutes}
   const layoutTsx = `import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-const NAV_GROUPS = [
-  { group: 'Operations', items: [
-    { path: '/', label: 'Dashboard', icon: '▦' },
-    { path: '/appointments', label: 'Appointments', icon: '📅' },
-    { path: '/customers', label: 'Customers', icon: '👤' },
-    { path: '/sales', label: 'Sales / POS', icon: '🏷️' },
-  ]},
-  { group: 'Inventory', items: [
-    { path: '/gown-inventory', label: 'Gown Inventory', icon: '👗' },
-    { path: '/alterations', label: 'Alterations', icon: '✂️' },
-    { path: '/pickups', label: 'Pickups', icon: '📦' },
-    { path: '/vendor-orders', label: 'Vendor Orders', icon: '🏭' },
-  ]},
-  { group: 'Finance', items: [
-    { path: '/invoices', label: 'Invoices', icon: '🧾' },
-    { path: '/layaway', label: 'Layaway', icon: '💰' },
-  ]},
-  { group: 'Staff', items: [
-    { path: '/employee-scheduling', label: 'Scheduling', icon: '🗓️' },
-    { path: '/payroll', label: 'Payroll', icon: '💵' },
-  ]},
-  { group: 'Insights', items: [
-    { path: '/reports', label: 'Reports', icon: '📊' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' },
-  ]},
+const ALL_PAGES = [
+${navLinks}
 ];
+
+// Categorize pages into sidebar groups based on their names
+function categorize(pages) {
+  const ops = [], inv = [], fin = [], staff = [], insights = [];
+  for (const p of pages) {
+    const n = (p.label || '').toLowerCase();
+    if (n.includes('dashboard') || n.includes('appointment') || n.includes('booking') || n.includes('customer') || n.includes('client') || n.includes('sale') || n.includes('pos') || n.includes('bride') || n.includes('transaction')) ops.push(p);
+    else if (n.includes('gown') || n.includes('inventory') || n.includes('product') || n.includes('alteration') || n.includes('pickup') || n.includes('vendor') || n.includes('order') || n.includes('merchandise') || n.includes('stock')) inv.push(p);
+    else if (n.includes('invoice') || n.includes('layaway') || n.includes('payment') || n.includes('finance') || n.includes('billing') || n.includes('receivable') || n.includes('installment')) fin.push(p);
+    else if (n.includes('staff') || n.includes('employee') || n.includes('payroll') || n.includes('schedule') || n.includes('commission') || n.includes('team') || n.includes('hr')) staff.push(p);
+    else insights.push(p);
+  }
+  return [
+    { group: 'Operations', items: ops },
+    { group: 'Inventory', items: inv },
+    { group: 'Finance', items: fin },
+    { group: 'Staff', items: staff },
+    { group: 'Insights', items: insights },
+  ].filter(g => g.items.length > 0);
+}
+
+const NAV_GROUPS = categorize(ALL_PAGES);
 
 // Match any nav item path against current route
 const navItems = NAV_GROUPS.flatMap(g => g.items);
