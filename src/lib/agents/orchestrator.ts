@@ -376,37 +376,44 @@ export async function runOrchestrator(
   setAgent('injector', { status: 'done', message: `${mergedFiles.length} total files ready` })
   onStatus('injector', `${mergedFiles.length} files ready`, 75)
 
-  // ── AGENT 4: Sanitizer ────────────────────────────────────────────────────
+  // ── AGENT 4: Sanitizer + Pre-flight Validator ────────────────────────────
   setAgent('sanitizer', { status: 'running', message: 'Sanitizing all files...' })
-  onStatus('sanitizer', 'Sanitizing imports, icons, and UI stubs...', 78)
+  onStatus('sanitizer', 'Sanitizing imports, icons, stubs, and syntax...', 78)
   const sanitizerRepairs: string[] = []
+
+  // Pass 1: sanitize imports/icons/stubs
   let sanitized = mergedFiles.map(file => {
     if (!file.path.endsWith('.tsx') && !file.path.endsWith('.ts')) return file
-
-    // Run sanitizer
     const cleaned = sanitizeFileContent(file.path, file.content)
-
-    // Run corruption detector on page files only
-    if (file.path.startsWith('src/pages/')) {
-      const { broken, reason } = detectCorruption(cleaned)
-      if (broken) {
-        sanitizerRepairs.push(`${file.path.split('/').pop()}: ${reason}`)
-        const pageName = file.path.split('/').pop()?.replace(/\.tsx$/, '') || 'Page'
-        const route = skeleton.pages.find(p => p.path === file.path)?.route || '/'
-        return { path: file.path, content: generateSafeStub(pageName, route) }
-      }
-    }
     return { path: file.path, content: cleaned }
+  })
+
+  // Pass 2: pre-flight corruption check on ALL tsx/ts files
+  sanitized = sanitized.map(file => {
+    if (!file.path.endsWith('.tsx') && !file.path.endsWith('.ts')) return file
+    // Skip infrastructure files
+    if (file.path.includes('config') || file.path.includes('tsconfig') ||
+        file.path.endsWith('main.tsx') || file.path.endsWith('App.tsx') ||
+        file.path.includes('Layout')) return file
+
+    const { broken, reason } = detectCorruption(file.content)
+    if (broken) {
+      sanitizerRepairs.push(`${file.path.split('/').pop()}: ${reason}`)
+      const pageName = file.path.split('/').pop()?.replace(/\.(tsx|ts)$/, '') || 'Page'
+      const route = skeleton.pages.find(p => p.path === file.path)?.route || '/'
+      return { path: file.path, content: generateSafeStub(pageName, route) }
+    }
+    return file
   })
 
   setAgent('sanitizer', {
     status: sanitizerRepairs.length > 0 ? 'repaired' : 'done',
     message: sanitizerRepairs.length > 0
-      ? `${sanitizerRepairs.length} files auto-fixed`
-      : 'All files clean',
+      ? `${sanitizerRepairs.length} files auto-fixed before deploy`
+      : 'All files passed pre-flight checks',
     repairs: sanitizerRepairs
   })
-  onStatus('sanitizer', 'Sanitization complete', 82)
+  onStatus('sanitizer', 'Pre-flight validation complete', 82)
 
   // ── AGENT 5: Build ────────────────────────────────────────────────────────
   setAgent('build', { status: 'running', message: 'Deploying to Vercel...' })

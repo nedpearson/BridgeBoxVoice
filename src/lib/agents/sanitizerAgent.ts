@@ -65,23 +65,61 @@ const UI_STUBS: Record<string, string> = {
 
 // ── Syntax corruption detector ────────────────────────────────────────────────
 export function detectCorruption(content: string): { broken: boolean; reason: string } {
+  // Truncation markers
   if (content.includes('... +') || content.includes('**import*') || content.includes('// rest of'))
     return { broken: true, reason: 'truncation marker detected' }
   if (/^\s*\.\.\.\s*[^{[(]/m.test(content))
     return { broken: true, reason: 'dangling spread operator' }
+
+  // Data corruption
   if (/:\s*\d+\s+[a-z]{2,}/i.test(content) && /value|price|amount|total|count/i.test(content))
-    return { broken: true, reason: 'numeric data corruption (e.g. "value: 120 or ns 00")' }
+    return { broken: true, reason: 'numeric data corruption' }
+
+  // Broken JSX
   if (/<[a-zA-Z][^>]{0,200}[^=!<>"'\s]\)\s*>/m.test(content))
     return { broken: true, reason: 'broken JSX attribute with dangling )' }
+
+  // File too short
   if (content.trim().length < 50)
     return { broken: true, reason: 'file too short (likely truncated)' }
+
+  // Unbalanced braces
   const opens = (content.match(/\{/g) || []).length
   const closes = (content.match(/\}/g) || []).length
   if (Math.abs(opens - closes) > 10)
     return { broken: true, reason: `unbalanced braces (${opens} open, ${closes} close)` }
+
+  // Unbalanced parens (catches missing opening paren bugs like the ico() issue)
+  const parensOpen = (content.match(/\(/g) || []).length
+  const parensClose = (content.match(/\)/g) || []).length
+  if (Math.abs(parensOpen - parensClose) > 5)
+    return { broken: true, reason: `unbalanced parentheses (${parensOpen} open, ${parensClose} close)` }
+
+  // Unbalanced brackets
+  const brackOpen = (content.match(/\[/g) || []).length
+  const brackClose = (content.match(/\]/g) || []).length
+  if (Math.abs(brackOpen - brackClose) > 5)
+    return { broken: true, reason: `unbalanced brackets (${brackOpen} open, ${brackClose} close)` }
+
+  // Unclosed template literals (odd number of backticks outside strings is a red flag)
+  const backticks = (content.match(/`/g) || []).length
+  if (backticks % 2 !== 0)
+    return { broken: true, reason: 'unclosed template literal (odd number of backticks)' }
+
+  // Duplicate export default
+  const exportDefaults = (content.match(/\bexport\s+default\s+/g) || []).length
+  if (exportDefaults > 1)
+    return { broken: true, reason: `multiple export default declarations (${exportDefaults})` }
+
+  // Missing default export
   const hasDefaultExport = /export\s+default\s+(function|class|const|\w)/.test(content)
   if (!hasDefaultExport && content.length > 100)
     return { broken: true, reason: 'no default export found' }
+
+  // ANSI escape codes leaked into source (build log contamination)
+  if (/\x1b\[\d+m/.test(content) || /\[3[12]m/.test(content))
+    return { broken: true, reason: 'ANSI escape codes detected in source (log contamination)' }
+
   return { broken: false, reason: '' }
 }
 
