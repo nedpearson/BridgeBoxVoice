@@ -537,6 +537,7 @@ export default function ProjectDetailPage() {
 
   const handleApplyTemplate = (template: AppTemplate) => {
     setShowTemplateGallery(false)
+    setTab('overview')
     setEditTranscript(template.prompt)
     setEditingTranscript(true)
     toast('Template loaded - review and save to re-analyze')
