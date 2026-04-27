@@ -515,6 +515,7 @@ export default function ProjectDetailPage() {
 
   const saveTranscript = async (text: string) => {
     setSavingTranscript(true)
+    setStageProgress(0)
     const updates = { transcript: text, status: 'analyzing', spec: null }
     await supabase.from('projects').update(updates).eq('id', project!.id)
     updateProject(project!.id, updates as any)
@@ -1419,9 +1420,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                      onClick={() => {
-                        saveTranscript(selectedTemplate.prompt).then(() => setSelectedTemplate(null))
-                      }}
+                      onClick={() => saveTranscript(selectedTemplate.prompt)}
                       disabled={savingTranscript}
                       className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 shadow-md"
                     >
