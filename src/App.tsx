@@ -17,6 +17,7 @@ import StatusPage from './pages/StatusPage'
 import TeamPage from './pages/TeamPage'
 import HelpPage from './pages/HelpPage'
 import CapturesPage from './pages/CapturesPage'
+import { runPlatformSuperAgent } from './lib/agents/platformSuperAgent'
 
 // Handles Supabase OAuth redirect (/auth/callback?code=...) and exchanges the code for a session
 function AuthCallback() {
@@ -83,7 +84,15 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
+
+      // ── Platform SuperAgent — runs non-blocking after session resolves ──
+      // Validates DB tables, AI API, agent modules, env vars, and extension ZIP.
+      // Results appear in browser DevTools console (grouped under 🤖 BridgeBox Voice)
+      setTimeout(() => {
+        runPlatformSuperAgent().catch(e => console.warn('SuperAgent audit error:', e))
+      }, 2000) // 2s delay so it doesn't compete with initial page render
     })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setSession(session)
     })

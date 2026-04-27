@@ -280,7 +280,7 @@ export default function CapturesPage() {
 
               {/* Step indicator dots */}
               <div className="flex items-center justify-center gap-2 mb-6">
-                {INSTALL_STEPS.map((s, i) => (
+                {INSTALL_STEPS.map((_s, i) => (
                   <button
                     key={i}
                     onClick={() => setInstallStep(i)}
