@@ -154,3 +154,4 @@ export default function ${safe}(){
     </div></div>}
   </div>);
 }`
+}
