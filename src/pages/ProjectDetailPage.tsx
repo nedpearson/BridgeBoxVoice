@@ -152,6 +152,9 @@ export default function ProjectDetailPage() {
         } catch (e: any) {
           console.error('Analysis error:', e)
           toast.error('Analysis failed: ' + e.message)
+          await supabase.from('projects').update({ status: 'failed' }).eq('id', project.id)
+          setProject((p: any) => ({ ...p, status: 'failed' }))
+          updateProject(project.id, { status: 'failed' } as any)
         }
       }
 

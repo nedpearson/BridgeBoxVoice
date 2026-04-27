@@ -95,7 +95,8 @@ Respond ONLY with valid JSON in this exact structure. No markdown, no explanatio
 
 export async function extractIntent(transcript: string): Promise<AIAnalysis> {
   const raw = await callClaude(EXTRACTION_SYSTEM, `Voice transcript:\n\n${transcript}`)
-  return JSON.parse(raw) as AIAnalysis
+  const cleaned = raw.replace(/```[a-z]*\n?/ig, '').replace(/```\n?/g, '').trim()
+  return JSON.parse(cleaned) as AIAnalysis
 }
 
 // ─── Clarifying Q&A ───────────────────────────────────────────────────────────
@@ -136,7 +137,8 @@ Respond ONLY with valid JSON. Be extremely specific and detailed.`
 
 export async function generateSpec(analysis: AIAnalysis): Promise<Record<string, unknown>> {
   const raw = await callClaude(SPEC_SYSTEM, JSON.stringify(analysis, null, 2), [], 8192)
-  return JSON.parse(raw) as Record<string, unknown>
+  const cleaned = raw.replace(/```[a-z]*\n?/ig, '').replace(/```\n?/g, '').trim()
+  return JSON.parse(cleaned) as Record<string, unknown>
 }
 
 // ─── Prompt Enhancement ───────────────────────────────────────────────────────
