@@ -62,7 +62,7 @@ export function buildPageFromData(pageName: string, _route: string, data: PageDa
 
   return `import React from 'react';
 
-import { Plus, Edit2, X, ChevronRight, ChevronLeft, Search, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Edit2, X, ChevronRight, ChevronLeft, Search, RefreshCw, Trash2, FileText, AlertCircle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 
 const DATA=${dataJson};
 
