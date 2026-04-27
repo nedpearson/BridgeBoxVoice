@@ -84,7 +84,7 @@ FormFields: Full Name, Role (select), Location (select), Hire Date, Hourly Rate 
 SubRecords: Commission earned on sale ($XXX - gown name), Shift worked (X hrs), Performance review completed, Training completed, Bonus issued ($XXX), Schedule change requested.`
   }
 
-  if (n.includes('schedule') || n.includes('calendar') || n.includes('shift')) {
+  if (n.includes('schedule') || n.includes('calendar') || n.includes('shift') || n.includes('appointment') || n.includes('booking') || n.includes('event') || n.includes('meeting') || n.includes('rota') || n.includes('timetable') || n.includes('planner')) {
     return `Fields: id, employeeName, location, shiftDate, startTime, endTime, hoursScheduled, role, status (Scheduled/Worked/Called-Out/Swapped).
 Stats: Staff Scheduled This Week, Open Shifts, Total Hours This Week, Overtime Hours.
 FormFields: Employee (select), Location (select), Date, Start Time, End Time, Role (select), Notes (textarea).
@@ -559,7 +559,7 @@ export async function runPageAgent(
           onStatus(`${page.name}: Generating retail data (${attempt})...`)
           const data = await fetchPageData(page, spec, projectName)
           if (validatePageData(data)) {
-            const isCalPage = /appointment|booking|schedule|calendar/i.test(page.name)
+            const isCalPage = /appointment|booking|schedule|calendar|shift|rota|event|meeting|timetable|planner|availability/i.test(page.name)
             const builder = isCalPage ? buildCalendarPage : buildPageFromData
             const content = builder(page.name, page.route, data)
             const sanitized = sanitizeFileContent(page.path, content)

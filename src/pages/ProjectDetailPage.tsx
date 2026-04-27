@@ -1200,6 +1200,25 @@ export default function ProjectDetailPage() {
         {tab === 'deployments' && (
           <div className="max-w-4xl space-y-6">
 
+            {/* Rebuild & Redeploy Card */}
+            <div className="bg-gradient-to-br from-indigo-900/25 to-purple-900/20 border border-indigo-500/30 rounded-2xl p-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
+                    {buildingApp ? <div className="w-5 h-5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" /> : <RefreshCw size={22} className="text-indigo-400" />}
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-base">Rebuild &amp; Redeploy</p>
+                    <p className="text-slate-400 text-xs mt-0.5 max-w-md leading-relaxed">Re-generates all pages with the latest AI templates including live calendars for scheduling pages, premium card layouts, and drill-down views. Cache cleared automatically.</p>
+                  </div>
+                </div>
+                <button onClick={() => { Object.keys(localStorage).filter(k => k.startsWith('bbv_pg_')).forEach(k => localStorage.removeItem(k)); handleBuildFullApp(); }} disabled={buildingApp || !spec} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl transition-colors text-sm flex-shrink-0">
+                  {buildingApp ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{buildStage ? buildStage.slice(0,28)+'…' : 'Building…'}</> : <><RefreshCw size={14} />Rebuild App</>}
+                </button>
+              </div>
+              {buildingApp && <div className="mt-4"><div className="flex justify-between mb-1.5"><span className="text-indigo-300 text-xs truncate max-w-xs">{buildStage}</span><span className="text-slate-400 text-xs font-mono">{buildPct}%</span></div><div className="h-2 w-full bg-[#0B0F19] rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-indigo-600 to-purple-500 rounded-full transition-all duration-700" style={{width:`${buildPct}%`}} /></div></div>}
+            </div>
+
             {/* Spec Deployment Card */}
             {project.status === 'deployed' ? (() => {
               const displayUrl = project.web_app_url ?? `${window.location.origin}/project/${project.id}?tab=spec`
