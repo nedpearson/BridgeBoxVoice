@@ -9,7 +9,7 @@
 import { callClaude } from '../anthropic'
 import { sanitizeFileContent, generateSafeStub } from './sanitizerAgent'
 import type { SkeletonPage } from './skeletonAgent'
-import { buildPageFromData, type PageData } from './pageTemplate'
+import { buildPageFromData, buildCalendarPage, type PageData } from './pageTemplate'
 
 // â”€â”€ Retail-specific data generation prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DATA_SYSTEM = `You are a retail boutique business data expert.
@@ -547,7 +547,9 @@ export async function runPageAgent(
           onStatus(`${page.name}: Generating retail data (${attempt})...`)
           const data = await fetchPageData(page, spec, projectName)
           if (validatePageData(data)) {
-            const content = buildPageFromData(page.name, page.route, data)
+            const isCalPage = /appointment|booking|schedule|calendar/i.test(page.name)
+            const builder = isCalPage ? buildCalendarPage : buildPageFromData
+            const content = builder(page.name, page.route, data)
             const sanitized = sanitizeFileContent(page.path, content)
             onStatus(`${page.name}: Done`)
             return { path: page.path, content: sanitized }
