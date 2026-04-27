@@ -61,6 +61,7 @@ const SF='${statusField}';
 const DF='${dateField}';
 const EMPTY=${emptyForm};
 const IS_DASH=PAGE.toLowerCase().includes('dashboard');
+const IS_SETTINGS=PAGE.toLowerCase().includes('settings');
 
 const SC={active:'#22c55e',confirmed:'#60a5fa',completed:'#22c55e',done:'#22c55e',pending:'#fbbf24',cancelled:'#ef4444','no-show':'#ef4444',scheduled:'#60a5fa',paid:'#22c55e',overdue:'#ef4444',delinquent:'#ef4444',inactive:'#64748b','on-hold':'#f59e0b',new:'#818cf8',layaway:'#a855f7','full-time':'#22c55e','part-time':'#60a5fa',seasonal:'#f59e0b'};
 const sc=v=>SC[String(v||'').toLowerCase()]||'#a855f7';
@@ -155,6 +156,35 @@ export default function ${safe}(){
               React.createElement('button',{onClick:()=>{setForm({...sel});setShowForm(true);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(124,58,237,.1)',color:'#c084fc',border:'1px solid rgba(124,58,237,.25)'}},React.createElement(Edit2,{size:13}),'Edit Record'),
               React.createElement('button',{onClick:()=>setSel(null),style:{...BTN,width:'100%',justifyContent:'center',background:'#0d1626',color:'#94a3b8',border:'1px solid #1e2d45'}},React.createElement(ChevronLeft,{size:13}),'Back to List'),
               React.createElement('button',{onClick:()=>{del(sel.id);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(239,68,68,.06)',color:'#f87171',border:'1px solid rgba(239,68,68,.15)'}},React.createElement(Trash2,{size:13}),'Delete')
+            )
+          )
+        )
+      )
+    );
+  }
+
+  
+  // SETTINGS VIEW
+  if(IS_SETTINGS){
+    return React.createElement('div',{style:{...ROOT,display:'flex',flexDirection:'row'}},
+      React.createElement('div',{style:{width:'240px',background:'#0d1626',borderRight:'1px solid #1e2d45',padding:'24px 16px',display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}},
+        React.createElement('div',{style:{fontSize:'11px',fontWeight:800,color:'#475569',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'12px',paddingLeft:'12px'}},'Configuration'),
+        ['General','Store Details','Taxes & Fees','Payment Providers','Staff Permissions','Notifications'].map((tab,i)=>
+          React.createElement('button',{key:tab,style:{...BTN,background:i===0?'rgba(124,58,237,.1)':'transparent',color:i===0?'#c084fc':'#94a3b8',border:i===0?'1px solid rgba(124,58,237,.2)':'1px solid transparent',justifyContent:'flex-start',padding:'10px 14px'}},tab)
+        )
+      ),
+      React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'32px 48px'}},
+        React.createElement('div',{style:{maxWidth:'700px'}},
+          React.createElement('h2',{style:{margin:'0 0 24px',fontSize:'24px',fontWeight:900,color:'#fff'}},'General Settings'),
+          React.createElement('div',{style:{...CARD,padding:'28px',display:'flex',flexDirection:'column',gap:'20px'}},
+            FF.length>0?FF.map(f=>
+              React.createElement('div',{key:f.key},
+                React.createElement('label',{style:{display:'block',fontSize:'12px',fontWeight:700,color:'#94a3b8',marginBottom:'8px'}},fk(f.key)),
+                React.createElement('input',{defaultValue:DATA[0]?DATA[0][f.key]:'',style:{width:'100%',padding:'12px 16px',background:'#080c14',border:'1px solid #1e2d45',borderRadius:'10px',color:'#fff',fontSize:'14px',outline:'none'}})
+              )
+            ):React.createElement('div',{style:{color:'#94a3b8',fontSize:'14px'}},'No configuration fields defined.'),
+            React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',marginTop:'12px'}},
+              React.createElement('button',{style:{...BTN,background:'#7c3aed',color:'#fff',padding:'10px 20px'}},'Save Changes')
             )
           )
         )
