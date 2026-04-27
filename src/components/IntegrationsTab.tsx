@@ -41,7 +41,19 @@ export default function IntegrationsTab({ project, connectedIntegrations, setCon
     setBusy(true)
     setIntStates(p => ({ ...p, [int.id]: { status: 'generating', message: 'Agent starting...', files: 0, pages: [] } }))
     try {
-      const { runIntegrationAgent } = await import('../lib/agents/integrationAgent')
+      let runIntegrationAgent;
+      try {
+        const mod = await import('../lib/agents/integrationAgent')
+        runIntegrationAgent = mod.runIntegrationAgent
+      } catch (err: any) {
+        if (err.message?.includes('fetch dynamically imported module') || err.name === 'TypeError') {
+          toast.error('App updated. Reloading to fetch latest modules...')
+          setTimeout(() => window.location.reload(), 1500)
+          return
+        }
+        throw err
+      }
+
       const result = await runIntegrationAgent(
         int as any, project!.name, spec, [],
         (msg: string) => setIntStates(p => ({ ...p, [int.id]: { ...p[int.id], status: 'injecting', message: msg } }))

@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -393,7 +393,18 @@ export default function ProjectDetailPage() {
           return JSON.parse(raw as string) as Record<string, unknown>
         } catch { return {} }
       })()
-      const { runOrchestrator } = await import('../lib/agents/orchestrator')
+      let runOrchestrator;
+      try {
+        const mod = await import('../lib/agents/orchestrator')
+        runOrchestrator = mod.runOrchestrator
+      } catch (err: any) {
+        if (err.message?.includes('fetch dynamically imported module') || err.name === 'TypeError') {
+          toast.error('App updated. Reloading to fetch latest modules...')
+          setTimeout(() => window.location.reload(), 1500)
+          return
+        }
+        throw err
+      }
 
       const orchResult = await runOrchestrator(
         spec,

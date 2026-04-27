@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Workspace } from '../../types/platform'
 import { Mic, Type, Image as ImageIcon, Sparkles, CheckCircle, X, ChevronRight, ArrowLeft, Upload, FileImage, FileVideo, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { callClaude } from '../../lib/anthropic'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   workspace: Workspace
@@ -115,8 +117,6 @@ export default function EnhancementRequestWizard({ workspace, initialMode, onClo
 
     setLoading(true); setStep(3)
     try {
-      const { callClaude } = await import('../../lib/anthropic')
-
       // Build context from uploaded files
       let fileContext = ''
       if (uploadedFiles.length > 0) {
@@ -145,7 +145,6 @@ export default function EnhancementRequestWizard({ workspace, initialMode, onClo
 
       // Save to DB (non-blocking — ok if table doesn't exist)
       try {
-        const { supabase } = await import('../../lib/supabase')
         const { data: { session } } = await supabase.auth.getSession()
         await supabase.from('enhancement_requests').insert({
           workspace_id: workspace.id,
@@ -170,7 +169,6 @@ export default function EnhancementRequestWizard({ workspace, initialMode, onClo
 
   // Upload files to Supabase Storage bucket 'enhancement-media'
   async function uploadFilesToStorage(files: UploadedFile[], wsId: string) {
-    const { supabase } = await import('../../lib/supabase')
     for (const f of files) {
       const path = `${wsId}/${Date.now()}-${f.file.name.replace(/\s+/g, '_')}`
       await supabase.storage.from('enhancement-media').upload(path, f.file, { upsert: true })
@@ -182,8 +180,6 @@ export default function EnhancementRequestWizard({ workspace, initialMode, onClo
     { id: 'type'   as Mode, icon: Type,       label: 'Type Request',   desc: 'Write specific requirements',   color: 'emerald' },
     { id: 'upload' as Mode, icon: ImageIcon,  label: 'Upload Media',   desc: 'Screenshots or recordings',     color: 'purple' },
   ]
-
-  const curStep = MODES.find(m => m.id === mode)
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">

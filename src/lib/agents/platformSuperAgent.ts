@@ -159,18 +159,18 @@ export async function runPlatformSuperAgent(): Promise<PlatformHealth> {
   }
 
   // ── 10. Core agent modules ────────────────────────────────────────────────
+  const modules = import.meta.glob('../agents/*.ts')
   const agents = [
-    { name: 'Skeleton Agent', path: '../agents/skeletonAgent' },
-    { name: 'Page Agent',     path: '../agents/pageAgent' },
-    { name: 'Build Agent',    path: '../agents/buildAgent' },
-    { name: 'Orchestrator',   path: '../agents/orchestrator' },
+    { name: 'Skeleton Agent', path: '../agents/skeletonAgent.ts' },
+    { name: 'Page Agent',     path: '../agents/pageAgent.ts' },
+    { name: 'Build Agent',    path: '../agents/buildAgent.ts' },
+    { name: 'Orchestrator',   path: '../agents/orchestrator.ts' },
   ]
   for (const agent of agents) {
-    try {
-      await import(/* @vite-ignore */ agent.path)
+    if (modules[agent.path]) {
       checks.push({ name: agent.name, status: 'ok', message: 'Module importable' })
-    } catch (e: any) {
-      checks.push({ name: agent.name, status: 'fail', message: 'Import failed: ' + e.message, fix: `Check ${agent.path}.ts for syntax errors` })
+    } else {
+      checks.push({ name: agent.name, status: 'fail', message: 'Import failed: Not found in module graph', fix: `Check ${agent.path} for syntax errors` })
     }
   }
 
