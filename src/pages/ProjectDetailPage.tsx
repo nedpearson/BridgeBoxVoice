@@ -329,9 +329,9 @@ export default function ProjectDetailPage() {
       setPreviewRemaining('')
       setTimeout(() => { setPreviewHtml(html); setPreviewProgress(0); setPreviewStage(''); setPreviewElapsed('') }, 400)
 
-      // Ã¢â‚¬Ã¢â‚¬ Auto-deploy to Vercel so "Open App" always works Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬
+      // Auto-deploy to Vercel so "Open App" always works
       if (import.meta.env.VITE_VERCEL_TOKEN && project) {
-        const deployToast = toast.loading('Ã°Å¸Å¡â‚¬ Deploying live app...')
+        const deployToast = toast.loading('Deploying live app...')
         try {
           const { deployHtmlToVercel } = await import('../lib/deploy/vercel')
           const uniqueName = `${project.name}-${project.id.split('-')[0]}`
@@ -339,7 +339,7 @@ export default function ProjectDetailPage() {
           if (vercelRes?.state === 'READY' && vercelRes.url) {
             await supabase.from('projects').update({ production_url: vercelRes.url, status: 'deployed' }).eq('id', project.id)
             setProject((prev: any) => prev ? { ...prev, web_app_url: vercelRes.url, production_url: vercelRes.url, status: 'deployed' } : prev)
-            toast.success(`Ã¢Å“â€¦ Live: ${vercelRes.url}`, { id: deployToast })
+            toast.success(`Live: ${vercelRes.url}`, { id: deployToast })
           } else {
             toast.dismiss(deployToast)
           }
@@ -422,7 +422,7 @@ export default function ProjectDetailPage() {
           status: 'deployed'
         } : prev)
         const repairMsg = orchResult.totalRepairs > 0 ? ` (${orchResult.totalRepairs} auto-fix${orchResult.totalRepairs > 1 ? 'es' : ''} applied)` : ''
-        toast.success(`Ã¢Å“â€¦ App deployed!${repairMsg}`)
+        toast.success(`Deployed successfully!${repairMsg}`)
       } else {
         // Surface the actual error from the failing agent
         const failedAgent = orchResult.agents?.find(a => a.status === 'error')
