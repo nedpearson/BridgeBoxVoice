@@ -78,7 +78,7 @@ Return ONLY valid JSON. No markdown.`
   const prompt = `Project: ${projectName}\nFile: ${filePath}\nError: ${errorMsg}\n\nOriginal code:\n${originalContent.slice(0, 2500)}\n\nGenerate a COMPLETE fixed replacement.`
 
   try {
-    const raw = await callClaude(REPAIR_SYSTEM, prompt, [], 4096)
+    const raw = await callClaude(REPAIR_SYSTEM, prompt, [], 2048) // repair stubs are small
     const cleaned = raw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
     const parsed = JSON.parse(cleaned)
     return sanitizeFileContent(filePath, parsed.content as string)

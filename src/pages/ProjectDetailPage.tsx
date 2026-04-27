@@ -1382,7 +1382,24 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Danger zone */}
-            <div className="bg-red-900/10 border border-red-900/30 rounded-2xl p-6">
+            <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
+                  <h3 className="text-white font-semibold mb-1 text-sm">Build Cache</h3>
+                  <p className="text-slate-500 text-xs mb-4">
+                    Page data is cached 30 min to save AI tokens on rebuilds.
+                  </p>
+                  <button
+                    onClick={() => {
+                      const keys = Object.keys(localStorage).filter(k => k.startsWith('bbv_pg_'));
+                      keys.forEach(k => localStorage.removeItem(k));
+                      toast.success(`Cleared ${keys.length} cached pages`);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 text-sm font-semibold rounded-xl transition-all"
+                  >
+                    <RefreshCw size={13} /> Clear All Page Cache
+                  </button>
+                </div>
+
+                <div className="bg-red-900/10 border border-red-900/30 rounded-2xl p-6">
               <h3 className="text-red-400 font-semibold mb-2 text-sm">Danger Zone</h3>
               <p className="text-slate-500 text-xs mb-4">Deleting this project is permanent and cannot be undone.</p>
               {confirmDelete ? (

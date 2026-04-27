@@ -156,7 +156,17 @@ async function fetchPageData(
   spec: Record<string, unknown>,
   projectName: string
 ): Promise<PageData> {
-  const specStr = JSON.stringify(spec).slice(0, 500)
+  // -- 30-min localStorage cache � skip Claude on rebuilds ------------------
+  const _cacheKey = ('bbv_pg_' + projectName + '_' + page.name).replace(/\W/g, '_')
+  try {
+    const _hit = localStorage.getItem(_cacheKey)
+    if (_hit) {
+      const { d, t } = JSON.parse(_hit)
+      if (Date.now() - t < 1800000 && validatePageData(d)) return d
+    }
+  } catch {}
+
+  const specStr = JSON.stringify(spec).slice(0, 300) // hard cap prevents leaking full spec
   const hint = getPageTypeHint(page.name)
   const prompt = `Boutique Name: ${projectName}
 Business: ${spec.description || 'Luxury bridal boutique retail store'}
@@ -174,9 +184,11 @@ REQUIREMENTS:
 - Sub-records must reference specific dollar amounts, dates, and names
 - If this page involves products/inventory: ALWAYS include costPrice AND retailPrice AND margin fields`
 
-  const raw = await callClaude(DATA_SYSTEM, prompt, [], 4096)
+  const raw = await callClaude(DATA_SYSTEM, prompt, [], 2048) // optimized: JSON needs ~1k tokens max
   const cleaned = raw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
-  return JSON.parse(cleaned) as PageData
+  const _pageData = JSON.parse(cleaned) as PageData
+  try { localStorage.setItem(_cacheKey, JSON.stringify({ d: _pageData, t: Date.now() })) } catch {}
+  return _pageData
 }
 
 // â”€â”€ Validate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

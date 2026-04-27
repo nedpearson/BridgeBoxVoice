@@ -394,7 +394,7 @@ NO placeholders. NO empty sections. ALL buttons must work.
 
 SPEC:
 ${specJson}`
-  const raw = await callClaude(PREVIEW_SYSTEM, userMsg, [], 8192)
+  const raw = await callClaude(PREVIEW_SYSTEM, userMsg, [], 6144) // 6144 sufficient for full-page HTML
   return raw.replace(/^```html\n?/i, '').replace(/\n?```$/i, '').trim()
 }
 
