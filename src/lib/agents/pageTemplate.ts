@@ -280,70 +280,161 @@ export function buildCalendarPage(pageName: string, _route: string, data: PageDa
   const fields = data.fields.filter(f => f !== 'id')
   const dateField = fields.find(f => /date|time|start/i.test(f)) || fields[1] || 'date'
   const primaryField = fields[0] || 'name'
-  const statusField = fields.find(f => /status|state/i.test(f)) || ''
+  const statusField = fields.find(f => /status|state|stage/i.test(f)) || ''
+
   const dataJson = JSON.stringify(data.records).replace(/</g,'\\u003c').replace(/>/g,'\\u003e')
   const statsJson = JSON.stringify(data.stats)
-  const formJson = JSON.stringify(data.formFields)
-  const emptyForm = '{' + data.formFields.map(f => `"${f.key}":''`).join(',') + '}'
+  const formJson = JSON.stringify(data.formFields || [])
+  const emptyForm = '{' + (data.formFields || []).map(f => `"${f.key}":""`).join(',') + '}'
 
-  const L: string[] = []
-  L.push(`import React from 'react';`)
-  L.push(`import { Plus, X } from 'lucide-react';`)
-  L.push(`let DATA=[];try{DATA=${dataJson};}catch(e){console.error('Data parse error',e);}`)
-  L.push(`let STATS=[];try{STATS=${statsJson};}catch(e){}`)
-  L.push(`let FF=[];try{FF=${formJson};}catch(e){}`)
-  L.push(`const PAGE='${pageName}';`)
-  L.push(`const DF='${dateField}';`)
-  L.push(`const PF='${primaryField}';`)
-  L.push(`const SF='${statusField}';`)
-  L.push(`const EMPTY=${emptyForm};`)
-  L.push(`const MO=['January','February','March','April','May','June','July','August','September','October','November','December'];`)
-  L.push(`const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];`)
-  L.push(`const SC={active:'#22c55e',confirmed:'#60a5fa',scheduled:'#60a5fa',completed:'#22c55e',done:'#22c55e','no-show':'#ef4444',cancelled:'#ef4444',pending:'#fbbf24','walk-in':'#a855f7'};`)
-  L.push(`const ec=v=>SC[String(v).toLowerCase()]||'#a855f7';`)
-  L.push(`const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
-const isDashboard=PAGE.toLowerCase().includes('dashboard');`)
-  L.push(`const bB={display:'flex',alignItems:'center',gap:'5px',padding:'7px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:600,cursor:'pointer',border:'1px solid #334155',background:'#1e293b',color:'#94a3b8'};`)
-  L.push(`const bP={...bB,background:'#7c3aed',color:'#fff',borderColor:'#7c3aed'};`)
-  L.push(`const Bg=({v})=><span style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:ec(v)+'22',color:ec(v)}}><span style={{width:'5px',height:'5px',borderRadius:'50%',background:ec(v),flexShrink:0}}/>{String(v)}</span>;`)
-  L.push(`export default function ${safe}(){`)
-  L.push(`  const [items,setItems]=React.useState(DATA);`)
-  L.push(`  const [view,setView]=React.useState('month');`)
-  L.push(`  const [cur,setCur]=React.useState(new Date());`)
-  L.push(`  const [modal,setModal]=React.useState(false);`)
-  L.push(`  const [form,setForm]=React.useState(EMPTY);`)
-  L.push(`  const [sel,setSel]=React.useState(null);`)
-  L.push(`  const y=cur.getFullYear(),mo=cur.getMonth();`)
-  L.push(`  const save=()=>{if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));else setItems(it=>[...it,{...form,id:Date.now()}]);setModal(false);setForm(EMPTY);};`)
-  L.push(`  const nav=d=>{const n=new Date(cur);if(view==='month')n.setMonth(mo+d);else if(view==='week')n.setDate(cur.getDate()+d*7);else n.setDate(cur.getDate()+d);setCur(n);};`)
-  L.push(`  const evOn=d=>items.filter(r=>{try{return new Date(r[DF]).toDateString()===d.toDateString();}catch{return false;}});`)
-  L.push(`  const fd=new Date(y,mo,1).getDay();`)
-  L.push(`  const dim=new Date(y,mo+1,0).getDate();`)
-  L.push(`  const cells=[...Array(fd).fill(null),...Array.from({length:dim},(_,i)=>new Date(y,mo,i+1))];`)
-  L.push(`  const ws=new Date(cur);ws.setDate(cur.getDate()-cur.getDay());`)
-  L.push(`  const wk=Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return d;});`)
-  L.push(`  const hrs=Array.from({length:11},(_,i)=>i+8);`)
-  L.push(`  const hdr=view==='month'?MO[mo]+' '+y:view==='week'?'Week of '+wk[0].toLocaleDateString('en-US',{month:'short',day:'numeric'}):cur.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});`)
-  L.push(`  const pill=(ev,i)=><div key={i} onClick={()=>setSel(ev)} style={{background:ec(ev[SF]||'')+'28',borderLeft:'3px solid '+ec(ev[SF]||''),borderRadius:'4px',padding:'2px 5px',fontSize:'10px',color:'#e2e8f0',cursor:'pointer',marginBottom:'1px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{String(ev[PF]||'')}</div>;`)
-  L.push(`  return(<div style={{display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"}}>`)
-  L.push(`    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'1px',background:'#1a2235',flexShrink:0}}>{STATS.map((s,i)=><div key={i} style={{display:'flex',flexDirection:'column',gap:'4px',padding:'14px 20px',background:'#0d1117'}}><span style={{fontSize:'11px',fontWeight:600,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em'}}>{s.label}</span><span style={{fontSize:'24px',fontWeight:800,color:'#fff',lineHeight:1}}>{s.value}</span></div>)}</div>`)
-  L.push(`    <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px 20px',background:'#0d1117',borderBottom:'1px solid #1a2235',flexShrink:0}}>`)
-  L.push(`      <button onClick={()=>setCur(new Date())} style={bB}>Today</button>`)
-  L.push(`      <button onClick={()=>nav(-1)} style={{...bB,padding:'7px 10px'}}>&#8249;</button>`)
-  L.push(`      <button onClick={()=>nav(1)} style={{...bB,padding:'7px 10px'}}>&#8250;</button>`)
-  L.push(`      <span style={{fontSize:'15px',fontWeight:700,color:'#fff',flex:1}}>{hdr}</span>`)
-  L.push(`      {[['month','Month'],['week','Week'],['day','Day'],['list','List']].map(([v,l])=><button key={v} onClick={()=>setView(v)} style={{...bB,borderColor:view===v?'#7c3aed':'#334155',background:view===v?'rgba(124,58,237,.15)':'#1e293b',color:view===v?'#c084fc':'#94a3b8'}}>{l}</button>)}`)
-  L.push(`      <button onClick={()=>{setForm(EMPTY);setModal(true);}} style={bP}><Plus size={13}/>New</button>`)
-  L.push(`    </div>`)
-  L.push(`    <div style={{flex:1,overflowY:'auto'}}>`)
-  L.push(`      {view==='month'&&<div style={{padding:'12px'}}><div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',marginBottom:'4px'}}>{WD.map(d=><div key={d} style={{textAlign:'center',fontSize:'11px',fontWeight:700,color:'#475569',padding:'6px 0',textTransform:'uppercase'}}>{d}</div>)}</div><div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'3px'}}>{cells.map((d,i)=>{const evs=d?evOn(d):[];const isTd=d&&d.toDateString()===new Date().toDateString();return <div key={i} style={{minHeight:'96px',background:d?'#0d1117':'transparent',border:d?'1px solid '+(isTd?'#7c3aed':'#1a2235'):'none',borderRadius:'8px',padding:'6px'}}>{d&&<><div style={{fontSize:'12px',fontWeight:isTd?800:500,color:isTd?'#a855f7':'#64748b',marginBottom:'4px',width:'22px',height:'22px',borderRadius:'50%',background:isTd?'rgba(168,85,247,.2)':'transparent',display:'flex',alignItems:'center',justifyContent:'center'}}>{d.getDate()}</div>{evs.slice(0,3).map(pill)}{evs.length>3&&<div style={{fontSize:'10px',color:'#475569'}}>+{evs.length-3}</div>}</>}</div>;})} </div></div>}`)
-  L.push(`      {view==='week'&&<div><div style={{display:'grid',gridTemplateColumns:'52px repeat(7,1fr)',background:'#0d1117',position:'sticky',top:0,zIndex:5,borderBottom:'1px solid #1a2235'}}><div/>{wk.map((d,i)=>{const isTd=d.toDateString()===new Date().toDateString();return <div key={i} style={{padding:'8px 4px',textAlign:'center',borderLeft:'1px solid #1a2235'}}><div style={{fontSize:'10px',color:'#475569',textTransform:'uppercase'}}>{WD[d.getDay()]}</div><div style={{fontSize:'20px',fontWeight:700,color:isTd?'#a855f7':'#fff',width:'32px',height:'32px',borderRadius:'50%',background:isTd?'rgba(168,85,247,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto'}}>{d.getDate()}</div></div>;})} </div>{hrs.map(h=><div key={h} style={{display:'grid',gridTemplateColumns:'52px repeat(7,1fr)',borderBottom:'1px solid #1a2235'}}><div style={{padding:'6px 4px',textAlign:'right',fontSize:'10px',color:'#475569',paddingTop:'8px'}}>{h>12?h-12+'pm':h===12?'12pm':h+'am'}</div>{wk.map((d,di)=><div key={di} style={{borderLeft:'1px solid #1a2235',minHeight:'52px',padding:'2px 3px'}}>{evOn(d).map(pill)}</div>)}</div>)}</div>}`)
-  L.push(`      {view==='day'&&<div style={{padding:'16px',maxWidth:'640px'}}>{hrs.map(h=><div key={h} style={{display:'flex',gap:'12px',marginBottom:'1px'}}><div style={{width:'44px',textAlign:'right',fontSize:'11px',color:'#475569',paddingTop:'8px',flexShrink:0}}>{h>12?h-12+'pm':h===12?'12pm':h+'am'}</div><div style={{flex:1,borderTop:'1px solid #1a2235',minHeight:'60px',padding:'4px'}}>{evOn(cur).map(pill)}</div></div>)}</div>}`)
-  L.push(`      {view==='list'&&<div style={{padding:'16px',display:'flex',flexDirection:'column',gap:'8px'}}>{items.map((r,i)=><div key={i} onClick={()=>setSel(r)} style={{background:'#0d1117',border:'1px solid #1a2235',borderRadius:'12px',padding:'14px 18px',display:'flex',alignItems:'center',gap:'14px',cursor:'pointer',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='#7c3aed'} onMouseLeave={e=>e.currentTarget.style.borderColor='#1a2235'}><div style={{width:'10px',height:'10px',borderRadius:'50%',background:ec(r[SF]||''),flexShrink:0}}/><div style={{flex:1}}><div style={{fontSize:'14px',fontWeight:600,color:'#fff'}}>{String(r[PF]||'')}</div><div style={{fontSize:'12px',color:'#475569',marginTop:'2px'}}>{String(r[DF]||'')}</div></div>{SF&&<Bg v={r[SF]}/>}</div>)}</div>}`)
-  L.push(`    </div>`)
-  L.push(`    {sel&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',backdropFilter:'blur(4px)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}><div style={{background:'#0d1117',border:'1px solid #334155',borderRadius:'16px',width:'100%',maxWidth:'480px',overflow:'hidden'}}><div style={{padding:'16px 20px',borderBottom:'1px solid #1a2235',background:'linear-gradient(135deg,#160d38,#080d1c)',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:'16px',fontWeight:700,color:'#fff'}}>{String(sel[PF]||'Appointment')}</div><button onClick={()=>setSel(null)} style={{background:'none',border:'none',cursor:'pointer',color:'#64748b'}}><X size={16}/></button></div><div style={{padding:'16px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>{Object.entries(sel).filter(([k])=>k!=='id').map(([k,v])=><div key={k} style={{background:'#111827',borderRadius:'8px',padding:'10px 12px'}}><div style={{fontSize:'10px',color:'#475569',fontWeight:700,textTransform:'uppercase',marginBottom:'4px'}}>{fk(k)}</div>{k===SF?<Bg v={v}/>:<div style={{fontSize:'13px',color:'#e2e8f0',fontWeight:500}}>{String(v)}</div>}</div>)}</div><div style={{padding:'12px 16px',borderTop:'1px solid #1a2235',display:'flex',gap:'8px'}}><button onClick={()=>{setForm({...sel});setSel(null);setModal(true);}} style={{...bB,flex:1,justifyContent:'center'}}>Edit</button><button onClick={()=>{setItems(it=>it.filter(r=>r.id!==sel.id));setSel(null);}} style={{...bB,color:'#f87171',borderColor:'#450a0a',flex:1,justifyContent:'center'}}>Remove</button></div></div></div>}`)
-  L.push(`    {modal&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}><div style={{background:'#0d1117',border:'1px solid #334155',borderRadius:'16px',width:'100%',maxWidth:'540px',overflow:'hidden'}}><div style={{padding:'16px 24px',borderBottom:'1px solid #1a2235',background:'linear-gradient(135deg,#160d38,#080d1c)',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:'16px',fontWeight:700,color:'#fff'}}>{form.id?'Edit':'New'} Appointment</div><button onClick={()=>{setModal(false);setForm(EMPTY);}} style={{background:'none',border:'none',cursor:'pointer',color:'#64748b'}}><X size={16}/></button></div><div style={{padding:'20px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',maxHeight:'55vh',overflowY:'auto'}}>{FF.map(ff=><div key={ff.key} style={ff.type==='textarea'?{gridColumn:'1/-1'}:{}}><label style={{display:'block',fontSize:'11px',fontWeight:700,color:'#64748b',marginBottom:'5px',textTransform:'uppercase'}}>{ff.label}</label>{ff.type==='select'?<select value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} style={{width:'100%',background:'#111827',border:'1px solid #1e293b',borderRadius:'8px',padding:'8px 10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}>{(ff.options||[]).map(o=><option key={o}>{o}</option>)}</select>:ff.type==='textarea'?<textarea value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} rows={2} style={{width:'100%',background:'#111827',border:'1px solid #1e293b',borderRadius:'8px',padding:'8px 10px',color:'#e2e8f0',fontSize:'13px',outline:'none',resize:'none'}}/>:<input type={ff.type||'text'} value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} style={{width:'100%',background:'#111827',border:'1px solid #1e293b',borderRadius:'8px',padding:'8px 10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}/> }</div>)}</div><div style={{display:'flex',gap:'10px',padding:'14px 20px',borderTop:'1px solid #1a2235'}}><button onClick={()=>{setModal(false);setForm(EMPTY);}} style={{...bB,flex:1,justifyContent:'center'}}>Cancel</button><button onClick={save} style={{...bP,flex:1,justifyContent:'center'}}>{form.id?'Save':'Book'}</button></div></div></div>}`)
-  L.push(`  );`)
-  L.push(`}`)
-  return L.join('\n')
+  return `import React,{useState} from 'react';
+import {Plus,Search,ChevronRight,ChevronLeft,Edit2,Trash2,X,Calendar,Clock} from 'lucide-react';
+
+let DATA=[],STATS=[],FF=[];
+try{DATA=${dataJson};}catch(e){}
+try{STATS=${statsJson};}catch(e){}
+try{FF=${formJson};}catch(e){}
+
+const PAGE='${pageName}';
+const PF='${primaryField}';
+const SF='${statusField}';
+const DF='${dateField}';
+const EMPTY=${emptyForm};
+
+const MO=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const SC={active:'#22c55e',confirmed:'#60a5fa',completed:'#22c55e',done:'#22c55e',pending:'#fbbf24',cancelled:'#ef4444','no-show':'#ef4444',scheduled:'#60a5fa',paid:'#22c55e',overdue:'#ef4444',delinquent:'#ef4444'};
+const sc=v=>SC[String(v||'').toLowerCase()]||'#a855f7';
+const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
+const fmt=v=>v===null||v===undefined?'-':String(v);
+
+const ROOT={display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"};
+const BTN={display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer',border:'none'};
+
+export default function ${safe}(){
+  const [items,setItems]=useState(DATA);
+  const [view,setView]=useState('month');
+  const [cur,setCur]=useState(new Date());
+  const [showForm,setShowForm]=useState(false);
+  const [form,setForm]=useState(EMPTY);
+  const [sel,setSel]=useState(null);
+
+  const y=cur.getFullYear(),mo=cur.getMonth();
+  
+  const save=()=>{
+    if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));
+    else setItems(it=>[...it,{...form,id:Date.now()}]);
+    setShowForm(false);setForm(EMPTY);
+  };
+
+  const nav=d=>{
+    const n=new Date(cur);
+    if(view==='month')n.setMonth(mo+d);
+    else if(view==='week')n.setDate(cur.getDate()+d*7);
+    else n.setDate(cur.getDate()+d);
+    setCur(n);
+  };
+
+  const evOn=d=>items.filter(r=>{
+    try{return new Date(r[DF]).toDateString()===d.toDateString();}
+    catch{return false;}
+  });
+
+  const fd=new Date(y,mo,1).getDay();
+  const dim=new Date(y,mo+1,0).getDate();
+  const cells=[...Array(fd).fill(null),...Array.from({length:dim},(_,i)=>new Date(y,mo,i+1))];
+  
+  const ws=new Date(cur);ws.setDate(cur.getDate()-cur.getDay());
+  const wk=Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return d;});
+
+  const hdr=view==='month'?MO[mo]+' '+y:view==='week'?'Week of '+wk[0].toLocaleDateString('en-US',{month:'short',day:'numeric'}):cur.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  return React.createElement('div',{style:ROOT},
+    // Top bar
+    React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px',background:'#0d1626',borderBottom:'1px solid #1a2538',flexShrink:0}},
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'16px'}},
+        React.createElement('div',{style:{fontSize:'20px',fontWeight:900,color:'#fff'}},hdr),
+        React.createElement('div',{style:{display:'flex',gap:'4px'}},
+          React.createElement('button',{onClick:()=>nav(-1),style:{...BTN,padding:'6px',background:'#1e293b',color:'#94a3b8'}},React.createElement(ChevronLeft,{size:16})),
+          React.createElement('button',{onClick:()=>setCur(new Date()),style:{...BTN,padding:'6px 12px',background:'#1e293b',color:'#94a3b8'}},'Today'),
+          React.createElement('button',{onClick:()=>nav(1),style:{...BTN,padding:'6px',background:'#1e293b',color:'#94a3b8'}},React.createElement(ChevronRight,{size:16}))
+        )
+      ),
+      React.createElement('div',{style:{display:'flex',gap:'12px'}},
+        React.createElement('div',{style:{display:'flex',background:'#080c14',borderRadius:'8px',padding:'4px',border:'1px solid #1e293b'}},
+          ['month','week','day'].map(v=>
+            React.createElement('button',{key:v,onClick:()=>setView(v),style:{padding:'4px 12px',background:view===v?'#1e293b':'transparent',color:view===v?'#fff':'#64748b',border:'none',borderRadius:'6px',fontSize:'12px',fontWeight:700,cursor:'pointer',textTransform:'capitalize'}},v)
+          )
+        ),
+        React.createElement('button',{onClick:()=>{setForm(EMPTY);setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},React.createElement(Plus,{size:13}),'New')
+      )
+    ),
+    
+    // Calendar body
+    React.createElement('div',{style:{flex:1,overflow:'auto',padding:'20px'}},
+      view==='month'&&React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1a2538',borderRadius:'16px',overflow:'hidden'}},
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:'1px solid #1a2538',background:'#080c14'}},
+          WD.map(d=>React.createElement('div',{key:d,style:{padding:'12px',textAlign:'center',fontSize:'11px',fontWeight:800,color:'#475569',textTransform:'uppercase'}},d))
+        ),
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'minmax(120px,auto)'}},
+          cells.map((d,i)=>{
+            const evs=d?evOn(d):[];
+            return React.createElement('div',{key:i,style:{borderRight:i%7!==6?'1px solid #1a2538':'none',borderBottom:i<cells.length-7?'1px solid #1a2538':'none',padding:'8px',background:d&&d.toDateString()===new Date().toDateString()?'rgba(124,58,237,.05)':'transparent'}},
+              d&&React.createElement('div',{style:{fontSize:'12px',fontWeight:700,color:d.toDateString()===new Date().toDateString()?'#a855f7':'#94a3b8',marginBottom:'8px',textAlign:'right',padding:'4px'}},d.getDate()),
+              React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'4px'}},
+                evs.map((ev,ei)=>React.createElement('div',{key:ei,onClick:()=>setSel(ev),style:{background:sc(ev[SF])+'20',borderLeft:'3px solid '+sc(ev[SF]),padding:'4px 8px',borderRadius:'4px',fontSize:'11px',fontWeight:600,color:'#e2e8f0',cursor:'pointer',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},fmt(ev[PF])))
+              )
+            )
+          })
+        )
+      )
+    ),
+
+    // Form Modal
+    showForm&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100}},
+      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'480px'},onClick:e=>e.stopPropagation()},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},
+          React.createElement('h3',{style:{margin:0,fontSize:'16px',fontWeight:800,color:'#fff'}},form.id?'Edit':'New Event'),
+          React.createElement('button',{onClick:()=>setShowForm(false),style:{background:'none',border:'none',color:'#475569',cursor:'pointer'}},React.createElement(X,{size:16}))
+        ),
+        React.createElement('div',{style:{display:'grid',gap:'14px'}},
+          FF.map(f=>React.createElement('div',{key:f.key},
+            React.createElement('label',{style:{display:'block',fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(f.key)),
+            React.createElement('input',{value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
+          ))
+        ),
+        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}},
+          React.createElement('button',{onClick:()=>setShowForm(false),style:{...BTN,background:'#1e293b',color:'#94a3b8'}},'Cancel'),
+          React.createElement('button',{onClick:save,style:{...BTN,background:'#7c3aed',color:'#fff'}},'Save')
+        )
+      )
+    ),
+
+    // Detail Modal
+    sel&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100}},
+      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'400px'},onClick:e=>e.stopPropagation()},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'24px'}},
+          React.createElement('div',null,
+            React.createElement('h3',{style:{margin:0,fontSize:'20px',fontWeight:900,color:'#fff'}},fmt(sel[PF])),
+            React.createElement('p',{style:{margin:'4px 0 0',fontSize:'13px',color:'#94a3b8'}},fmt(sel[DF]))
+          ),
+          React.createElement('button',{onClick:()=>setSel(null),style:{background:'none',border:'none',color:'#475569',cursor:'pointer'}},React.createElement(X,{size:16}))
+        ),
+        React.createElement('div',{style:{display:'grid',gap:'16px',background:'#080c14',padding:'16px',borderRadius:'12px',border:'1px solid #1a2538'}},
+          Object.entries(sel).filter(([k])=>k!=='id'&&k!==PF&&k!==DF).map(([k,v])=>
+            React.createElement('div',{key:k},
+              React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}},fk(k)),
+              React.createElement('div',{style:{fontSize:'14px',color:'#e2e8f0',fontWeight:600}},fmt(v))
+            )
+          )
+        ),
+        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'24px'}},
+          React.createElement('button',{onClick:()=>{setForm({...sel});setSel(null);setShowForm(true);},style:{...BTN,flex:1,justifyContent:'center',background:'#7c3aed',color:'#fff'}},React.createElement(Edit2,{size:13}),'Edit'),
+          React.createElement('button',{onClick:()=>{setItems(it=>it.filter(i=>i.id!==sel.id));setSel(null);},style:{...BTN,flex:1,justifyContent:'center',background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)'}},React.createElement(Trash2,{size:13}),'Delete')
+        )
+      )
+    )
+  );
+}
+`
 }
