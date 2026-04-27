@@ -162,50 +162,7 @@ export default function ProjectDetailPage() {
     }
   }, [project?.status, project?.transcript, project?.id, project?.spec, updateProject])
 
-  // building ' deployed (simulated build phase -> now actually generates preview)
-  useEffect(() => {
-    if (project?.status === 'building' && project?.spec && !buildStarted.current) {
-      buildStarted.current = true
 
-      const runBuild = async () => {
-        try {
-          const spec = typeof project.spec === 'string' ? JSON.parse(project.spec) : project.spec
-          const { generateAppPreview } = await import('../lib/anthropic')
-          const html = await generateAppPreview(spec)
-          
-          setStageProgress(100)
-          setPreviewHtml(html)
-
-          // Mark as deployed
-          const { error } = await supabase.from('projects').update({
-            status: 'deployed'
-          }).eq('id', project.id)
-          if (error) throw error
-
-          // Insert a deployment history record
-          await supabase.from('project_deployments').insert({
-            project_id: project.id,
-            platform: 'web',
-            version: 'v1.0.0',
-            status: 'success',
-            url: ''
-          })
-
-          const deployed = { ...project, status: 'deployed' }
-          setProject(deployed)
-          updateProject(project.id, { status: 'deployed' } as any)
-          setDeployHistory([{ id: 'initial', project_id: project.id, platform: 'web', version: 'v1.0.0', status: 'success', url: '', created_at: new Date().toISOString() }])
-          toast.success('App built successfully!')
-        } catch (e: any) {
-          console.error('Build failed', e)
-          toast.error('Build failed: ' + e.message)
-          setProject((p: any) => ({ ...p, status: 'failed' }))
-        }
-      }
-
-      runBuild()
-    }
-  }, [project?.status, project?.spec, project?.id, updateProject])
 
   const deleteProject = async () => {
     if (!project) return
@@ -466,6 +423,14 @@ export default function ProjectDetailPage() {
       setBuildingApp(false)
     }
   }
+
+  // Auto-trigger full multi-agent build when status becomes 'building'
+  useEffect(() => {
+    if (project?.status === 'building' && project?.spec && !buildStarted.current) {
+      buildStarted.current = true
+      handleBuildFullApp()
+    }
+  }, [project?.status, project?.spec, project?.id])
 
   const handleCompilePlatform = async (label: string) => {
     if (!project) return
