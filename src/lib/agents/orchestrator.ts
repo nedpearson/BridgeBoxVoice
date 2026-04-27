@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ╔══════════════════════════════════════════════════════════════════════╗
  * ║  SUPER AGENT ORCHESTRATOR                                            ║
  * ║  Coordinates all agents through the full build pipeline:            ║
@@ -41,14 +41,14 @@ function generateInjectedFiles(
   pages: { path: string; name: string; route: string }[]
 ): { path: string; content: string }[] {
   const folderName = projectName.replace(/\s+/g, '-').toLowerCase()
-  const navLinks = pages.map(p => `  { path: '${p.route}', label: '${p.name}' }`).join(',\n')
+  const navLinks = pages.map(p => { const n=p.name.toLowerCase(); const icon=n.includes('dashboard')?'chart':n.includes('appointment')||n.includes('booking')?'cal':n.includes('customer')||n.includes('client')||n.includes('bride')?'user':n.includes('sale')||n.includes('pos')?'dollar':n.includes('gown')||n.includes('inventory')||n.includes('stock')?'box':n.includes('alteration')?'scissors':n.includes('pickup')?'truck':n.includes('vendor')||n.includes('order')?'shop':n.includes('invoice')||n.includes('payment')||n.includes('layaway')?'receipt':n.includes('staff')||n.includes('employee')||n.includes('hr')?'users':n.includes('payroll')||n.includes('commission')?'dollar':n.includes('schedule')||n.includes('shift')?'clock':n.includes('report')||n.includes('analytic')?'chart':n.includes('setting')?'gear':'page'; return `  { path: '\', label: '\', icon: '\' }`; }).join(',\n')
   const pageImports = pages.map((p, i) => `import Page${i} from './${p.path.replace(/^src\//, '').replace(/\.tsx$/, '')}';`).join('\n')
-  const pageRoutes = pages.map((p, i) =>
-    `          <Route path="${p.route}" element={<ErrorBoundary name="${p.name}"><Page${i} /></ErrorBoundary>} />`
-  ).join('\n')
+  const firstRoute = pages[0]?.route ?? '/dashboard'
+  const pageRoutesArr = pages.map((p, i) => `          <Route path="\" element={<ErrorBoundary name="\"><Page\ /></ErrorBoundary>} />`)
+  const pageRoutes = [...pageRoutesArr, `          <Route index element={<Navigate to="\" replace />} />`, `          <Route path="*" element={<Navigate to="\" replace />} />`].join('\n')
 
   const appTsx = `import React, { Component, ReactNode } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 ${pageImports}
 
@@ -92,7 +92,7 @@ ${pageRoutes}
 }`
 
   const layoutTsx = `import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 const ALL_PAGES = [
 ${navLinks}
@@ -124,6 +124,7 @@ const NAV_GROUPS = categorize(ALL_PAGES);
 const navItems = NAV_GROUPS.flatMap(g => g.items);
 
 const Layout: React.FC = () => {
+  const location = useLocation();
   const [time, setTime] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 30000); return () => clearInterval(t); }, []);
 
@@ -185,7 +186,7 @@ const Layout: React.FC = () => {
           {/* Sub-header breadcrumb bar */}
           <div style={{ height:'38px', background:'#111827', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', padding:'0 20px', flexShrink:0 }}>
             <span style={{ fontSize:'12px', color:'#475569' }}>
-              {navItems.find(n => n.path !== '/' && window.location.pathname.startsWith(n.path))?.label
+            {(() => { const loc = location.pathname; return navItems.find(n => n.path !== '/' && loc.startsWith(n.path))?.label ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'; })()}
                 ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'}
             </span>
           </div>
