@@ -510,14 +510,15 @@ export default function ProjectDetailPage() {
   }
 
   const saveTranscript = async (text: string) => {
-
     setSavingTranscript(true)
-    await supabase.from('projects').update({ transcript: text }).eq('id', project!.id)
-    updateProject(project!.id, { transcript: text } as any)
-    setProject((p: any) => ({ ...p, transcript: text }))
+    const updates = { transcript: text, status: 'analyzing', spec: null }
+    await supabase.from('projects').update(updates).eq('id', project!.id)
+    updateProject(project!.id, updates as any)
+    analysisStarted.current = false
+    setProject((p: any) => ({ ...p, ...updates }))
     setSavingTranscript(false)
     setEditingTranscript(false)
-    toast.success('Transcript updated')
+    toast.success('Transcript saved! Re-analyzing project...')
   }
 
   const handleRewriteTranscript = async () => {
