@@ -204,3 +204,382 @@ function validatePageData(data: unknown): data is PageData {
 }
 
 // â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ Settings page: real controls that save to localStorage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function generateSettingsPage(pageName: string, projectName: string): string {
+  const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
+  return `import React, { useState, useEffect } from 'react';
+import { Save, Plus, Trash2, X, Check, Settings, MapPin, DollarSign, CreditCard, Bell, Users, FileText, Clock } from 'lucide-react';
+
+const STORAGE_KEY = '${projectName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}_settings';
+
+const DEFAULTS = {
+  storeName: '${projectName}',
+  phone: '(504) 555-0100',
+  email: 'info@boutique.com',
+  website: 'www.boutique.com',
+  address: '123 Main St, Baton Rouge, LA 70801',
+  taxRate: '8.5',
+  defaultMarkup: '120',
+  currency: 'USD',
+  layawayMinDeposit: '20',
+  layawayTermOptions: ['3 months', '6 months', '9 months', '12 months'],
+  defaultLayawayTerm: '6 months',
+  alterationMarkup: '40',
+  rushFeeAmount: '75',
+  paymentMethods: { cash: true, creditCard: true, check: true, zelle: true, venmo: true, layaway: true, splitPayment: true },
+  locations: [
+    { id: 1, name: '${projectName} - Main', address: '123 Main St, Baton Rouge, LA', phone: '(504) 555-0100', hours: 'Mon-Sat 10AM-6PM, Sun 12PM-5PM', active: true },
+    { id: 2, name: '${projectName} - Covington', address: '456 Oak Ave, Covington, LA', phone: '(985) 555-0200', hours: 'Tue-Sat 10AM-6PM', active: true },
+  ],
+  commissionRates: { owner: '0', manager: '3', seniorStylist: '5', stylist: '4', partTime: '3' },
+  notifications: { appointmentConfirm: true, appointmentReminder: true, layawayDue: true, alterationReady: true, lowInventory: true, orderArrival: true },
+  receiptHeader: '${projectName}',
+  receiptFooter: 'Thank you for choosing us for your special day!',
+  invoiceTerms: 'Payment due upon receipt unless otherwise agreed in writing.',
+  invoicePrefix: 'INV-',
+  poPrefix: 'PO-',
+  appointmentDuration: '90',
+  appointmentBuffer: '15',
+};
+
+type Settings = typeof DEFAULTS;
+type Location = Settings['locations'][0];
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!checked)} className={\`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 \${checked ? 'bg-purple-600' : 'bg-slate-700'}\`}>
+      <span className={\`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform \${checked ? 'translate-x-5' : ''}\`} />
+    </button>
+  );
+}
+
+function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-[#1e293b] rounded-2xl border border-[#334155] overflow-hidden mb-4">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#334155] bg-[#0f172a]">
+        <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center flex-shrink-0">
+          <Icon size={16} className="text-purple-400" />
+        </div>
+        <h2 className="text-base font-bold text-white">{title}</h2>
+      </div>
+      <div className="p-6">{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-slate-400 mb-1.5">{label}</label>
+      {children}
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+function Input({ value, onChange, type = 'text', prefix }: { value: string; onChange: (v: string) => void; type?: string; prefix?: string }) {
+  return (
+    <div className="relative">
+      {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{prefix}</span>}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)}
+        className={\`w-full bg-[#0f172a] border border-[#334155] rounded-lg py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 \${prefix ? 'pl-7 pr-3' : 'px-3'}\`} />
+    </div>
+  );
+}
+
+export default function ${safe}() {
+  const [s, setS] = useState<Settings>(DEFAULTS);
+  const [saved, setSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState('store');
+  const [editingLoc, setEditingLoc] = useState<Location | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) setS({ ...DEFAULTS, ...JSON.parse(stored) });
+    } catch {}
+  }, []);
+
+  const save = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const set = (key: keyof Settings, val: any) => setS(prev => ({ ...prev, [key]: val }));
+  const setNested = (key: keyof Settings, subKey: string, val: any) => setS(prev => ({ ...prev, [key]: { ...(prev[key] as any), [subKey]: val } }));
+
+  const tabs = [
+    { id: 'store', label: 'Store Info', icon: Settings },
+    { id: 'locations', label: 'Locations', icon: MapPin },
+    { id: 'financial', label: 'Financial', icon: DollarSign },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
+    { id: 'staff', label: 'Staff', icon: Users },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'documents', label: 'Documents', icon: FileText },
+    { id: 'scheduling', label: 'Scheduling', icon: Clock },
+  ];
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Settings</h1>
+          <p className="text-slate-400 text-sm mt-0.5">Configure your boutique operations</p>
+        </div>
+        <button onClick={save} className={\`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all \${saved ? 'bg-emerald-600 text-white' : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/30'}\`}>
+          {saved ? <><Check size={16} />Saved!</> : <><Save size={16} />Save Changes</>}
+        </button>
+      </div>
+
+      <div className="flex gap-1 bg-[#0f172a] rounded-xl p-1 mb-6 overflow-x-auto">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={\`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all \${activeTab === t.id ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}\`}>
+            <t.icon size={14} />{t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'store' && (
+        <Section icon={Settings} title="Store Information">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Business Name"><Input value={s.storeName} onChange={v => set('storeName', v)} /></Field>
+            <Field label="Phone Number"><Input value={s.phone} onChange={v => set('phone', v)} /></Field>
+            <Field label="Email Address"><Input value={s.email} onChange={v => set('email', v)} /></Field>
+            <Field label="Website"><Input value={s.website} onChange={v => set('website', v)} /></Field>
+            <div className="col-span-2">
+              <Field label="Primary Address"><Input value={s.address} onChange={v => set('address', v)} /></Field>
+            </div>
+            <Field label="Currency">
+              <select value={s.currency} onChange={e => set('currency', e.target.value)} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+                <option>USD</option><option>CAD</option><option>EUR</option><option>GBP</option>
+              </select>
+            </Field>
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'locations' && (
+        <Section icon={MapPin} title="Store Locations">
+          <div className="space-y-3 mb-4">
+            {s.locations.map(loc => (
+              <div key={loc.id} className="bg-[#0f172a] rounded-xl p-4 border border-[#334155]">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-white font-semibold text-sm">{loc.name}</p>
+                      <span className={\`text-xs px-2 py-0.5 rounded-full \${loc.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}\`}>{loc.active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs">{loc.address}</p>
+                    <p className="text-slate-400 text-xs">{loc.phone} Â· {loc.hours}</p>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Toggle checked={loc.active} onChange={v => set('locations', s.locations.map(l => l.id === loc.id ? { ...l, active: v } : l))} />
+                    <button onClick={() => setEditingLoc({ ...loc })} className="p-1.5 text-slate-400 hover:text-purple-400 transition-colors"><Settings size={14} /></button>
+                    <button onClick={() => set('locations', s.locations.filter(l => l.id !== loc.id))} className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setEditingLoc({ id: Date.now(), name: '', address: '', phone: '', hours: 'Mon-Sat 10AM-6PM', active: true })}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#0f172a] border border-dashed border-[#334155] text-slate-400 hover:text-purple-400 hover:border-purple-500/50 rounded-xl text-sm transition-colors w-full justify-center">
+            <Plus size={16} />Add Location
+          </button>
+          {editingLoc && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-[#1e293b] rounded-2xl border border-[#334155] w-full max-w-md shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
+                  <h3 className="text-lg font-bold text-white">{editingLoc.id && s.locations.find(l => l.id === editingLoc.id) ? 'Edit' : 'New'} Location</h3>
+                  <button onClick={() => setEditingLoc(null)} className="p-1.5 text-slate-400 hover:text-white"><X size={18} /></button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <Field label="Location Name"><Input value={editingLoc.name} onChange={v => setEditingLoc(l => l ? { ...l, name: v } : l)} /></Field>
+                  <Field label="Address"><Input value={editingLoc.address} onChange={v => setEditingLoc(l => l ? { ...l, address: v } : l)} /></Field>
+                  <Field label="Phone"><Input value={editingLoc.phone} onChange={v => setEditingLoc(l => l ? { ...l, phone: v } : l)} /></Field>
+                  <Field label="Hours"><Input value={editingLoc.hours} onChange={v => setEditingLoc(l => l ? { ...l, hours: v } : l)} /></Field>
+                </div>
+                <div className="flex gap-3 px-6 pb-6">
+                  <button onClick={() => setEditingLoc(null)} className="flex-1 px-4 py-2.5 bg-[#0f172a] border border-[#334155] text-slate-300 rounded-xl text-sm font-semibold hover:bg-[#263148] transition-colors">Cancel</button>
+                  <button onClick={() => {
+                    const exists = s.locations.find(l => l.id === editingLoc!.id);
+                    set('locations', exists ? s.locations.map(l => l.id === editingLoc!.id ? editingLoc! : l) : [...s.locations, editingLoc!]);
+                    setEditingLoc(null);
+                  }} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors">Save Location</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {activeTab === 'financial' && (
+        <Section icon={DollarSign} title="Financial Settings">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Sales Tax Rate" hint="Applied to all taxable transactions"><Input value={s.taxRate} onChange={v => set('taxRate', v)} prefix="%" /></Field>
+            <Field label="Default Gown Markup" hint="Applied when creating inventory from cost price"><Input value={s.defaultMarkup} onChange={v => set('defaultMarkup', v)} prefix="%" /></Field>
+            <Field label="Alteration Markup" hint="Markup on tailor cost to charge customer"><Input value={s.alterationMarkup} onChange={v => set('alterationMarkup', v)} prefix="%" /></Field>
+            <Field label="Rush Fee (flat)" hint="Added when alteration is marked rush"><Input value={s.rushFeeAmount} onChange={v => set('rushFeeAmount', v)} prefix="$" /></Field>
+            <Field label="Min Layaway Deposit" hint="Minimum % required to start layaway"><Input value={s.layawayMinDeposit} onChange={v => set('layawayMinDeposit', v)} prefix="%" /></Field>
+            <Field label="Default Layaway Term">
+              <select value={s.defaultLayawayTerm} onChange={e => set('defaultLayawayTerm', e.target.value)} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+                {s.layawayTermOptions.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </Field>
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'payments' && (
+        <Section icon={CreditCard} title="Accepted Payment Methods">
+          <div className="space-y-3">
+            {Object.entries(s.paymentMethods).map(([method, enabled]) => (
+              <div key={method} className="flex items-center justify-between bg-[#0f172a] rounded-xl px-4 py-3 border border-[#334155]">
+                <div>
+                  <p className="text-white text-sm font-medium capitalize">{method.replace(/([A-Z])/g, ' $1').trim()}</p>
+                  <p className="text-slate-500 text-xs">{method === 'splitPayment' ? 'Allow combining two payment methods' : method === 'layaway' ? 'Installment payment plan' : ('Accept ' + method.replace(/([A-Z])/g, ' ' + '$' + '1').trim() + ' payments')}</p>
+                </div>
+                <Toggle checked={enabled as boolean} onChange={v => setNested('paymentMethods', method, v)} />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'staff' && (
+        <Section icon={Users} title="Commission Rates by Role">
+          <p className="text-slate-400 text-sm mb-4">Commission is calculated as a % of the retail sale price and paid in payroll.</p>
+          <div className="space-y-3">
+            {Object.entries(s.commissionRates).map(([role, rate]) => (
+              <div key={role} className="flex items-center justify-between bg-[#0f172a] rounded-xl px-4 py-3 border border-[#334155]">
+                <p className="text-white text-sm font-medium capitalize">{role.replace(/([A-Z])/g, ' $1').trim()}</p>
+                <div className="flex items-center gap-2">
+                  <Input value={rate as string} onChange={v => setNested('commissionRates', role, v)} prefix="%" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'notifications' && (
+        <Section icon={Bell} title="Notification Preferences">
+          <div className="space-y-3">
+            {[
+              { key: 'appointmentConfirm', label: 'Appointment Confirmations', desc: 'Send confirmation email/SMS when appointment is booked' },
+              { key: 'appointmentReminder', label: 'Appointment Reminders', desc: 'Send reminder 24 hours before appointment' },
+              { key: 'layawayDue', label: 'Layaway Payment Due', desc: 'Notify customer 3 days before payment due date' },
+              { key: 'alterationReady', label: 'Alteration Ready for Pickup', desc: 'Notify bride when alterations are complete' },
+              { key: 'lowInventory', label: 'Low Inventory Alerts', desc: 'Alert when a gown size has fewer than 2 units' },
+              { key: 'orderArrival', label: 'Vendor Order Arrival', desc: 'Notify manager when a PO is marked received' },
+            ].map(n => (
+              <div key={n.key} className="flex items-start justify-between bg-[#0f172a] rounded-xl px-4 py-3 border border-[#334155] gap-4">
+                <div className="flex-1">
+                  <p className="text-white text-sm font-medium">{n.label}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{n.desc}</p>
+                </div>
+                <Toggle checked={(s.notifications as any)[n.key]} onChange={v => setNested('notifications', n.key, v)} />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'documents' && (
+        <Section icon={FileText} title="Invoice & Receipt Settings">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Invoice Number Prefix" hint="e.g. INV-0001"><Input value={s.invoicePrefix} onChange={v => set('invoicePrefix', v)} /></Field>
+            <Field label="Purchase Order Prefix" hint="e.g. PO-0001"><Input value={s.poPrefix} onChange={v => set('poPrefix', v)} /></Field>
+            <div className="col-span-2">
+              <Field label="Receipt Header Text"><Input value={s.receiptHeader} onChange={v => set('receiptHeader', v)} /></Field>
+            </div>
+            <div className="col-span-2">
+              <Field label="Receipt Footer Message">
+                <textarea value={s.receiptFooter} onChange={e => set('receiptFooter', e.target.value)} rows={2} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 resize-none" />
+              </Field>
+            </div>
+            <div className="col-span-2">
+              <Field label="Invoice Payment Terms (default)">
+                <textarea value={s.invoiceTerms} onChange={e => set('invoiceTerms', e.target.value)} rows={2} className="w-full bg-[#0f172a] border border-[#334155] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 resize-none" />
+              </Field>
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {activeTab === 'scheduling' && (
+        <Section icon={Clock} title="Appointment Scheduling">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Default Appointment Duration" hint="Minutes per appointment slot"><Input value={s.appointmentDuration} onChange={v => set('appointmentDuration', v)} /></Field>
+            <Field label="Buffer Between Appointments" hint="Buffer time in minutes between bookings"><Input value={s.appointmentBuffer} onChange={v => set('appointmentBuffer', v)} /></Field>
+            <div className="col-span-2">
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-3">Business Hours (per location â€” edit in Locations tab)</p>
+              <div className="space-y-2">
+                {s.locations.map(loc => (
+                  <div key={loc.id} className="flex items-center justify-between bg-[#0f172a] rounded-lg px-4 py-2.5 border border-[#334155]">
+                    <span className="text-white text-sm">{loc.name}</span>
+                    <span className="text-slate-400 text-xs">{loc.hours}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+      )}
+    </div>
+  );
+}`
+}
+
+// â”€â”€ Main: Generate all pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export async function runPageAgent(
+  pages: SkeletonPage[],
+  spec: Record<string, unknown>,
+  projectName: string,
+  onStatus: (msg: string) => void,
+  maxRetriesPerPage = 2
+): Promise<{ path: string; content: string }[]> {
+  onStatus(`Page Agent: Generating ${pages.length} full retail pages...`)
+
+  const results = await Promise.allSettled(
+    pages.map(async (page) => {
+      
+
+      // Settings pages get a real functional settings UI â€” not the generic template
+      if (false) { // if (n.includes('setting') || n.includes('config') || n.includes('preference')) {
+
+        onStatus(`${page.name}: Building real settings page...`)
+        const content = generateSettingsPage(page.name, projectName)
+        // Settings is hand-crafted trusted code — skip sanitizer to preserve all icon imports
+        return { path: page.path, content }
+      }
+
+      for (let attempt = 1; attempt <= maxRetriesPerPage; attempt++) {
+        try {
+          onStatus(`${page.name}: Generating retail data (${attempt})...`)
+          const data = await fetchPageData(page, spec, projectName)
+          if (validatePageData(data)) {
+            const isCalPage = /appointment|booking|schedule|calendar|shift|rota|event|meeting|timetable|planner|availability/i.test(page.name)
+            const builder = isCalPage ? buildCalendarPage : buildPageFromData
+            const content = builder(page.name, page.route, data)
+            const sanitized = sanitizeFileContent(page.path, content)
+            onStatus(`${page.name}: Done`)
+            return { path: page.path, content: sanitized }
+          }
+          onStatus(`${page.name}: Validation failed, retrying...`)
+        } catch (e: any) {
+          onStatus(`${page.name}: ${e.message?.slice(0, 50)} (attempt ${attempt})`)
+        }
+      }
+      onStatus(`${page.name}: Using safe stub`)
+      return { path: page.path, content: generateSafeStub(page.name, page.route) }
+    })
+  )
+
+  return results.map((r, i) => {
+    if (r.status === 'fulfilled') return r.value
+    return { path: pages[i].path, content: generateSafeStub(pages[i].name, pages[i].route) }
+  })
+}
+
