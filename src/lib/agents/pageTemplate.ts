@@ -31,335 +31,250 @@ export function generateSafeStub(pageName: string, route: string): string {
 }
 
 export function buildPageFromData(pageName: string, _route: string, data: PageData): string {
-
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
-
   const fields = data.fields.filter(f => f !== 'id')
-
-  const primaryField = fields[0] || 'id'
-
-  const statusField = fields.find(f => /status|state|availability/i.test(f)) || ''
-
-  const moneyFields = fields.filter(f => /price|cost|total|amount|balance|revenue|gross|margin|pay|deposit|fee/i.test(f))
-
+  const primaryField = fields[0] || 'name'
+  const statusField = fields.find(f => /status|state|stage/i.test(f)) || ''
   const dateField = fields.find(f => /date|time|created|updated/i.test(f)) || ''
-
-
+  const moneyFields = fields.filter(f => /price|amount|balance|cost|fee|total|pay|revenue|salary|wage|rate/i.test(f))
 
   const dataJson = JSON.stringify(data.records).replace(/</g,'\\u003c').replace(/>/g,'\\u003e')
-
-  const subJson = JSON.stringify(data.subRecords)
-
   const statsJson = JSON.stringify(data.stats)
-
-  const formJson = JSON.stringify(data.formFields)
-
   const fieldsJson = JSON.stringify(fields)
+  const moneyJson = JSON.stringify(moneyFields)
+  const formJson = JSON.stringify(data.formFields || [])
+  const emptyForm = '{' + (data.formFields || []).map(f => `"${f.key}":""`).join(',') + '}'
 
-  const emptyForm = '{' + data.formFields.map(f => `"${f.key}":''`).join(',') + '}'
+  return `import React,{useState} from 'react';
+import {Plus,Search,ChevronRight,ChevronLeft,Edit2,Trash2,X,RefreshCw} from 'lucide-react';
 
-
-
-  return `import React from 'react';
-
-import { Plus, Edit2, X, ChevronRight, ChevronLeft, Search, RefreshCw, Trash2, FileText, AlertCircle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
-
-let DATA=[];try{DATA=${dataJson};}catch(e){console.error('Data parse error',e);}
-
-const SUB=${subJson};
-
-let STATS=[];try{STATS=${statsJson};}catch(e){}
-
-let FF=[];try{FF=${formJson};}catch(e){}
-
-const FIELDS=${fieldsJson};
+let DATA=[],STATS=[],FF=[],FIELDS=[],MF=[];
+try{DATA=${dataJson};}catch(e){console.error('DATA',e);}
+try{STATS=${statsJson};}catch(e){}
+try{FIELDS=${fieldsJson};}catch(e){}
+try{MF=${moneyJson};}catch(e){}
+try{FF=${formJson};}catch(e){}
 
 const PAGE='${pageName}';
-
 const PF='${primaryField}';
-
 const SF='${statusField}';
-
 const DF='${dateField}';
-
-const MF=${JSON.stringify(moneyFields)};
-
 const EMPTY=${emptyForm};
+const IS_DASH=PAGE.toLowerCase().includes('dashboard');
 
-const SC={active:{bg:'rgba(34,197,94,.12)',c:'#4ade80',dot:'#22c55e'},completed:{bg:'rgba(34,197,94,.12)',c:'#4ade80',dot:'#22c55e'},done:{bg:'rgba(34,197,94,.12)',c:'#4ade80',dot:'#22c55e'},'paid-off':{bg:'rgba(34,197,94,.12)',c:'#4ade80',dot:'#22c55e'},confirmed:{bg:'rgba(59,130,246,.12)',c:'#60a5fa',dot:'#3b82f6'},scheduled:{bg:'rgba(59,130,246,.12)',c:'#60a5fa',dot:'#3b82f6'},upcoming:{bg:'rgba(59,130,246,.12)',c:'#60a5fa',dot:'#3b82f6'},pending:{bg:'rgba(245,158,11,.12)',c:'#fbbf24',dot:'#f59e0b'},reserved:{bg:'rgba(245,158,11,.12)',c:'#fbbf24',dot:'#f59e0b'},cancelled:{bg:'rgba(239,68,68,.12)',c:'#f87171',dot:'#ef4444'},overdue:{bg:'rgba(239,68,68,.12)',c:'#f87171',dot:'#ef4444'},inactive:{bg:'rgba(100,116,139,.12)',c:'#94a3b8',dot:'#64748b'}};
-
-const bs=v=>SC[String(v).toLowerCase()]||{bg:'rgba(168,85,247,.12)',c:'#c084fc',dot:'#a855f7'};
-
-const isMon=k=>MF.includes(k);
-
-const isSt=k=>!!SF&&k===SF;
-
+const SC={active:'#22c55e',confirmed:'#60a5fa',completed:'#22c55e',done:'#22c55e',pending:'#fbbf24',cancelled:'#ef4444','no-show':'#ef4444',scheduled:'#60a5fa',paid:'#22c55e',overdue:'#ef4444',delinquent:'#ef4444',inactive:'#64748b','on-hold':'#f59e0b',new:'#818cf8',layaway:'#a855f7','full-time':'#22c55e','part-time':'#60a5fa',seasonal:'#f59e0b'};
+const sc=v=>SC[String(v||'').toLowerCase()]||'#a855f7';
 const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
-const isDashboard=PAGE.toLowerCase().includes('dashboard');
+const isMon=f=>MF.includes(f);
+const isSt=f=>SF&&f===SF;
+const fmt=v=>v===null||v===undefined?'-':String(v);
 
-const Badge=({v})=>{const s=bs(v);return <span style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:800,letterSpacing:'.02em',background:s.bg,color:s.c}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:s.dot,flexShrink:0}}/>{String(v)}</span>;};
+const ROOT={display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"};
+const BTN={display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer',border:'none'};
+const CARD={background:'linear-gradient(145deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'20px'};
 
-const bBase={display:'flex',alignItems:'center',gap:'5px',padding:'7px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:600,cursor:'pointer',border:'1px solid #334155',background:'#1e293b',color:'#94a3b8',transition:'all .15s'};
-
-const bPrimary={...bBase,background:'#7c3aed',color:'#fff',borderColor:'#7c3aed'};
+function Badge({v}){
+  const c=sc(v);
+  return React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:c+'20',color:c,border:'1px solid '+c+'40',whiteSpace:'nowrap'}},
+    React.createElement('span',{style:{width:'5px',height:'5px',borderRadius:'50%',background:c,flexShrink:0}}),
+    fmt(v)
+  );
+}
 
 export default function ${safe}(){
-
-  const [items,setItems]=React.useState(DATA);
-
-  const [q,setQ]=React.useState('');
-
-  const [nav,setNav]=React.useState([{type:'list',label:PAGE}]);
-
-  const [form,setForm]=React.useState(EMPTY);
-
-  const [modal,setModal]=React.useState(false);
-
-  const [dtab,setDtab]=React.useState('details');
-
-  const push=v=>{setNav(n=>[...n,v]);setDtab('details');};
-
-  const pop=()=>setNav(n=>n.length>1?n.slice(0,-1):n);
-
-  const jump=i=>setNav(n=>n.slice(0,i+1));
-
-  const cur=nav[nav.length-1];
-
-  const rows=items.filter(r=>!q||Object.values(r).some(v=>String(v).toLowerCase().includes(q.toLowerCase())));
-
-  const related=cur.data?SUB.filter(r=>r.parentId===cur.data.id):[];
-
-  const sameVal=cur.fieldKey?items.filter(r=>String(r[cur.fieldKey])===String(cur.fieldValue)):[];
-
-  const allVals=cur.fieldKey?[...new Set(items.map(r=>String(r[cur.fieldKey])))]:[];
-
-  const save=()=>{if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));else setItems(it=>[...it,{...form,id:Date.now()}]);setModal(false);setForm(EMPTY);};
-
-  const R={root:{display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"},top:{display:'flex',alignItems:'center',gap:'6px',padding:'12px 24px',background:'#080c18',borderBottom:'1px solid #1a2538',flexShrink:0,flexWrap:'wrap'},kpi:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:'1px',background:'#1a2235',flexShrink:0},kpiBox:{display:'flex',flexDirection:'column',gap:'6px',padding:'22px 28px',background:'#090d1a',cursor:'pointer',transition:'background .15s'},cards:{flex:1,overflowY:'auto',padding:'24px',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:'20px',alignContent:'start'},card:{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px',cursor:'pointer',transition:'all .2s',display:'flex',flexDirection:'column',gap:'12px'},fGrid:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'16px',padding:'24px'},fBox:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'14px',padding:'18px',cursor:'pointer',transition:'all .2s',display:'flex',flexDirection:'column',gap:'8px'}};
-
-  return (
-
-  <div style={R.root}>
-
-    {/* Breadcrumb + actions */}
-
-    <div style={R.top}>
-
-      {nav.map((v,i)=><React.Fragment key={i}>{i>0&&<ChevronRight size={13} style={{color:'#334155'}}/>}<button onClick={()=>jump(i)} style={{background:'none',border:'none',cursor:'pointer',color:i===nav.length-1?'#fff':'#475569',fontWeight:i===nav.length-1?700:400,fontSize:'13px',padding:'3px 6px',borderRadius:'6px'}}>{v.label}</button></React.Fragment>)}
-
-      <div style={{marginLeft:'auto',display:'flex',gap:'8px'}}>
-
-        {cur.type!=='list'&&<button onClick={pop} style={bBase}><ChevronLeft size={13}/>Back</button>}
-
-        {cur.type==='list'&&<><div style={{position:'relative'}}><Search size={13} style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#475569',pointerEvents:'none'}}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder={'Search '+PAGE.toLowerCase()+'...'} style={{paddingLeft:'32px',paddingRight:'12px',paddingTop:'8px',paddingBottom:'8px',background:'#111827',border:'1px solid #1e293b',borderRadius:'8px',color:'#e2e8f0',fontSize:'13px',outline:'none',width:'220px'}}/></div><button onClick={()=>{setForm(EMPTY);setModal(true);}} style={bPrimary}><Plus size={13}/>New {PAGE.replace(/s$/,'')}</button></>}
-
-        {cur.type==='record'&&cur.data&&<><button onClick={()=>{setForm({...cur.data});setModal(true);}} style={bBase}><Edit2 size={13}/>Edit</button><button onClick={()=>{setItems(it=>it.filter(i=>i.id!==cur.data.id));pop();}} style={{...bBase,color:'#f87171',borderColor:'#450a0a'}}><Trash2 size={13}/>Delete</button></>}
-
-      </div>
-
-    </div>
-
-
-
-
-    {/* DASHBOARD OVERVIEW */}
-    {isDashboard&&<div style={{flex:1,overflowY:'auto',padding:'24px',display:'flex',flexDirection:'column',gap:'20px'}}>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
-        {STATS.map((s,i)=><div key={i} style={{background:'linear-gradient(135deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
-          <div style={{fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'10px'}}>{s.label}</div>
-          <div style={{fontSize:'36px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</div>
-        </div>)}
-      </div>
-      <div style={{background:'linear-gradient(135deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
-        <div style={{fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}}>Recent Activity</div>
-        {DATA.length===0?<div style={{color:'#374151',fontSize:'13px',padding:'20px',textAlign:'center'}}>No recent data</div>:
-        <table style={{width:'100%',borderCollapse:'collapse'}}>
-          <thead><tr>{FIELDS.slice(0,5).map(f=><th key={f} style={{textAlign:'left',padding:'8px 12px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',borderBottom:'1px solid #1a2538'}}>{fk(f)}</th>)}</tr></thead>
-          <tbody>{DATA.slice(0,8).map((row,i)=><tr key={i} style={{borderBottom:'1px solid #111827'}}>{FIELDS.slice(0,5).map(f=><td key={f} style={{padding:'10px 12px',fontSize:'13px',color:isMon(f)?'#4ade80':'#94a3b8',fontWeight:isMon(f)?700:400,fontFamily:isMon(f)?'monospace':'inherit'}}>{String(row[f]||'-')}</td>)}</tr>)}</tbody>
-        </table>}
-      </div>
-    </div>}
-
-    {/* LIST VIEW */}
-
-    {cur.type==='list'&&!isDashboard&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
-
-      {/* KPI bar */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',background:'#090d1a',flexShrink:0,borderBottom:'1px solid #1a2538'}}>{STATS.map((s,i)=><div key={i} style={{padding:'20px 28px',borderRight:'1px solid #1a2538'}}><div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}}>{s.label}</div><div style={{fontSize:'32px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</div></div>)}</div>
-
-      {/* Toolbar */}
-      <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'14px 20px',background:'#080c18',borderBottom:'1px solid #1a2538',flexShrink:0}}>
-        <div style={{position:'relative',flex:1,maxWidth:'320px'}}><Search size={13} style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#374151',pointerEvents:'none'}}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder={'Search '+PAGE.toLowerCase()+'...'} style={{width:'100%',paddingLeft:'32px',paddingRight:'12px',paddingTop:'9px',paddingBottom:'9px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}/></div>
-        <div style={{marginLeft:'auto',display:'flex',gap:'8px'}}>
-          <span style={{fontSize:'12px',color:'#374151',alignSelf:'center'}}>{rows.length} {PAGE.toLowerCase()}</span>
-          <button onClick={()=>{setForm(EMPTY);setModal(true);}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',background:'#7c3aed',color:'#fff',border:'none',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Plus size={13}/>New {PAGE.replace(/s$/,'')}</button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div style={{flex:1,overflowY:'auto',padding:'16px 20px'}}>
-        {rows.length===0?<div style={{textAlign:'center',padding:'80px',color:'#374151',fontSize:'14px'}}>No records found</div>:
-        <table style={{width:'100%',borderCollapse:'collapse'}}>
-          <thead><tr style={{borderBottom:'2px solid #1a2538'}}>{[PF,...FIELDS.filter(f=>f!==PF).slice(0,4)].map(f=><th key={f} style={{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',whiteSpace:'nowrap'}}>{fk(f)}</th>)}<th style={{padding:'10px 14px'}}></th></tr></thead>
-          <tbody>
-            {rows.map((row,idx)=>{
-              const statusVal=SF?String(row[SF]||''):'';
-              const sc=bs(statusVal);
-              return <tr key={row.id||idx} onClick={()=>push({type:'record',label:String(row[PF]||''),data:row})} style={{borderBottom:'1px solid #111827',cursor:'pointer',transition:'background .1s'}} onMouseEnter={e=>e.currentTarget.style.background='#0d1626'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                <td style={{padding:'13px 14px',borderLeft:'3px solid '+sc.dot}}>
-                  <div style={{fontSize:'14px',fontWeight:700,color:'#fff'}}>{String(row[PF]||'')}</div>
-                  {DF&&<div style={{fontSize:'11px',color:'#4a5a72',marginTop:'2px'}}>{String(row[DF]||'')}</div>}
-                </td>
-                {FIELDS.filter(f=>f!==PF&&f!==DF).slice(0,3).map(f=><td key={f} style={{padding:'13px 14px'}}>{isSt(f)?<Badge v={row[f]}/>:isMon(f)?<span style={{color:'#4ade80',fontWeight:800,fontFamily:'monospace',fontSize:'15px'}}>{String(row[f]||'')}</span>:<span style={{color:'#94a3b8',fontSize:'13px'}}>{String(row[f]||'')}</span>}</td>)}
-                {SF&&<td style={{padding:'13px 14px'}}><Badge v={row[SF]}/></td>}
-                <td style={{padding:'13px 14px',textAlign:'right'}}><button onClick={e=>{e.stopPropagation();setForm({...row});setModal(true);}} style={{padding:'5px 12px',borderRadius:'7px',fontSize:'12px',fontWeight:600,border:'1px solid #1e2d45',background:'#0d1626',color:'#94a3b8',cursor:'pointer'}}>Edit</button></td>
-              </tr>;
-            })}
-          </tbody>
-        </table>}
-      </div>
-    </div>}
-
-
-    {/* RECORD DETAIL */}
-
-    {cur.type==='record'&&cur.data&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
-
-      {/* Detail header */}
-      <div style={{padding:'18px 24px',background:'linear-gradient(135deg,#0f1a35,#080d1c)',borderBottom:'1px solid #1e2d45',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px'}}>
-        <div>
-          <h2 style={{margin:0,fontSize:'22px',fontWeight:900,color:'#fff',letterSpacing:'-0.02em'}}>{String(cur.data[PF]||'Record')}</h2>
-          <p style={{margin:'4px 0 0',fontSize:'12px',color:'#4a5a72'}}>{PAGE} &rsaquo; {String(cur.data[PF])}</p>
-        </div>
-        <div style={{display:'flex',gap:'8px',alignItems:'center',flexShrink:0}}>
-          {SF&&<Badge v={cur.data[SF]}/>}
-          <button onClick={()=>{setForm({...cur.data});setModal(true);}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',background:'#7c3aed',color:'#fff',border:'none',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Edit2 size={13}/>Edit</button>
-          <button onClick={()=>{setItems(it=>it.filter(i=>i.id!==cur.data.id));pop();}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Trash2 size={13}/></button>
-        </div>
-      </div>
-
-      {/* Two-panel body */}
-      <div style={{flex:1,overflow:'auto',display:'flex',gap:0}}>
-
-        {/* Left: field sections */}
-        <div style={{flex:'1 1 65%',padding:'20px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'16px'}}>
-
-          {/* Information card */}
-          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
-            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'18px'}}>Record Information</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'16px'}}>
-              {Object.entries(cur.data).filter(([k])=>k!=='id').map(([k,v])=><div key={k} onClick={()=>push({type:'field',label:fk(k),fieldKey:k,fieldValue:v})} style={{cursor:'pointer',padding:'14px',background:'#080d1c',border:'1px solid #1a2538',borderRadius:'12px',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='#7c3aed'} onMouseLeave={e=>e.currentTarget.style.borderColor='#1a2538'}>
-                <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>{fk(k)}</div>
-                {isSt(k)?<Badge v={v}/>:isMon(k)?<div style={{fontSize:'24px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{String(v)}</div>:<div style={{fontSize:'15px',fontWeight:600,color:'#e2e8f0'}}>{String(v)}</div>}
-              </div>)}
-            </div>
-          </div>
-
-          {/* Activity */}
-          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
-            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'18px'}}>Activity ({related.length})</div>
-            {related.length===0?<div style={{textAlign:'center',padding:'32px',color:'#374151',fontSize:'13px'}}>No activity recorded</div>:
-            <div style={{display:'flex',flexDirection:'column',gap:0}}>
-              {related.map((r,ri)=><div key={r.id} onClick={()=>push({type:'subRecord',label:r.title,data:r,parentRecord:cur.data})} style={{display:'flex',alignItems:'flex-start',gap:'12px',padding:'14px 0',borderBottom:ri<related.length-1?'1px solid #111827':'none',cursor:'pointer'}}>
-                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#7c3aed',flexShrink:0,marginTop:'5px'}}/>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:'14px',fontWeight:600,color:'#e2e8f0'}}>{r.title}</div>
-                  <div style={{fontSize:'11px',color:'#4a5a72',marginTop:'2px'}}>{r.date}</div>
-                </div>
-                <Badge v={r.status}/>
-                <ChevronRight size={14} style={{color:'#374151'}}/>
-              </div>)}
-            </div>}
-          </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div style={{flex:'0 0 280px',padding:'20px 20px 20px 0',display:'flex',flexDirection:'column',gap:'14px',overflowY:'auto'}}>
-
-          {/* Money summary */}
-          {MF.length>0&&<div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'18px'}}>
-            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}}>Financial Summary</div>
-            {MF.map(f=><div key={f} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
-              <span style={{fontSize:'12px',color:'#94a3b8'}}>{fk(f)}</span>
-              <span style={{fontSize:'18px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{String(cur.data[f]||'')}</span>
-            </div>)}
-          </div>}
-
-          {/* Quick actions */}
-          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'18px'}}>
-            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}}>Quick Actions</div>
-            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              <button onClick={()=>{setForm({...cur.data});setModal(true);}} style={{width:'100%',padding:'10px',background:'rgba(124,58,237,.1)',border:'1px solid rgba(124,58,237,.25)',borderRadius:'10px',color:'#c084fc',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><Edit2 size={13}/>Edit Record</button>
-              <button onClick={pop} style={{width:'100%',padding:'10px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#94a3b8',fontSize:'13px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><ChevronLeft size={13}/>Back to List</button>
-              <button onClick={()=>{setItems(it=>it.filter(i=>i.id!==cur.data.id));pop();}} style={{width:'100%',padding:'10px',background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.15)',borderRadius:'10px',color:'#f87171',fontSize:'13px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><Trash2 size={13}/>Delete Record</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>}
-
-
-    {/* FIELD PIVOT */}
-
-    {cur.type==='field'&&<div style={{flex:1,overflowY:'auto',padding:'24px'}}>
-
-      <div style={{maxWidth:'700px'}}>
-
-        <div style={{background:'#0d1117',border:'1px solid #1a2235',borderRadius:'16px',overflow:'hidden',marginBottom:'16px'}}>
-
-          <div style={{padding:'24px',borderBottom:'1px solid #1a2235',background:'linear-gradient(135deg,#160d38,#080d1c)'}}>
-
-            <div style={{fontSize:'11px',fontWeight:700,color:'#7c3aed',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}}>{cur.label}</div>
-
-            {isSt(cur.fieldKey||'')?<Badge v={cur.fieldValue}/>:isMon(cur.fieldKey||'')?<div style={{fontSize:'36px',fontWeight:800,color:'#4ade80',fontFamily:'monospace'}}>{String(cur.fieldValue)}</div>:<div style={{fontSize:'28px',fontWeight:800,color:'#fff'}}>{String(cur.fieldValue)}</div>}
-
-          </div>
-
-          <div style={{padding:'20px'}}>
-
-            <div style={{fontSize:'12px',fontWeight:600,color:'#475569',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'12px'}}>{sameVal.length} records share this value</div>
-
-            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>{sameVal.map(r=><div key={r.id} onClick={()=>push({type:'record',label:String(r[PF]),data:r})} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'#111827',border:'1px solid #1a2235',borderRadius:'10px',cursor:'pointer',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='#7c3aed'} onMouseLeave={e=>e.currentTarget.style.borderColor='#1a2235'}><span style={{fontSize:'14px',fontWeight:500,color:'#e2e8f0'}}>{String(r[PF])}</span><ChevronRight size={14} style={{color:'#475569'}}/></div>)}</div>
-
-            <div style={{marginTop:'20px'}}><div style={{fontSize:'12px',fontWeight:600,color:'#475569',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'10px'}}>All values in {cur.label}</div><div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>{allVals.map(val=><button key={val} onClick={()=>push({type:'field',label:cur.label,fieldKey:cur.fieldKey,fieldValue:val})} style={{padding:'6px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:600,cursor:'pointer',border:'1px solid',borderColor:String(val)===String(cur.fieldValue)?'#7c3aed':'#1a2235',background:String(val)===String(cur.fieldValue)?'rgba(124,58,237,.2)':'#111827',color:String(val)===String(cur.fieldValue)?'#c084fc':'#64748b',transition:'all .15s'}}>{val}</button>)}</div></div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>}
-
-
-
-    {/* SUB-RECORD */}
-
-    {cur.type==='subRecord'&&cur.data&&<div style={{flex:1,overflowY:'auto',padding:'24px'}}><div style={{maxWidth:'700px',background:'#0d1117',border:'1px solid #1a2235',borderRadius:'16px',overflow:'hidden'}}><div style={{padding:'20px',borderBottom:'1px solid #1a2235',background:'linear-gradient(135deg,#160d38,#080d1c)'}}><h3 style={{margin:0,fontSize:'18px',fontWeight:700,color:'#fff'}}>{cur.data.title}</h3></div><div style={R.fGrid}>{Object.entries(cur.data).filter(([k])=>k!=='id'&&k!=='parentId').map(([k,v])=><div key={k} onClick={()=>push({type:'field',label:k,fieldKey:k,fieldValue:v})} style={R.fBox} onMouseEnter={e=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.background='#120a24';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#1a2235';e.currentTarget.style.background='#0d1117';}}><div style={{fontSize:'11px',fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em'}}>{k}</div>{isSt(k)?<Badge v={v}/>:<div style={{fontSize:'15px',fontWeight:600,color:'#e2e8f0'}}>{String(v)}</div>}</div>)}</div></div></div>}
-
-
-
-    {/* FORM MODAL */}
-
-    {modal&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',backdropFilter:'blur(6px)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}><div style={{background:'#0d1117',border:'1px solid #334155',borderRadius:'16px',width:'100%',maxWidth:'560px',overflow:'hidden',boxShadow:'0 32px 80px rgba(0,0,0,.9)'}}>
-
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 24px',borderBottom:'1px solid #1a2235',background:'linear-gradient(135deg,#160d38,#080d1c)'}}><div><div style={{fontSize:'16px',fontWeight:700,color:'#fff'}}>{form.id?'Edit':'New'} {PAGE.replace(/s$/,'')}</div><div style={{fontSize:'12px',color:'#475569',marginTop:'2px'}}>{form.id?'Update existing record':'Create a new record'}</div></div><button onClick={()=>{setModal(false);setForm(EMPTY);}} style={{background:'rgba(255,255,255,.08)',border:'none',cursor:'pointer',color:'#94a3b8',borderRadius:'8px',padding:'6px',display:'flex',alignItems:'center',justifyContent:'center'}}><X size={16}/></button></div>
-
-      <div style={{padding:'20px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',maxHeight:'60vh',overflowY:'auto'}}>{FF.map(ff=><div key={ff.key} style={ff.type==='textarea'?{gridColumn:'1/-1'}:{}}><label style={{display:'block',fontSize:'11px',fontWeight:700,color:'#64748b',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.06em'}}>{ff.label}</label>{ff.type==='select'?<select value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} style={{width:'100%',background:'#0a0f1e',border:'1px solid #1e2d45',borderRadius:'10px',padding:'11px 14px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}>{(ff.options||[]).map(o=><option key={o}>{o}</option>)}</select>:ff.type==='textarea'?<textarea value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} rows={3} style={{width:'100%',background:'#0a0f1e',border:'1px solid #1e2d45',borderRadius:'10px',padding:'11px 14px',color:'#e2e8f0',fontSize:'13px',outline:'none',resize:'vertical'}}/>:<input type={ff.type||'text'} value={form[ff.key]||''} onChange={e=>setForm(f=>({...f,[ff.key]:e.target.value}))} style={{width:'100%',background:'#0a0f1e',border:'1px solid #1e2d45',borderRadius:'10px',padding:'11px 14px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}/>}</div>)}</div>
-
-      <div style={{display:'flex',gap:'10px',padding:'16px 24px',borderTop:'1px solid #1a2235',background:'#080c14'}}><button onClick={()=>{setModal(false);setForm(EMPTY);}} style={{...bBase,flex:1,justifyContent:'center'}}>Cancel</button><button onClick={save} style={{...bPrimary,flex:1,justifyContent:'center'}}>{form.id?'Save Changes':'Create Record'}</button></div>
-
-    </div></div>}
-
-  </div>);
-
-}`
-
+  const [items,setItems]=useState(DATA);
+  const [q,setQ]=useState('');
+  const [sel,setSel]=useState(null);
+  const [form,setForm]=useState(EMPTY);
+  const [showForm,setShowForm]=useState(false);
+
+  const rows=q?items.filter(r=>Object.values(r).some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))):items;
+
+  const save=()=>{
+    if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));
+    else setItems(it=>[...it,{...form,id:Date.now()}]);
+    setShowForm(false);setForm(EMPTY);
+  };
+
+  const del=(id)=>{setItems(it=>it.filter(i=>i.id!==id));if(sel&&sel.id===id)setSel(null);};
+
+  // DETAIL VIEW
+  if(sel){
+    return React.createElement('div',{style:{...ROOT,overflowY:'hidden'}},
+      // Header
+      React.createElement('div',{style:{padding:'16px 24px',background:'#0d1626',borderBottom:'1px solid #1e2d45',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},
+          React.createElement('button',{onClick:()=>setSel(null),style:{...BTN,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',padding:'7px 14px'}},
+            React.createElement(ChevronLeft,{size:13}),'Back'
+          ),
+          React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:'20px',fontWeight:900,color:'#fff'}},fmt(sel[PF])),
+            React.createElement('div',{style:{fontSize:'12px',color:'#475569',marginTop:'2px'}},PAGE+' / '+fmt(sel[PF]))
+          )
+        ),
+        React.createElement('div',{style:{display:'flex',gap:'8px'}},
+          SF&&sel[SF]&&React.createElement(Badge,{v:sel[SF]}),
+          React.createElement('button',{onClick:()=>{setForm({...sel});setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},
+            React.createElement(Edit2,{size:13}),'Edit'
+          ),
+          React.createElement('button',{onClick:()=>{del(sel.id);},style:{...BTN,background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)'}},
+            React.createElement(Trash2,{size:13})
+          )
+        )
+      ),
+      // Body - two panel
+      React.createElement('div',{style:{display:'flex',flex:1,overflow:'hidden'}},
+        // Left panel - fields
+        React.createElement('div',{style:{flex:'1 1 65%',overflowY:'auto',padding:'20px',display:'flex',flexDirection:'column',gap:'14px'}},
+          React.createElement('div',{style:CARD},
+            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}},'Record Information'),
+            React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px'}},
+              Object.entries(sel).filter(([k])=>k!=='id').map(([k,v])=>
+                React.createElement('div',{key:k,style:{background:'#080d1c',border:'1px solid #1a2538',borderRadius:'12px',padding:'14px'}},
+                  React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(k)),
+                  isSt(k)?React.createElement(Badge,{v}):
+                  isMon(k)?React.createElement('div',{style:{fontSize:'22px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}},fmt(v)):
+                  React.createElement('div',{style:{fontSize:'14px',fontWeight:600,color:'#e2e8f0'}},fmt(v))
+                )
+              )
+            )
+          )
+        ),
+        // Right panel - summary + actions
+        React.createElement('div',{style:{flex:'0 0 260px',overflowY:'auto',padding:'20px 20px 20px 0',display:'flex',flexDirection:'column',gap:'12px'}},
+          MF.length>0&&React.createElement('div',{style:CARD},
+            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}},'Financial Summary'),
+            MF.map(f=>React.createElement('div',{key:f,style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}},
+              React.createElement('span',{style:{fontSize:'12px',color:'#94a3b8'}},fk(f)),
+              React.createElement('span',{style:{fontSize:'18px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}},fmt(sel[f]))
+            ))
+          ),
+          React.createElement('div',{style:CARD},
+            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}},'Quick Actions'),
+            React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}},
+              React.createElement('button',{onClick:()=>{setForm({...sel});setShowForm(true);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(124,58,237,.1)',color:'#c084fc',border:'1px solid rgba(124,58,237,.25)'}},React.createElement(Edit2,{size:13}),'Edit Record'),
+              React.createElement('button',{onClick:()=>setSel(null),style:{...BTN,width:'100%',justifyContent:'center',background:'#0d1626',color:'#94a3b8',border:'1px solid #1e2d45'}},React.createElement(ChevronLeft,{size:13}),'Back to List'),
+              React.createElement('button',{onClick:()=>{del(sel.id);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(239,68,68,.06)',color:'#f87171',border:'1px solid rgba(239,68,68,.15)'}},React.createElement(Trash2,{size:13}),'Delete')
+            )
+          )
+        )
+      )
+    );
+  }
+
+  // DASHBOARD VIEW
+  if(IS_DASH){
+    return React.createElement('div',{style:{...ROOT,overflowY:'auto',padding:'24px',gap:'20px'}},
+      React.createElement('div',{style:{fontSize:'22px',fontWeight:900,color:'#fff',marginBottom:'4px'}},PAGE+' Overview'),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}},
+        STATS.map((s,i)=>React.createElement('div',{key:i,style:{...CARD,padding:'22px'}},
+          React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'10px'}},s.label),
+          React.createElement('div',{style:{fontSize:'36px',fontWeight:900,color:'#fff',lineHeight:1}},s.value)
+        ))
+      ),
+      items.length>0&&React.createElement('div',{style:CARD},
+        React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}},'Recent Records'),
+        React.createElement('table',{style:{width:'100%',borderCollapse:'collapse'}},
+          React.createElement('thead',null,React.createElement('tr',null,
+            FIELDS.slice(0,5).map(f=>React.createElement('th',{key:f,style:{textAlign:'left',padding:'8px 12px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',borderBottom:'1px solid #1a2538'}},fk(f)))
+          )),
+          React.createElement('tbody',null,
+            items.slice(0,10).map((row,i)=>React.createElement('tr',{key:i,onClick:()=>setSel(row),style:{borderBottom:'1px solid #111827',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#0d1626',onMouseLeave:e=>e.currentTarget.style.background='transparent'},
+              FIELDS.slice(0,5).map(f=>React.createElement('td',{key:f,style:{padding:'10px 12px'}},
+                isSt(f)?React.createElement(Badge,{v:row[f]}):
+                isMon(f)?React.createElement('span',{style:{color:'#4ade80',fontWeight:800,fontFamily:'monospace'}},fmt(row[f])):
+                React.createElement('span',{style:{color:'#94a3b8',fontSize:'13px'}},fmt(row[f]))
+              ))
+            ))
+          )
+        )
+      )
+    );
+  }
+
+  // LIST VIEW
+  return React.createElement('div',{style:{...ROOT}},
+    // KPI bar
+    STATS.length>0&&React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',background:'#090d1a',flexShrink:0,borderBottom:'1px solid #1a2538'}},
+      STATS.map((s,i)=>React.createElement('div',{key:i,style:{padding:'20px 24px',borderRight:'1px solid #1a2538'}},
+        React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}},s.label),
+        React.createElement('div',{style:{fontSize:'28px',fontWeight:900,color:'#fff',lineHeight:1}},s.value)
+      ))
+    ),
+    // Toolbar
+    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'10px',padding:'12px 20px',background:'#080c18',borderBottom:'1px solid #1a2538',flexShrink:0}},
+      React.createElement('div',{style:{position:'relative',flex:1,maxWidth:'300px'}},
+        React.createElement(Search,{size:13,style:{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#374151',pointerEvents:'none'}}),
+        React.createElement('input',{value:q,onChange:e=>setQ(e.target.value),placeholder:'Search '+PAGE.toLowerCase()+'...',style:{width:'100%',paddingLeft:'32px',paddingRight:'12px',paddingTop:'8px',paddingBottom:'8px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
+      ),
+      React.createElement('span',{style:{fontSize:'12px',color:'#374151',marginLeft:'auto'}},rows.length+' '+PAGE.toLowerCase()),
+      React.createElement('button',{onClick:()=>{setForm(EMPTY);setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},
+        React.createElement(Plus,{size:13}),'New'
+      )
+    ),
+    // Table
+    React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'0 20px 20px'}},
+      rows.length===0
+        ?React.createElement('div',{style:{textAlign:'center',padding:'80px',color:'#374151',fontSize:'14px'}},'No records found')
+        :React.createElement('table',{style:{width:'100%',borderCollapse:'collapse',marginTop:'12px'}},
+          React.createElement('thead',null,
+            React.createElement('tr',{style:{borderBottom:'2px solid #1a2538'}},
+              React.createElement('th',{style:{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em'}},fk(PF)),
+              FIELDS.filter(f=>f!==PF).slice(0,4).map(f=>React.createElement('th',{key:f,style:{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em'}},fk(f))),
+              React.createElement('th',{style:{width:'60px'}})
+            )
+          ),
+          React.createElement('tbody',null,
+            rows.map((row,idx)=>{
+              const sv=SF?fmt(row[SF]):'';
+              const c=sc(sv);
+              return React.createElement('tr',{key:row.id||idx,onClick:()=>setSel(row),style:{borderBottom:'1px solid #111827',cursor:'pointer',transition:'background .1s'},onMouseEnter:e=>e.currentTarget.style.background='#0d1626',onMouseLeave:e=>e.currentTarget.style.background='transparent'},
+                React.createElement('td',{style:{padding:'12px 14px',borderLeft:'3px solid '+c}},
+                  React.createElement('div',{style:{fontSize:'14px',fontWeight:700,color:'#fff'}},fmt(row[PF])),
+                  DF&&row[DF]&&React.createElement('div',{style:{fontSize:'11px',color:'#475569',marginTop:'2px'}},fmt(row[DF]))
+                ),
+                FIELDS.filter(f=>f!==PF).slice(0,4).map(f=>React.createElement('td',{key:f,style:{padding:'12px 14px'}},
+                  isSt(f)?React.createElement(Badge,{v:row[f]}):
+                  isMon(f)?React.createElement('span',{style:{color:'#4ade80',fontWeight:800,fontFamily:'monospace',fontSize:'14px'}},fmt(row[f])):
+                  React.createElement('span',{style:{color:'#94a3b8',fontSize:'13px'}},fmt(row[f]))
+                )),
+                React.createElement('td',{style:{padding:'12px 14px',textAlign:'right'}},
+                  React.createElement('button',{onClick:e=>{e.stopPropagation();setForm({...row});setShowForm(true);},style:{padding:'5px 12px',borderRadius:'7px',fontSize:'12px',fontWeight:600,border:'1px solid #1e2d45',background:'#0d1626',color:'#94a3b8',cursor:'pointer'}},'Edit')
+                )
+              );
+            })
+          )
+        )
+    ),
+    // FORM MODAL
+    showForm&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}},
+      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'480px',maxWidth:'90vw',maxHeight:'80vh',overflowY:'auto'},onClick:e=>e.stopPropagation()},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},
+          React.createElement('h3',{style:{margin:0,fontSize:'16px',fontWeight:800,color:'#fff'}},form.id?'Edit '+fmt(form[PF]):'New '+PAGE.replace(/s$/,'')),
+          React.createElement('button',{onClick:()=>setShowForm(false),style:{background:'none',border:'none',color:'#475569',cursor:'pointer',padding:'4px'}},React.createElement(X,{size:16}))
+        ),
+        React.createElement('div',{style:{display:'grid',gap:'14px'}},
+          FF.map(f=>React.createElement('div',{key:f.key},
+            React.createElement('label',{style:{display:'block',fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(f.key)),
+            f.type==='select'
+              ?React.createElement('select',{value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}},
+                (f.options||[]).map(o=>React.createElement('option',{key:o,value:o},o))
+              )
+              :React.createElement('input',{type:f.type||'text',value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
+          ))
+        ),
+        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}},
+          React.createElement('button',{onClick:()=>setShowForm(false),style:{...BTN,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155'}},'Cancel'),
+          React.createElement('button',{onClick:save,style:{...BTN,background:'#7c3aed',color:'#fff'}},'Save')
+        )
+      )
+    )
+  );
+}
+`
 }
 
 
-
-// ── Calendar page builder ──────────────────────────────────────────────────────
 export function buildCalendarPage(pageName: string, _route: string, data: PageData): string {
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
   const fields = data.fields.filter(f => f !== 'id')
