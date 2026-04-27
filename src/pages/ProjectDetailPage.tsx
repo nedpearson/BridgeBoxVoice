@@ -1583,6 +1583,13 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+      {/* Template Gallery Modal */}
+      {showTemplateGallery && (
+        <TemplateGallery
+          onSelect={handleApplyTemplate}
+          onClose={() => setShowTemplateGallery(false)}
+        />
+      )}
     </div>
   )
 }
