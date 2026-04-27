@@ -72,6 +72,7 @@ export default function ProjectDetailPage() {
   const [savingTranscript, setSavingTranscript] = useState(false)
   const [rewritingTranscript, setRewritingTranscript] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<AppTemplate | null>(null)
   const [showQR, setShowQR] = useState(false)
   const [mobilePreviewUrl, setMobilePreviewUrl] = useState<string | null>(null)
   const [buildingApp, setBuildingApp] = useState(false)
@@ -538,10 +539,8 @@ export default function ProjectDetailPage() {
 
   const handleApplyTemplate = (template: AppTemplate) => {
     setShowTemplateGallery(false)
-    setTab('overview')
-    setEditTranscript(template.prompt)
-    setEditingTranscript(true)
-    toast('Template loaded - review and save to re-analyze')
+    setSelectedTemplate(template)
+    toast('Template selected. Click Save Template to apply it.')
   }
 
   if (loading) return (
@@ -1405,6 +1404,37 @@ export default function ProjectDetailPage() {
                  Apply a Template
               </h3>
               <p className="text-slate-500 text-xs mb-4">Pick an industry template to pre-fill the project description and re-analyze.</p>
+              
+              {selectedTemplate && (
+                <div className="flex items-center gap-4 bg-[#0B0F19] border border-[#334155] rounded-xl p-4 mb-5 shadow-lg">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 text-2xl">
+                    {selectedTemplate.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-bold truncate">{selectedTemplate.name}</p>
+                    <p className="text-slate-400 text-xs truncate mt-0.5">{selectedTemplate.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        saveTranscript(selectedTemplate.prompt).then(() => setSelectedTemplate(null))
+                      }}
+                      disabled={savingTranscript}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 shadow-md"
+                    >
+                      {savingTranscript ? <RefreshCw size={13} className="animate-spin" /> : 'Save Template'}
+                    </button>
+                    <button
+                      onClick={() => setSelectedTemplate(null)}
+                      disabled={savingTranscript}
+                      className="p-2 text-slate-500 hover:text-white transition-colors rounded-lg hover:bg-[#1E293B]"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={() => setShowTemplateGallery(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 text-sm font-semibold rounded-xl transition-all"
