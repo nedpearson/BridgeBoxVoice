@@ -53,7 +53,7 @@ export function buildPageFromData(pageName: string, _route: string, data: PageDa
 
   // Icon map — plain ASCII fallback labels so no encoding issues
   lines.push(`const ICON={name:'👤',customer:'👤',bride:'👤',client:'👤',employee:'👤',stylist:'👤',date:'📅',appointmentDate:'📅',weddingDate:'💍',dueDate:'📅',nextPayment:'📅',status:'🔵',paymentStatus:'💳',phone:'📞',email:'📧',costPrice:'💵',retailPrice:'🏷',totalCost:'💵',totalRetail:'🏷',totalDue:'💵',balance:'💵',amountPaid:'💳',deposit:'💳',margin:'📈',commissionRate:'📈',vendor:'🏭',designer:'🏷',brand:'🏷',size:'📐',color:'🎨',style:'👗',gown:'👗',location:'📍',paymentTerms:'📋',notes:'📝',description:'📝',quantity:'📦',totalGross:'💰',basePay:'💰',totalSales:'💰',category:'🗂'};`)
-  lines.push(`const ico=(k)=>ICON[k]||Object.entries(ICON).find(([fk])=>k.toLowerCase().includes(fk.toLowerCase()))||['','▪'])[1]||'▪';`)
+  lines.push(`const ico=(k)=>ICON[k]||(Object.entries(ICON).find(([fk])=>k.toLowerCase().includes(fk.toLowerCase()))||['','*'])[1]||'*';`)
   lines.push(`const SC={active:{bg:'#052e16',c:'#4ade80',d:'#22c55e'},completed:{bg:'#052e16',c:'#4ade80',d:'#22c55e'},done:{bg:'#052e16',c:'#4ade80',d:'#22c55e'},confirmed:{bg:'#0c1a4a',c:'#60a5fa',d:'#3b82f6'},scheduled:{bg:'#0c1a4a',c:'#60a5fa',d:'#3b82f6'},pending:{bg:'#2d1a00',c:'#fbbf24',d:'#f59e0b'},cancelled:{bg:'#2d0000',c:'#f87171',d:'#ef4444'},overdue:{bg:'#2d0000',c:'#f87171',d:'#ef4444'},inactive:{bg:'#1a1a1a',c:'#94a3b8',d:'#64748b'}};`)
   lines.push(`const bs=(v)=>SC[String(v).toLowerCase()]||{bg:'#1e0a3a',c:'#c084fc',d:'#a855f7'};`)
   lines.push(`const isMon=(k)=>/amount|price|pay|cost|revenue|total|value|gross|balance|margin|deposit|fee/i.test(k);`)
