@@ -410,6 +410,9 @@ export default function ProjectDetailPage() {
         const errorDetail = failedAgent?.message || 'Unknown error'
         setBuildStage(`Failed: ${errorDetail.slice(0, 80)}`)
         toast.error(`Build failed: ${errorDetail.slice(0, 120)}`)
+        await supabase.from('projects').update({ status: 'failed' }).eq('id', project.id)
+        setProject((p: any) => ({ ...p, status: 'failed' }))
+        updateProject(project.id, { status: 'failed' } as any)
       }
 
       setBuildPct(100); setBuildStage('Done!')
@@ -418,6 +421,9 @@ export default function ProjectDetailPage() {
     } catch (e: any) {
       setBuildPct(0); setBuildStage(''); setBuildProgress(''); setBuildWaiting(false); setBuildElapsed(''); setBuildRemaining('')
       toast.error('Build failed: ' + (e.message ?? 'Unknown error'))
+      await supabase.from('projects').update({ status: 'failed' }).eq('id', project.id)
+      setProject((p: any) => ({ ...p, status: 'failed' }))
+      updateProject(project.id, { status: 'failed' } as any)
     } finally {
       clearInterval(buildClockTimer)
       setBuildingApp(false)
@@ -684,12 +690,15 @@ export default function ProjectDetailPage() {
           const stages = [
             { key: 'recording', label: 'Recording', desc: 'Capturing your voice description', color: 'blue' },
             { key: 'analyzing', label: 'Analyzing',  desc: 'AI is extracting requirements', color: 'amber' },
-            { key: 'building',  label: 'Building',   desc: 'Generating your specification', color: 'purple' },
+            { key: 'building',  label: 'Building',   desc: project.status === 'building' && buildStage ? buildStage : 'Generating your application', color: 'purple' },
           ]
           const currentIdx = stages.findIndex(s => s.key === project.status)
           const current = stages[currentIdx]
           const barColor = current.color === 'blue' ? 'bg-blue-500' : current.color === 'amber' ? 'bg-amber-400' : 'bg-purple-500'
           const glowColor = current.color === 'blue' ? 'shadow-blue-500/40' : current.color === 'amber' ? 'shadow-amber-400/40' : 'shadow-purple-500/40'
+          
+          const displayProgress = project.status === 'building' && buildingApp ? buildPct : stageProgress;
+          
           return (
             <div className="mt-4 bg-[#0B0F19]/70 border border-[#1E293B] rounded-xl px-5 py-4">
               {/* Stage pills */}
@@ -708,20 +717,20 @@ export default function ProjectDetailPage() {
                     {i < stages.length - 1 && <span className="text-slate-700 text-xs">&#8250;</span>}
                   </div>
                 ))}
-                <span className="ml-auto text-xs text-slate-500">{current.desc}...</span>
+                <span className="ml-auto text-xs text-slate-500 truncate max-w-[200px] sm:max-w-md">{current.desc}...</span>
               </div>
               {/* Progress bar */}
               <div className="h-1.5 w-full bg-[#131B2B] rounded-full overflow-hidden border border-[#1E293B]">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${barColor} shadow-sm ${glowColor}`}
-                  style={{ width: `${stageProgress}%` }}
+                  style={{ width: `${displayProgress}%` }}
                 />
               </div>
               <div className="flex justify-between mt-1.5">
                 <span className="text-xs text-slate-600">Step {currentIdx + 1} of {stages.length}</span>
                 <span className={`text-xs font-mono font-semibold ${
                   current.color === 'blue' ? 'text-blue-400' : current.color === 'amber' ? 'text-amber-400' : 'text-purple-400'
-                }`}>{stageProgress}%</span>
+                }`}>{displayProgress}%</span>
               </div>
             </div>
           )
