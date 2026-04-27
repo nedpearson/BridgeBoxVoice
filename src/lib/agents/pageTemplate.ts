@@ -64,13 +64,13 @@ export function buildPageFromData(pageName: string, _route: string, data: PageDa
 
 import { Plus, Edit2, X, ChevronRight, ChevronLeft, Search, RefreshCw, Trash2, FileText, AlertCircle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 
-const DATA=${dataJson};
+let DATA=[];try{DATA=${dataJson};}catch(e){console.error('Data parse error',e);}
 
 const SUB=${subJson};
 
-const STATS=${statsJson};
+let STATS=[];try{STATS=${statsJson};}catch(e){}
 
-const FF=${formJson};
+let FF=[];try{FF=${formJson};}catch(e){}
 
 const FIELDS=${fieldsJson};
 
@@ -95,6 +95,7 @@ const isMon=k=>MF.includes(k);
 const isSt=k=>!!SF&&k===SF;
 
 const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
+const isDashboard=PAGE.toLowerCase().includes('dashboard');
 
 const Badge=({v})=>{const s=bs(v);return <span style={{display:'inline-flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:800,letterSpacing:'.02em',background:s.bg,color:s.c}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:s.dot,flexShrink:0}}/>{String(v)}</span>;};
 
@@ -160,9 +161,28 @@ export default function ${safe}(){
 
 
 
+
+    {/* DASHBOARD OVERVIEW */}
+    {isDashboard&&<div style={{flex:1,overflowY:'auto',padding:'24px',display:'flex',flexDirection:'column',gap:'20px'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
+        {STATS.map((s,i)=><div key={i} style={{background:'linear-gradient(135deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
+          <div style={{fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'10px'}}>{s.label}</div>
+          <div style={{fontSize:'36px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</div>
+        </div>)}
+      </div>
+      <div style={{background:'linear-gradient(135deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
+        <div style={{fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}}>Recent Activity</div>
+        {DATA.length===0?<div style={{color:'#374151',fontSize:'13px',padding:'20px',textAlign:'center'}}>No recent data</div>:
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead><tr>{FIELDS.slice(0,5).map(f=><th key={f} style={{textAlign:'left',padding:'8px 12px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',borderBottom:'1px solid #1a2538'}}>{fk(f)}</th>)}</tr></thead>
+          <tbody>{DATA.slice(0,8).map((row,i)=><tr key={i} style={{borderBottom:'1px solid #111827'}}>{FIELDS.slice(0,5).map(f=><td key={f} style={{padding:'10px 12px',fontSize:'13px',color:isMon(f)?'#4ade80':'#94a3b8',fontWeight:isMon(f)?700:400,fontFamily:isMon(f)?'monospace':'inherit'}}>{String(row[f]||'-')}</td>)}</tr>)}</tbody>
+        </table>}
+      </div>
+    </div>}
+
     {/* LIST VIEW */}
 
-    {cur.type==='list'&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
+    {cur.type==='list'&&!isDashboard&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
 
       {/* KPI bar */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',background:'#090d1a',flexShrink:0,borderBottom:'1px solid #1a2538'}}>{STATS.map((s,i)=><div key={i} style={{padding:'20px 28px',borderRight:'1px solid #1a2538'}}><div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}}>{s.label}</div><div style={{fontSize:'32px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</div></div>)}</div>
@@ -354,9 +374,9 @@ export function buildCalendarPage(pageName: string, _route: string, data: PageDa
   const L: string[] = []
   L.push(`import React from 'react';`)
   L.push(`import { Plus, X } from 'lucide-react';`)
-  L.push(`const DATA=${dataJson};`)
-  L.push(`const STATS=${statsJson};`)
-  L.push(`const FF=${formJson};`)
+  L.push(`let DATA=[];try{DATA=${dataJson};}catch(e){console.error('Data parse error',e);}`)
+  L.push(`let STATS=[];try{STATS=${statsJson};}catch(e){}`)
+  L.push(`let FF=[];try{FF=${formJson};}catch(e){}`)
   L.push(`const PAGE='${pageName}';`)
   L.push(`const DF='${dateField}';`)
   L.push(`const PF='${primaryField}';`)
@@ -366,7 +386,8 @@ export function buildCalendarPage(pageName: string, _route: string, data: PageDa
   L.push(`const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];`)
   L.push(`const SC={active:'#22c55e',confirmed:'#60a5fa',scheduled:'#60a5fa',completed:'#22c55e',done:'#22c55e','no-show':'#ef4444',cancelled:'#ef4444',pending:'#fbbf24','walk-in':'#a855f7'};`)
   L.push(`const ec=v=>SC[String(v).toLowerCase()]||'#a855f7';`)
-  L.push(`const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();`)
+  L.push(`const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
+const isDashboard=PAGE.toLowerCase().includes('dashboard');`)
   L.push(`const bB={display:'flex',alignItems:'center',gap:'5px',padding:'7px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:600,cursor:'pointer',border:'1px solid #334155',background:'#1e293b',color:'#94a3b8'};`)
   L.push(`const bP={...bB,background:'#7c3aed',color:'#fff',borderColor:'#7c3aed'};`)
   L.push(`const Bg=({v})=><span style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:ec(v)+'22',color:ec(v)}}><span style={{width:'5px',height:'5px',borderRadius:'50%',background:ec(v),flexShrink:0}}/>{String(v)}</span>;`)
