@@ -4,10 +4,11 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/appStore'
 import { Globe, Smartphone, Monitor, Trash2, Download, ExternalLink, ChevronLeft,
-  Clock, Code2, Rocket, Settings, Link2, FileText, CheckCircle, Play, RefreshCw, Layers, Archive
+  Clock, Code2, Rocket, Settings, Link2, FileText, CheckCircle, Play, RefreshCw, Layers, Archive, QrCode, X
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
+import QRCode from 'react-qr-code'
 import { extractIntent, generateSpec, generateAppPreview, enhancePrompt, hasAnthropicKey } from '../lib/anthropic'
 import TemplateGallery from '../components/templates/TemplateGallery'
 import { AppTemplate } from '../data/templates'
@@ -71,6 +72,8 @@ export default function ProjectDetailPage() {
   const [savingTranscript, setSavingTranscript] = useState(false)
   const [rewritingTranscript, setRewritingTranscript] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [mobilePreviewUrl, setMobilePreviewUrl] = useState<string | null>(null)
   const [buildingApp, setBuildingApp] = useState(false)
   const [buildProgress, setBuildProgress] = useState('')
   const [buildPct, setBuildPct] = useState(0)
@@ -630,17 +633,33 @@ export default function ProjectDetailPage() {
               if (!hasLiveUrl && !previewHtml) return null;
 
               const finalUrl = hasLiveUrl ? (liveUrl.startsWith('http') ? liveUrl : `https://${liveUrl}`) : ''
-              
+
               if (finalUrl) {
                 return (
-                  <a
-                    href={finalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors"
-                  >
-                    <Globe size={14} /> Open App <ExternalLink size={12} />
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={finalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors"
+                    >
+                      <Globe size={14} /> Open App <ExternalLink size={12} />
+                    </a>
+                    <button
+                      onClick={() => setShowQR(true)}
+                      title="QR Code - scan to open on mobile"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-sm font-semibold rounded-xl transition-colors border border-[#334155]"
+                    >
+                      <QrCode size={15} />
+                    </button>
+                    <button
+                      onClick={() => setMobilePreviewUrl(finalUrl)}
+                      title="Mobile preview"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-sm font-semibold rounded-xl transition-colors border border-[#334155]"
+                    >
+                      <Smartphone size={15} />
+                    </button>
+                  </div>
                 )
               }
 
@@ -1389,6 +1408,98 @@ export default function ProjectDetailPage() {
           onSelect={handleApplyTemplate}
           onClose={() => setShowTemplateGallery(false)}
         />
+      )}
+
+      {/* QR Code Modal */}
+      {showQR && (() => {
+        const liveUrl = (project as any).production_url || (project as any).staging_url || project.web_app_url
+        const finalUrl = liveUrl ? (liveUrl.startsWith('http') ? liveUrl : `https://${liveUrl}`) : ''
+        return (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowQR(false)}>
+            <div className="bg-[#0C1322] border border-[#1E293B] rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-white font-bold text-lg">{project.name}</h3>
+                  <p className="text-slate-500 text-xs mt-0.5">Scan to open on mobile</p>
+                </div>
+                <button onClick={() => setShowQR(false)} className="p-1.5 text-slate-500 hover:text-white rounded-lg"><X size={16} /></button>
+              </div>
+              <div className="bg-white rounded-2xl p-5 mb-5 inline-block">
+                {finalUrl ? (
+                  <QRCode value={finalUrl} size={200} level="H" />
+                ) : (
+                  <div className="w-[200px] h-[200px] flex items-center justify-center text-slate-400 text-sm">No URL yet</div>
+                )}
+              </div>
+              {finalUrl && (
+                <>
+                  <p className="text-slate-500 text-xs font-mono truncate mb-4">{finalUrl}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(finalUrl); toast.success('URL copied!') }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-sm font-semibold rounded-xl border border-[#334155] transition-colors"
+                    >
+                      Copy Link
+                    </button>
+                    <button
+                      onClick={() => setMobilePreviewUrl(finalUrl)}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-xl transition-colors"
+                    >
+                      <Smartphone size={14} /> Mobile Preview
+                    </button>
+                  </div>
+                  <p className="text-slate-600 text-xs mt-4">Point your camera at the QR code to open on any mobile device. App is PWA-optimized for install.</p>
+                </>
+              )}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Mobile Phone-Frame Preview Modal */}
+      {mobilePreviewUrl && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setMobilePreviewUrl(null)}>
+          <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between w-full max-w-sm">
+              <div>
+                <h3 className="text-white font-bold">Mobile Preview</h3>
+                <p className="text-slate-500 text-xs mt-0.5">{project.name}</p>
+              </div>
+              <button onClick={() => setMobilePreviewUrl(null)} className="p-2 text-slate-400 hover:text-white rounded-xl bg-[#1E293B]"><X size={16} /></button>
+            </div>
+            {/* Phone frame */}
+            <div style={{ width: '375px', height: '700px', background: '#1a1a2e', borderRadius: '40px', border: '8px solid #2d3748', boxShadow: '0 0 0 2px #4a5568, 0 40px 80px rgba(0,0,0,.8)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {/* Status bar */}
+              <div style={{ height: '44px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>9:41</span>
+                <div style={{ width: '120px', height: '28px', background: '#000', borderRadius: '14px', border: '2px solid #2d3748' }} />
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ color: '#fff', fontSize: '10px' }}>●●●</span>
+                  <span style={{ color: '#fff', fontSize: '10px' }}>WiFi</span>
+                  <span style={{ color: '#fff', fontSize: '10px' }}>100%</span>
+                </div>
+              </div>
+              <iframe
+                src={mobilePreviewUrl}
+                style={{ flex: 1, border: 'none', width: '100%' }}
+                title="Mobile Preview"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+              />
+              {/* Home bar */}
+              <div style={{ height: '34px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: '120px', height: '4px', background: '#4a5568', borderRadius: '2px' }} />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <a href={mobilePreviewUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors">
+                <ExternalLink size={13} /> Open in Browser
+              </a>
+              <button onClick={() => { setShowQR(true); setMobilePreviewUrl(null); }} className="flex items-center gap-1.5 px-4 py-2 bg-[#1E293B] hover:bg-[#263348] text-slate-300 text-sm font-semibold rounded-xl border border-[#334155] transition-colors">
+                <QrCode size={13} /> QR Code
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

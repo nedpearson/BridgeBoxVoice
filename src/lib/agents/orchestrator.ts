@@ -10,6 +10,7 @@
 
 import { runSkeletonAgent } from './skeletonAgent'
 import { runPageAgent } from './pageAgent'
+import { runSuperAgent } from './superAgent'
 import { sanitizeFileContent, detectCorruption, generateSafeStub } from './sanitizerAgent'
 import { runBuildAgent } from './buildAgent'
 
@@ -414,10 +415,23 @@ export async function runOrchestrator(
   })
   onStatus('sanitizer', 'Pre-flight validation complete', 82)
 
-  // ── AGENT 5: Build ────────────────────────────────────────────────────────
+  // ── AGENT 5: SuperAgent Validation ──────────────────────────────────────────
+  setAgent('superAgent' as any, { status: 'running', message: 'SuperAgent validating all files...' })
+  const { files: validatedFiles, result: superResult } = await runSuperAgent(
+    sanitized,
+    (msg) => onStatus('superAgent', msg, 84)
+  )
+  setAgent('superAgent' as any, {
+    status: superResult.passed ? 'done' : 'repaired',
+    message: superResult.summary,
+    repairs: superResult.errors.map(e => `${e.file.split('/').pop()}: ${e.issue}`)
+  })
+  onStatus('superAgent', superResult.summary, 86)
+
+  // ── AGENT 6: Build ────────────────────────────────────────────────────────
   setAgent('build', { status: 'running', message: 'Deploying to Vercel...' })
-  onStatus('build', 'Self-healing deploy starting...', 85)
-  const buildResult = await runBuildAgent(projectName, sanitized, (msg) => {
+  onStatus('build', 'Self-healing deploy starting...', 88)
+  const buildResult = await runBuildAgent(projectName, validatedFiles, (msg) => {
     setAgent('build', { message: msg })
     onStatus('build', msg, 90)
   })
