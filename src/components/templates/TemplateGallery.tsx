@@ -127,17 +127,32 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                         }`}
                         onClick={() => onSelect(template)}
                       >
-                        {/* Icon + complexity */}
-                        <div className="flex items-start justify-between mb-3">
-                          <span className="text-3xl">{template.icon}</span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border ${COMPLEXITY_STYLES[template.complexity]}`}>
-                            <ComplexityIcon size={10} />
-                            {template.complexity}
-                          </span>
+                        {/* Image Preview */}
+                        <div className="w-full h-32 bg-[#1E293B] rounded-lg mb-4 overflow-hidden relative border border-[#334155]/50 group-hover:border-blue-500/30 transition-colors">
+                          {template.previewImage ? (
+                            <img src={template.previewImage} alt={template.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1E293B] to-[#0F172A] flex items-center justify-center relative overflow-hidden">
+                               <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent"></div>
+                               <span className="text-5xl opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-300">{template.icon}</span>
+                            </div>
+                          )}
+                          
+                          {/* Complexity floating badge */}
+                          <div className="absolute top-2 right-2">
+                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold shadow-lg backdrop-blur-md ${COMPLEXITY_STYLES[template.complexity]}`}>
+                                <ComplexityIcon size={10} />
+                                {template.complexity}
+                             </span>
+                          </div>
                         </div>
 
-                        {/* Name + description */}
-                        <h3 className="text-white font-semibold text-sm mb-1.5">{template.name}</h3>
+                        {/* Icon + Title */}
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-2xl">{template.icon}</span>
+                          <h3 className="text-white font-semibold text-sm leading-tight">{template.name}</h3>
+                        </div>
+
                         <p className="text-slate-500 text-xs leading-relaxed flex-1 mb-3">{template.description}</p>
 
                         {/* Tags */}

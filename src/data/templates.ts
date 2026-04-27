@@ -7,6 +7,7 @@ export interface AppTemplate {
   tags: string[]
   complexity: 'Starter' | 'Pro' | 'Enterprise'
   prompt: string // The full AI prompt pre-fill
+  previewImage?: string // Optional image preview URL
 }
 
 export const TEMPLATE_CATEGORIES = [
@@ -23,6 +24,7 @@ export const TEMPLATE_CATEGORIES = [
   { id: 'saas',         label: 'SaaS / Tech',   icon: '⚙️' },
   { id: 'construction', label: 'Construction',  icon: '🏗️' },
   { id: 'wellness',     label: 'Wellness',      icon: '💪' },
+  { id: 'retail',       label: 'Retail',        icon: '🏷️' },
 ]
 
 export const TEMPLATES: AppTemplate[] = [
@@ -37,6 +39,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Stripe', 'Inventory', 'Orders', 'Admin'],
     complexity: 'Pro',
     prompt: `I want to build a complete e-commerce web application. It should have a product catalog with categories and variants (size, color), a shopping cart, a full Stripe-powered checkout flow with tax calculation, order tracking for customers, and a full admin panel where I can manage products, view orders, issue refunds, manage inventory stock counts, and see sales analytics sorted by product, category, and date range. Customers should be able to create accounts, view order history, and save shipping addresses. I also want email notifications sent on order confirmation and shipment using SendGrid.`,
+    previewImage: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ec-marketplace',
@@ -47,6 +50,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Multi-Vendor', 'Commission', 'Seller Portal'],
     complexity: 'Enterprise',
     prompt: `I want to build a multi-vendor marketplace platform similar to Etsy or Amazon. Vendors can register, set up a storefront profile, and list their own products with photos, descriptions, and pricing. Buyers can browse products across all vendors, filter by category and price, add items to a cart, and check out using Stripe Connect, which automatically splits payments and deposits the vendor's share minus our commission fee. Vendors get a seller dashboard to see their orders, revenue, and payouts. I need an admin panel to approve vendors, manage disputes, adjust commission rates, and see overall platform analytics.`,
+    previewImage: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ec-subscription',
@@ -57,6 +61,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Subscriptions', 'Stripe', 'Recurring'],
     complexity: 'Pro',
     prompt: `I want to build a subscription box e-commerce platform. Customers can browse box options by tier (basic, premium, deluxe), sign up for a monthly or quarterly subscription, and manage their subscription — pausing, skipping a month, or canceling — from their account portal. I need Stripe for recurring billing. Admins can manage box contents for each upcoming cycle, set quantities per tier, and see who is enrolled. I also want a referral program where subscribers can share a unique link and get a discount when someone signs up.`,
+    previewImage: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ec-wholesale',
@@ -67,6 +72,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['B2B', 'Bulk Orders', 'Net Terms', 'Invoicing'],
     complexity: 'Pro',
     prompt: `I want to build a B2B wholesale ordering portal. Approved wholesale buyers log in to see special tiered pricing based on their account level. They can place bulk orders with custom quantities, request quotes for large orders, and pay by credit card or Net 30 terms. Sales reps can manage accounts, set custom pricing overrides, and see a pipeline of pending orders. I need order history, PDF invoice generation, and a dashboard showing monthly revenue per account.`,
+    previewImage: 'https://images.unsplash.com/photo-1586528116311-ad8ed7c83a56?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Healthcare ──────────────────────────────────────────────────────────────
@@ -79,6 +85,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['EHR', 'Appointments', 'Billing', 'HIPAA'],
     complexity: 'Enterprise',
     prompt: `I want to build a medical clinic management system. Patients can book appointments online, view their medical history, and communicate securely with their doctor via a messaging portal. Doctors and nurses can access patient charts, record visit notes, issue prescriptions, and order lab work. The system should handle insurance billing with CPT code entry, co-pay collection via Stripe, and EOB tracking. I need a scheduling system for multiple providers with availability management. The platform must be HIPAA-compliant with audit logs on all data access.`,
+    previewImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'hc-telehealth',
@@ -89,6 +96,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Video Calls', 'Prescriptions', 'Scheduling'],
     complexity: 'Pro',
     prompt: `I want to build a telehealth platform where patients can book video consultations with licensed providers. Patients upload their ID, insurance card, and chief complaint before the visit. Providers join a secure video call, take visit notes, and send electronic prescriptions to a pharmacy of the patient's choice. I need a waiting room queue, automated appointment reminders via SMS and email, a patient portal for visit summaries, and billing integration to charge the patient's insurance or collect a self-pay fee via Stripe.`,
+    previewImage: 'https://images.unsplash.com/photo-1576091160550-2173ff9e5eb2?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'hc-pharmacy',
@@ -99,6 +107,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Prescriptions', 'Inventory', 'POS', 'Insurance'],
     complexity: 'Pro',
     prompt: `I want to build a pharmacy management system. Pharmacists can receive electronic prescriptions, verify them against a drug database, check for interactions with the patient's existing medications, and mark prescriptions as filled. Customers can be notified via SMS when their prescription is ready for pickup. The system should track drug inventory with automatic reorder alerts, process insurance claims, and run a POS for retail sales. I need a daily dispense log and reporting on top medications dispensed and inventory valuation.`,
+    previewImage: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Legal ───────────────────────────────────────────────────────────────────
@@ -111,6 +120,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Matter Tracking', 'Time Billing', 'Clients'],
     complexity: 'Enterprise',
     prompt: `I want to build a law firm management system. Attorneys and paralegals can track legal matters with all associated documents, correspondence, deadlines, and court dates in a matter file. Staff can log billable hours with time entries down to the minute, associated with specific tasks and matters. The billing module generates invoices from time entries, tracks retainer balances, and syncs with QuickBooks. Clients get a secure portal where they can view their matter status, share documents, and pay invoices. I need a conflict-of-interest check when creating new clients.`,
+    previewImage: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'leg-contracts',
@@ -121,6 +131,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['E-Signature', 'Versioning', 'Renewals', 'DocuSign'],
     complexity: 'Pro',
     prompt: `I want to build a contract lifecycle management platform. Users can create contracts from templates, negotiate via tracked changes, send for e-signature via DocuSign integration, and store the fully executed contract. The system tracks contract start and end dates, sends automated renewal alerts 90, 60, and 30 days before expiration, and logs every version change with who made it and when. I want a dashboard showing contracts expiring soon, contracts by status, and contracts by vendor or client with keyword search.`,
+    previewImage: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Finance ─────────────────────────────────────────────────────────────────
@@ -133,6 +144,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Stripe', 'Recurring', 'PDF Invoices', 'QBO'],
     complexity: 'Starter',
     prompt: `I want to build a professional invoicing and billing platform for freelancers and small businesses. I can create clients, add line-item invoices with hourly or fixed fees, attach expenses, and apply discounts or taxes. Clients receive the invoice via email and can pay online via Stripe. I want recurring invoice support, automated payment reminders at due date and 7 days overdue, and QuickBooks Online sync. My dashboard should show outstanding receivables, monthly revenue, and top clients by revenue.`,
+    previewImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'fin-expenses',
@@ -143,6 +155,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Receipts', 'Approvals', 'Reimbursement'],
     complexity: 'Pro',
     prompt: `I want to build a corporate expense management platform. Employees can submit expense reports by photographing receipts which are automatically OCR-scanned to extract the amount, vendor, and date. Expenses are categorized and routed to the employee's manager for approval. Approved expense reports trigger reimbursement via ACH. Finance administrators can see all expenses by category, department, and employee, set spending limits by category, and export to CSV for accounting. I need a mobile-friendly interface for employees to submit receipts on the go.`,
+    previewImage: 'https://images.unsplash.com/photo-1556742111-a301076d9d18?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'fin-payroll',
@@ -153,6 +166,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Payroll', 'Tax', 'Direct Deposit', 'W2'],
     complexity: 'Enterprise',
     prompt: `I want to build a payroll management system for small businesses. I can add employees as either salaried or hourly, track their hours via timesheets or manual entry, and run payroll on a weekly, biweekly, or semi-monthly schedule. The system automatically calculates federal and state tax withholdings, Social Security, and Medicare. Employees receive a digital pay stub and can view their pay history. I need end-of-year W-2 generation, a general ledger export for QuickBooks, and direct deposit initiation via ACH.`,
+    previewImage: 'https://images.unsplash.com/photo-1580519542036-ed47f3e42214?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Field Services ──────────────────────────────────────────────────────────
@@ -165,6 +179,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Scheduling', 'Crews', 'Route Optimization', 'Invoicing'],
     complexity: 'Pro',
     prompt: `I want to build a field service management app for a landscaping business. I need to schedule recurring and one-time lawn care jobs, assign jobs to crews, and track job completion with before/after photos from the field. Crew members use a mobile app to clock in/out, mark jobs complete, and flag issues. The office sees a dispatch board by day with a map view of all jobs. After jobs are complete, invoices are auto-generated and sent to customers. I also want customer profiles with service history, pricing agreement, and seasonal service packages.`,
+    previewImage: 'https://images.unsplash.com/photo-1558904541-efa843a96f0f?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'fs-hvac',
@@ -175,6 +190,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Maintenance Agreements', 'Dispatch', 'Parts', 'Technicians'],
     complexity: 'Pro',
     prompt: `I want to build an HVAC service management platform. Dispatchers can assign service calls to technicians with priority levels, track technician locations on a map, and manage a parts inventory that technicians can use on jobs. Technicians have a mobile view showing their daily jobs, customer equipment history, and the ability to add parts used and get a digital signature for job completion. Customers can have maintenance agreement contracts that automatically schedule seasonal tune-up visits. Invoicing integrates with QuickBooks.`,
+    previewImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'fs-plumbing',
@@ -185,6 +201,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Estimates', 'Dispatch', 'Invoicing', 'Mobile'],
     complexity: 'Starter',
     prompt: `I want to build a plumbing service app. When a customer calls, I can create a service request, enter the issue description, and dispatch the next available plumber. Plumbers get a notification with the job address. On-site, they create an estimate from a price book (flat-rate pricing per service type), get customer approval, do the work, collect payment via credit card on their phone, and upload a photo of the completed work. I need job history by customer and a weekly revenue report.`,
+    previewImage: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'fs-cleaning',
@@ -195,6 +212,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Recurring Jobs', 'Staff Scheduling', 'Client Portal'],
     complexity: 'Starter',
     prompt: `I want to build a cleaning service business management app. I can schedule recurring cleaning appointments for residential or commercial clients, assign cleaning teams, and collect a credit card on file for automatic billing after each visit. Cleaners can mark jobs complete and upload a post-clean photo checklist. Clients receive a before/after photo summary via email. I need a staff scheduling view, route optimization for teams, and a report on revenue per client and team productivity per week.`,
+    previewImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Restaurant ──────────────────────────────────────────────────────────────
@@ -207,6 +225,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Table Management', 'KDS', 'Payments', 'Reporting'],
     complexity: 'Pro',
     prompt: `I want to build a restaurant point-of-sale system. Servers can manage tables on a floor plan view, take orders per seat or table-wide, send orders directly to a kitchen display screen, split bills, and process payments via card reader or cash. Managers can update the menu, run items 86/out-of-stock alerts to the kitchen, manage staff shifts, and see end-of-day reports showing revenue by server, by menu category, and voids/comps. I want a customer loyalty points system and the ability to process gift cards.`,
+    previewImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'res-delivery',
@@ -217,6 +236,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Delivery Zones', 'Driver Tracking', 'Orders', 'ETA'],
     complexity: 'Enterprise',
     prompt: `I want to build a food delivery platform for a restaurant or ghost kitchen. Customers can order online or via mobile, see real-time order status updates, and track their driver on a map. Dispatchers assign incoming orders to available drivers, see a bird's-eye map of all active deliveries, and get alerts for late deliveries. Drivers have a simple mobile app showing pickup instructions, the delivery address, and a way to mark each step (picked up, on the way, delivered). I need analytics on delivery times, driver performance, and order volume by hour.`,
+    previewImage: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'res-catering',
@@ -227,6 +247,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Events', 'Proposals', 'Staffing', 'Rentals'],
     complexity: 'Pro',
     prompt: `I want to build a catering business management system. I can create event quotes with custom menu selections, linens and rental equipment, staffing costs, and a delivery fee. Clients receive a PDF proposal and can approve it online with a deposit payment. Approved events go onto a production calendar where I can assign kitchen staff and servers to the event, create a detailed day-of schedule, and build a packing list. Post-event, I send a final invoice and collect the balance. I need a food cost calculator and margin reporting per event.`,
+    previewImage: 'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Real Estate ─────────────────────────────────────────────────────────────
@@ -239,6 +260,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Tenants', 'Rent', 'Maintenance', 'Leases'],
     complexity: 'Pro',
     prompt: `I want to build a property management platform for landlords. I can add properties (single-family, multi-unit), create units, and manage tenants with lease agreements, move-in/move-out dates, and security deposits. Tenants have a portal to pay rent online, submit maintenance requests, and view their lease. I get automatic payment reminders, late fee calculation, and monthly statements per property. Maintenance requests trigger work orders that can be assigned to contractors. I want a financial report showing income and expenses per property, occupancy rate, and net operating income.`,
+    previewImage: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 're-crm',
@@ -249,6 +271,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Leads', 'Showings', 'Offers', 'Pipeline'],
     complexity: 'Pro',
     prompt: `I want to build a CRM for real estate agents. I can track buyer and seller leads through a pipeline: lead → showing → offer → under contract → closed. For buyer leads I track their search criteria (budget, bedrooms, neighborhoods) and log property showings with notes. For seller leads I track the listing, create comparable market analyses, and manage open houses. I want automated drip email campaigns for cold leads, a deal dashboard showing my pipeline value, and a commission tracking report for the year.`,
+    previewImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 're-listings',
@@ -259,6 +282,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Listings', 'Search', 'Lead Capture', 'Photos'],
     complexity: 'Pro',
     prompt: `I want to build a real estate listing website. Properties are listed with multiple photos, a virtual tour link, full description, price, beds/baths/sqft, and neighborhood info. Buyers can search by location, price range, property type, and features, and save favorite listings. Each listing has a lead capture form that notifies the listing agent by email and SMS. Agents have a portal to create and manage their listings, view inquiries, and see how many people viewed each property. I want map search and a Featured Listings section on the homepage.`,
+    previewImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Education ───────────────────────────────────────────────────────────────
@@ -271,6 +295,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Courses', 'Video', 'Quizzes', 'Certificates'],
     complexity: 'Pro',
     prompt: `I want to build a learning management system. Instructors can create courses with multiple sections and lessons containing video (uploaded or YouTube embed), text, and downloadable files. Students enroll in courses, track their progress with a completion percentage, take quizzes with instant grading, and earn a downloadable certificate upon course completion. I want a student discussion forum per course. Admins set pricing and coupons for courses. I need an instructor analytics dashboard showing enrollments, completion rates, and revenue earned.`,
+    previewImage: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ed-tutoring',
@@ -281,6 +306,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Booking', 'Video Sessions', 'Payments', 'Reviews'],
     complexity: 'Starter',
     prompt: `I want to build an online tutoring platform. Tutors create profiles with their subjects, education, hourly rate, and availability. Students can search tutors by subject and grade level, view profiles and reviews, and book sessions from the tutor's calendar. Payment is charged when booking (Stripe). Sessions take place via video call within the platform. After each session, students leave a rating and review. Tutors get paid weekly via Stripe Connect. I want a parent dashboard to track their child's sessions and progress.`,
+    previewImage: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ed-school',
@@ -291,6 +317,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Grades', 'Attendance', 'Students', 'Parents'],
     complexity: 'Enterprise',
     prompt: `I want to build a K-12 school management system. Administrators manage student enrollment, class rosters, and teacher assignments. Teachers take digital attendance, enter grades per assignment and exam, and communicate with parents via a secure messaging system. Students and parents access a portal showing grades, attendance record, upcoming assignments, and school announcements. The system generates report cards at the end of each semester. I need a behavior and discipline log, a fee collection system (tuition, lunch, activities), and an alumni tracking database.`,
+    previewImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Logistics ───────────────────────────────────────────────────────────────
@@ -303,6 +330,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['GPS Tracking', 'Maintenance', 'Fuel', 'Drivers'],
     complexity: 'Enterprise',
     prompt: `I want to build a fleet management system. I can add vehicles with their VIN, make/model, license plate, and assigned driver. The system integrates with GPS trackers to show all vehicles on a live map. I track fuel fill-ups per vehicle, schedule and log preventive maintenance (oil changes, tire rotations), and get alerts when a vehicle is due for service based on mileage. Drivers complete a pre-trip inspection checklist on their phones. I need reports on cost-per-mile per vehicle, fuel efficiency, and total fleet operating cost.`,
+    previewImage: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'log-warehouse',
@@ -313,6 +341,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Inventory', 'Pick/Pack', 'Shipping', 'Barcodes'],
     complexity: 'Enterprise',
     prompt: `I want to build a warehouse management system. When a shipment arrives, warehouse staff scan barcodes to receive items against a purchase order and are directed to a bin location to put away inventory. For outbound orders, the system generates a pick list optimized by bin location, guides the picker through the warehouse, and then a packer confirms items and prints a shipping label via ShipStation or EasyPost. I need real-time inventory levels by SKU and location, cycle count support for periodic inventory verification, and alerts for low-stock and out-of-stock SKUs.`,
+    previewImage: 'https://images.unsplash.com/photo-1586528116311-ad8ed7c83a56?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'log-dispatch',
@@ -323,6 +352,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Load Board', 'Dispatch', 'Tracking', 'BOL'],
     complexity: 'Enterprise',
     prompt: `I want to build a freight dispatch platform for a trucking carrier or freight brokerage. Dispatchers post loads with origin, destination, commodity, weight, rate, and required trailer type. Drivers can view available loads, accept loads, and update their status (picking up, loaded, in transit, delivered). Shippers and brokers get automated check-call updates via email/SMS. The system generates bills of lading, rate confirmations, and payment reports. I need driver settlements, a load profitability report, and customer invoice generation with detention and accessorial charges.`,
+    previewImage: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── SaaS / Tech ─────────────────────────────────────────────────────────────
@@ -335,6 +365,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Pipeline', 'Email Sequences', 'Forecasting', 'Reports'],
     complexity: 'Enterprise',
     prompt: `I want to build a sales CRM platform. Sales reps can manage contacts and companies, track deals through a customizable Kanban pipeline (Lead → Qualified → Proposal → Negotiation → Closed Won/Lost), log calls and emails, and set follow-up tasks with reminders. I need automated email sequence drip campaigns that pause when a prospect replies. Managers see a team dashboard with pipeline value, forecast by close date, individual rep activity metrics, and win rate. I want Salesforce-style deal scoring and a leaderboard for the sales team.`,
+    previewImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'saas-helpdesk',
@@ -345,6 +376,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Tickets', 'SLAs', 'Knowledge Base', 'Chat'],
     complexity: 'Pro',
     prompt: `I want to build a customer support helpdesk. Customers submit tickets via email, a web widget, or live chat, and all conversations appear in a unified inbox for support agents. Agents can categorize tickets, set priority, apply tags, use canned responses for common issues, and escalate to a senior agent. I need SLA rules that warn when a ticket is approaching breach time and full SLA reporting. I want a customer-facing knowledge base with searchable articles. Management sees CSAT scores, ticket volume by channel, average resolution time, and agent workload.`,
+    previewImage: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'saas-pm',
@@ -355,6 +387,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Kanban', 'Gantt', 'Time Tracking', 'Sprints'],
     complexity: 'Pro',
     prompt: `I want to build a project management tool for teams. Projects have tasks that can be viewed as a Kanban board, a list, or a Gantt timeline. Tasks have due dates, assignees, priority levels, subtasks, file attachments, and comment threads. Team members log time directly on tasks. Managers can create sprints, run burndown charts, and see workload balance across the team. I need project templates, project milestone tracking, and automated Slack notifications when tasks are assigned or deadlines are near. I also want a portfolio view showing all active projects, their status, and health indicators.`,
+    previewImage: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'saas-analytics',
@@ -365,6 +398,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Dashboards', 'KPIs', 'Charts', 'Reports'],
     complexity: 'Enterprise',
     prompt: `I want to build a business intelligence and analytics dashboard platform. Users connect data sources (Google Analytics, Stripe, PostgreSQL, CSV uploads), and the platform automatically creates visualizations. I can build custom dashboards with drag-and-drop chart widgets: bar charts, line charts, pie charts, funnels, and metric cards. I can define KPI goals and the dashboard shows whether I'm on track. Scheduled reports are emailed as PDF snapshots to stakeholders weekly. I need role-based access so different teams see only their relevant dashboards.`,
+    previewImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Construction ────────────────────────────────────────────────────────────
@@ -377,6 +411,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['RFIs', 'Submittals', 'Budget', 'Scheduling'],
     complexity: 'Enterprise',
     prompt: `I want to build a construction project management platform for general contractors. I can create projects with a detailed schedule (Gantt chart), assign subcontractors, manage subcontract agreements, and track RFIs and submittals with automated routing and approval workflows. The budget module tracks original contract, approved change orders, committed costs, and actual costs with a real-time cost-to-complete forecast. I want a daily field log for notes, weather, and manpower counts, a photo log by location and trade, and an owner-facing portal to see project progress and approve change orders.`,
+    previewImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'con-estimating',
@@ -387,6 +422,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Takeoff', 'Materials', 'Labor', 'Bid Proposals'],
     complexity: 'Pro',
     prompt: `I want to build a construction estimating application. I can import a PDF plan set and do a digital takeoff by drawing over it to count units, measure linear feet, and calculate square footage automatically. The takeoff quantities feed into a cost estimate with a pre-loaded material price database (lumber, concrete, steel, MEP) and adjustable labor rates per trade. The system calculates my total cost with a configurable overhead and profit margin, and generates a professional bid proposal PDF to send to the client. I need version history to track estimate changes and a bid win/loss tracker.`,
+    previewImage: 'https://images.unsplash.com/photo-1541888014798-84227918f0ee?auto=format&fit=crop&w=800&q=80',
   },
 
   // ── Wellness ─────────────────────────────────────────────────────────────────
@@ -399,6 +435,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Memberships', 'Classes', 'Check-In', 'Trainers'],
     complexity: 'Pro',
     prompt: `I want to build a gym and fitness studio management platform. Members can sign up for memberships (monthly auto-renew via Stripe), browse and book group fitness classes with capacity limits and waitlists, and check in via a QR code or member ID scan at the door. Personal trainers have profiles where members can book one-on-one sessions. Staff can view daily class attendance, check-in logs, and membership status. Managers see revenue by membership type, class utilization, and trainer booking rates. I also want an automated win-back email for members who haven't visited in 30 days.`,
+    previewImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'well-spa',
@@ -409,6 +446,7 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Appointments', 'Staff', 'POS', 'Loyalty'],
     complexity: 'Starter',
     prompt: `I want to build a booking and management platform for a spa or salon. Customers can book appointments online, selecting a service (massage, haircut, facial), their preferred staff member, and an available time slot. Staff see their daily appointment calendar, can add a no-show fee, and manage a client profile with service history and preferences. The POS processes payment for services and retail products sold at checkout. I want a client loyalty points program, gift card sales, and automated appointment reminder texts 24 hours before each appointment.`,
+    previewImage: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'well-coaching',
@@ -419,5 +457,19 @@ export const TEMPLATES: AppTemplate[] = [
     tags: ['Programs', 'Client Tracking', 'Video Sessions', 'Habit Tracking'],
     complexity: 'Pro',
     prompt: `I want to build a wellness coaching platform. Coaches create structured programs (12-week habit plans, nutrition guides, workout schedules) that clients purchase and follow in a structured portal. Coaches can chat with clients, hold video check-in sessions, assign weekly action items, and see a habit tracking dashboard per client. Clients log their daily habits, weight, mood, and energy level, and see their progress charts over time. I want a referral system, a group coaching cohort option where a coach manages 20+ clients together, and a library of evergreen content (PDF guides, recipe books) for purchase.`,
+    previewImage: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
+  },
+
+  // ── Retail ──────────────────────────────────────────────────────────────────
+  {
+    id: 'ret-pos',
+    name: 'Retail POS System',
+    category: 'retail',
+    icon: '🏷️',
+    description: 'Clean retail point-of-sale system with inventory management, payroll, and ordering.',
+    tags: ['POS', 'Inventory', 'Payroll', 'Ordering'],
+    complexity: 'Pro',
+    prompt: `I want to build a retail POS (Point of Sale) system. It must have a clean layout with large badges and tabs. It should include comprehensive Inventory Management (Products, Categories, Brands, Barcode generation), Ordering (Sales and Purchase management, Quotations, Returns), Payroll and Staff management (User and Customer/Supplier management, Expenses tracking for payroll). The dashboard should have big badges for Total Sales, Total Purchase, Total Sales Return, and Total Purchase Return. It should also have built-in reporting for Inventory, Sales, and Expenses.`,
+    previewImage: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=800&q=80',
   },
 ]
