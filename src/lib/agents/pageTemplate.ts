@@ -165,93 +165,118 @@ export default function ${safe}(){
     {cur.type==='list'&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
 
       {/* KPI bar */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',background:'#090d1a',flexShrink:0,borderBottom:'1px solid #1a2538'}}>{STATS.map((s,i)=><div key={i} style={{padding:'20px 28px',borderRight:'1px solid #1a2538'}}><div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}}>{s.label}</div><div style={{fontSize:'32px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</div></div>)}</div>
 
-      <div style={R.kpi}>{STATS.map((s,i)=><div key={i} style={R.kpiBox} onMouseEnter={e=>e.currentTarget.style.background='#111827'} onMouseLeave={e=>e.currentTarget.style.background='#0d1117'}><span style={{fontSize:'11px',fontWeight:600,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em'}}>{s.label}</span><span style={{fontSize:'32px',fontWeight:900,color:'#fff',lineHeight:1}}>{s.value}</span></div>)}</div>
-
-      {/* Count */}
-
-      <div style={{padding:'10px 20px 0',fontSize:'12px',color:'#475569',flexShrink:0}}>{rows.length} {PAGE.toLowerCase()} {q&&<span>matching <strong style={{color:'#a855f7'}}>"{q}"</strong></span>}{q&&<button onClick={()=>setQ('')} style={{marginLeft:'8px',background:'none',border:'none',cursor:'pointer',color:'#64748b',fontSize:'11px'}}>clear</button>}</div>
-
-      {/* Cards grid */}
-
-      <div style={R.cards}>
-
-        {rows.length===0?<div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',color:'#334155',fontSize:'14px'}}>No records found</div>:rows.map((row,idx)=>{
-
-          const primary=String(row[PF]||'');
-
-          const secondary=DF?String(row[DF]||''):'';
-
-          const moneyVals=MF.slice(0,2).map(f=>({k:fk(f),v:String(row[f]||'')}));
-
-          const statusVal=SF?String(row[SF]||''):'';
-
-          return <div key={row.id||idx} onClick={()=>push({type:'record',label:primary,data:row})} style={R.card} onMouseEnter={e=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.background='#0f1625';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(99,102,241,.28)';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#1a2235';e.currentTarget.style.background='#0d1117';e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='none';}}>
-
-            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'8px'}}>
-
-              <div><div style={{fontSize:'19px',fontWeight:800,color:'#fff',lineHeight:1.25}}>{primary}</div>{secondary&&<div style={{fontSize:'12px',color:'#4a5a72',marginTop:'5px',fontWeight:500}}>{secondary}</div>}</div>
-
-              {statusVal&&<Badge v={statusVal}/>}
-
-            </div>
-
-            {moneyVals.length>0&&<div style={{display:'flex',gap:'16px'}}>{moneyVals.map((mv,mi)=><div key={mi}><div style={{fontSize:'10px',color:'#475569',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'2px'}}>{mv.k}</div><div style={{fontSize:'22px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{mv.v}</div></div>)}</div>}
-
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>{FIELDS.filter(f=>f!==PF&&f!==SF&&f!==DF&&!MF.slice(0,2).includes(f)).slice(0,4).map(f=><div key={f} style={{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'12px',padding:'14px 16px'}}><div style={{fontSize:'10px',color:'#475569',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'2px'}}>{fk(f)}</div><div style={{fontSize:'14px',color:'#c8d6e8',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{String(row[f]||'ΓÇö')}</div></div>)}</div>
-
-            <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',marginTop:'4px'}}><span style={{fontSize:'11px',color:'#4f5d75',fontWeight:600}}>View details</span><ChevronRight size={13} style={{color:'#334155',marginLeft:'4px'}}/></div>
-
-          </div>;
-
-        })}
-
+      {/* Toolbar */}
+      <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'14px 20px',background:'#080c18',borderBottom:'1px solid #1a2538',flexShrink:0}}>
+        <div style={{position:'relative',flex:1,maxWidth:'320px'}}><Search size={13} style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#374151',pointerEvents:'none'}}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder={'Search '+PAGE.toLowerCase()+'...'} style={{width:'100%',paddingLeft:'32px',paddingRight:'12px',paddingTop:'9px',paddingBottom:'9px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}}/></div>
+        <div style={{marginLeft:'auto',display:'flex',gap:'8px'}}>
+          <span style={{fontSize:'12px',color:'#374151',alignSelf:'center'}}>{rows.length} {PAGE.toLowerCase()}</span>
+          <button onClick={()=>{setForm(EMPTY);setModal(true);}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',background:'#7c3aed',color:'#fff',border:'none',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Plus size={13}/>New {PAGE.replace(/s$/,'')}</button>
+        </div>
       </div>
 
+      {/* Table */}
+      <div style={{flex:1,overflowY:'auto',padding:'16px 20px'}}>
+        {rows.length===0?<div style={{textAlign:'center',padding:'80px',color:'#374151',fontSize:'14px'}}>No records found</div>:
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead><tr style={{borderBottom:'2px solid #1a2538'}}>{[PF,...FIELDS.filter(f=>f!==PF).slice(0,4)].map(f=><th key={f} style={{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',whiteSpace:'nowrap'}}>{fk(f)}</th>)}<th style={{padding:'10px 14px'}}></th></tr></thead>
+          <tbody>
+            {rows.map((row,idx)=>{
+              const statusVal=SF?String(row[SF]||''):'';
+              const sc=bs(statusVal);
+              return <tr key={row.id||idx} onClick={()=>push({type:'record',label:String(row[PF]||''),data:row})} style={{borderBottom:'1px solid #111827',cursor:'pointer',transition:'background .1s'}} onMouseEnter={e=>e.currentTarget.style.background='#0d1626'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <td style={{padding:'13px 14px',borderLeft:'3px solid '+sc.dot}}>
+                  <div style={{fontSize:'14px',fontWeight:700,color:'#fff'}}>{String(row[PF]||'')}</div>
+                  {DF&&<div style={{fontSize:'11px',color:'#4a5a72',marginTop:'2px'}}>{String(row[DF]||'')}</div>}
+                </td>
+                {FIELDS.filter(f=>f!==PF&&f!==DF).slice(0,3).map(f=><td key={f} style={{padding:'13px 14px'}}>{isSt(f)?<Badge v={row[f]}/>:isMon(f)?<span style={{color:'#4ade80',fontWeight:800,fontFamily:'monospace',fontSize:'15px'}}>{String(row[f]||'')}</span>:<span style={{color:'#94a3b8',fontSize:'13px'}}>{String(row[f]||'')}</span>}</td>)}
+                {SF&&<td style={{padding:'13px 14px'}}><Badge v={row[SF]}/></td>}
+                <td style={{padding:'13px 14px',textAlign:'right'}}><button onClick={e=>{e.stopPropagation();setForm({...row});setModal(true);}} style={{padding:'5px 12px',borderRadius:'7px',fontSize:'12px',fontWeight:600,border:'1px solid #1e2d45',background:'#0d1626',color:'#94a3b8',cursor:'pointer'}}>Edit</button></td>
+              </tr>;
+            })}
+          </tbody>
+        </table>}
+      </div>
     </div>}
-
 
 
     {/* RECORD DETAIL */}
 
     {cur.type==='record'&&cur.data&&<div style={{display:'flex',flexDirection:'column',flex:1,overflow:'hidden'}}>
 
-      <div style={{padding:'24px 28px',background:'linear-gradient(135deg,#0f1a35,#090d1a)',borderBottom:'1px solid #1e2d45',flexShrink:0}}>
-
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px'}}>
-
-          <div><h2 style={{margin:0,fontSize:'26px',fontWeight:900,color:'#fff',letterSpacing:'-0.02em'}}>{String(cur.data[PF]||'Record')}</h2><p style={{margin:'4px 0 0',fontSize:'12px',color:'#475569'}}>{PAGE} &rsaquo; {String(cur.data[PF])}</p></div>
-
+      {/* Detail header */}
+      <div style={{padding:'18px 24px',background:'linear-gradient(135deg,#0f1a35,#080d1c)',borderBottom:'1px solid #1e2d45',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px'}}>
+        <div>
+          <h2 style={{margin:0,fontSize:'22px',fontWeight:900,color:'#fff',letterSpacing:'-0.02em'}}>{String(cur.data[PF]||'Record')}</h2>
+          <p style={{margin:'4px 0 0',fontSize:'12px',color:'#4a5a72'}}>{PAGE} &rsaquo; {String(cur.data[PF])}</p>
+        </div>
+        <div style={{display:'flex',gap:'8px',alignItems:'center',flexShrink:0}}>
           {SF&&<Badge v={cur.data[SF]}/>}
+          <button onClick={()=>{setForm({...cur.data});setModal(true);}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',background:'#7c3aed',color:'#fff',border:'none',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Edit2 size={13}/>Edit</button>
+          <button onClick={()=>{setItems(it=>it.filter(i=>i.id!==cur.data.id));pop();}} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer'}}><Trash2 size={13}/></button>
+        </div>
+      </div>
 
+      {/* Two-panel body */}
+      <div style={{flex:1,overflow:'auto',display:'flex',gap:0}}>
+
+        {/* Left: field sections */}
+        <div style={{flex:'1 1 65%',padding:'20px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'16px'}}>
+
+          {/* Information card */}
+          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
+            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'18px'}}>Record Information</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'16px'}}>
+              {Object.entries(cur.data).filter(([k])=>k!=='id').map(([k,v])=><div key={k} onClick={()=>push({type:'field',label:fk(k),fieldKey:k,fieldValue:v})} style={{cursor:'pointer',padding:'14px',background:'#080d1c',border:'1px solid #1a2538',borderRadius:'12px',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='#7c3aed'} onMouseLeave={e=>e.currentTarget.style.borderColor='#1a2538'}>
+                <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'8px'}}>{fk(k)}</div>
+                {isSt(k)?<Badge v={v}/>:isMon(k)?<div style={{fontSize:'24px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{String(v)}</div>:<div style={{fontSize:'15px',fontWeight:600,color:'#e2e8f0'}}>{String(v)}</div>}
+              </div>)}
+            </div>
+          </div>
+
+          {/* Activity */}
+          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'22px'}}>
+            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'18px'}}>Activity ({related.length})</div>
+            {related.length===0?<div style={{textAlign:'center',padding:'32px',color:'#374151',fontSize:'13px'}}>No activity recorded</div>:
+            <div style={{display:'flex',flexDirection:'column',gap:0}}>
+              {related.map((r,ri)=><div key={r.id} onClick={()=>push({type:'subRecord',label:r.title,data:r,parentRecord:cur.data})} style={{display:'flex',alignItems:'flex-start',gap:'12px',padding:'14px 0',borderBottom:ri<related.length-1?'1px solid #111827':'none',cursor:'pointer'}}>
+                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#7c3aed',flexShrink:0,marginTop:'5px'}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'14px',fontWeight:600,color:'#e2e8f0'}}>{r.title}</div>
+                  <div style={{fontSize:'11px',color:'#4a5a72',marginTop:'2px'}}>{r.date}</div>
+                </div>
+                <Badge v={r.status}/>
+                <ChevronRight size={14} style={{color:'#374151'}}/>
+              </div>)}
+            </div>}
+          </div>
         </div>
 
+        {/* Right sidebar */}
+        <div style={{flex:'0 0 280px',padding:'20px 20px 20px 0',display:'flex',flexDirection:'column',gap:'14px',overflowY:'auto'}}>
+
+          {/* Money summary */}
+          {MF.length>0&&<div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'18px'}}>
+            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}}>Financial Summary</div>
+            {MF.map(f=><div key={f} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+              <span style={{fontSize:'12px',color:'#94a3b8'}}>{fk(f)}</span>
+              <span style={{fontSize:'18px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{String(cur.data[f]||'')}</span>
+            </div>)}
+          </div>}
+
+          {/* Quick actions */}
+          <div style={{background:'linear-gradient(145deg,#0f1729,#0a1020)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'18px'}}>
+            <div style={{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}}>Quick Actions</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+              <button onClick={()=>{setForm({...cur.data});setModal(true);}} style={{width:'100%',padding:'10px',background:'rgba(124,58,237,.1)',border:'1px solid rgba(124,58,237,.25)',borderRadius:'10px',color:'#c084fc',fontSize:'13px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><Edit2 size={13}/>Edit Record</button>
+              <button onClick={pop} style={{width:'100%',padding:'10px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#94a3b8',fontSize:'13px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><ChevronLeft size={13}/>Back to List</button>
+              <button onClick={()=>{setItems(it=>it.filter(i=>i.id!==cur.data.id));pop();}} style={{width:'100%',padding:'10px',background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.15)',borderRadius:'10px',color:'#f87171',fontSize:'13px',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:'8px'}}><Trash2 size={13}/>Delete Record</button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div style={{display:'flex',borderBottom:'1px solid #1a2235',background:'#0d1117',padding:'0 20px',flexShrink:0}}>
-
-        {['details','activity'].map(t=><button key={t} onClick={()=>setDtab(t)} style={{padding:'10px 16px',fontSize:'13px',fontWeight:600,cursor:'pointer',border:'none',background:'transparent',color:dtab===t?'#fff':'#475569',borderBottom:dtab===t?'2px solid #7c3aed':'2px solid transparent',marginBottom:'-1px'}}>{t==='activity'?'Activity ('+related.length+')':'Details'}</button>)}
-
-      </div>
-
-      <div style={{flex:1,overflowY:'auto'}}>
-
-        {dtab==='details'&&<div style={R.fGrid}>{Object.entries(cur.data).filter(([k])=>k!=='id').map(([k,v])=><div key={k} onClick={()=>push({type:'field',label:fk(k),fieldKey:k,fieldValue:v})} style={R.fBox} onMouseEnter={e=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.background='#120a24';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#1a2235';e.currentTarget.style.background='#0d1117';}}>
-
-          <div style={{fontSize:'11px',fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em'}}>{fk(k)}</div>
-
-          {isSt(k)?<Badge v={v}/>:isMon(k)?<div style={{fontSize:'30px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}}>{String(v)}</div>:<div style={{fontSize:'16px',fontWeight:600,color:'#e2e8f0'}}>{String(v)}</div>}
-
-          <div style={{fontSize:'11px',color:'#4f5d75',fontWeight:600,marginTop:'4px'}}>Tap to explore all records ΓÇ║</div>
-
-        </div>)}</div>}
-
-        {dtab==='activity'&&<div style={{padding:'20px',display:'flex',flexDirection:'column',gap:'10px'}}>{related.length===0?<div style={{textAlign:'center',padding:'60px',color:'#334155',fontSize:'14px'}}>No activity recorded yet.</div>:related.map(r=><div key={r.id} onClick={()=>push({type:'subRecord',label:r.title,data:r,parentRecord:cur.data})} style={{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'14px',padding:'18px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',transition:'all .2s'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.background='#0f1625';}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#1a2235';e.currentTarget.style.background='#0d1117';}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#7c3aed',flexShrink:0}}/><div><div style={{fontSize:'14px',fontWeight:600,color:'#e2e8f0'}}>{r.title}</div><div style={{fontSize:'12px',color:'#475569',marginTop:'2px'}}>{r.date}</div></div></div><div style={{display:'flex',alignItems:'center',gap:'10px'}}><Badge v={r.status}/><ChevronRight size={14} style={{color:'#334155'}}/></div></div>)}</div>}
-
-      </div>
-
     </div>}
-
 
 
     {/* FIELD PIVOT */}
