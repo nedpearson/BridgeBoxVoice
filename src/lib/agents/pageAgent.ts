@@ -1,4 +1,4 @@
-﻿/**
+/**
  * â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
  * â•‘  PAGE AGENT v6 â€” Full Retail Boutique Data Engine        â•‘
  * â•‘  Cost price, retail price, margins, payment terms        â•‘
@@ -538,7 +538,8 @@ export async function runPageAgent(
       if (n.includes('setting') || n.includes('config') || n.includes('preference')) {
         onStatus(`${page.name}: Building real settings page...`)
         const content = generateSettingsPage(page.name, projectName)
-        return { path: page.path, content: sanitizeFileContent(page.path, content) }
+        // Settings is hand-crafted trusted code — skip sanitizer to preserve all icon imports
+        return { path: page.path, content }
       }
 
       for (let attempt = 1; attempt <= maxRetriesPerPage; attempt++) {

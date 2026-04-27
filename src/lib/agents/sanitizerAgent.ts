@@ -22,9 +22,9 @@ const VALID_LUCIDE_ICONS = new Set([
   'Hash','Heart','HelpCircle','Home','Image','Inbox','Info','Key','Layout',
   'Link','List','Lock','LogIn','LogOut','Mail','Map','MapPin','Menu',
   'MessageCircle','MessageSquare','Minus','Monitor','Moon','MoreHorizontal','MoreVertical',
-  'Package','Paperclip','Pause','Phone','PieChart','Play','Plus','PlusCircle','Power',
-  'Printer','RefreshCw','Search','Send','Settings','Share','Shield','ShoppingCart','Star',
-  'Sun','Table','Tag','Trash','Trash2','TrendingDown','TrendingUp','Type','Upload',
+  'Package','Paperclip','Pause','Percent','Phone','PieChart','Play','Plus','PlusCircle','Power',
+  'Printer','Receipt','RefreshCw','Save','Search','Send','Settings','Share','Shield','ShoppingCart','Star',
+  'Store','Sun','Table','Tag','Trash','Trash2','TrendingDown','TrendingUp','Type','Upload',
   'User','UserCheck','UserMinus','UserPlus','Users','Video','Wallet','X','XCircle','ZoomIn','ZoomOut'
 ])
 
