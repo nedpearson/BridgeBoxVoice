@@ -90,43 +90,120 @@ ${pageRoutes}
   );
 }`
 
-  const layoutTsx = `import React from 'react';
+  const layoutTsx = `import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-const navItems = [
-${navLinks}
+const NAV_GROUPS = [
+  { group: 'Operations', items: [
+    { path: '/', label: 'Dashboard', icon: '▦' },
+    { path: '/appointments', label: 'Appointments', icon: '📅' },
+    { path: '/customers', label: 'Customers', icon: '👤' },
+    { path: '/sales', label: 'Sales / POS', icon: '🏷️' },
+  ]},
+  { group: 'Inventory', items: [
+    { path: '/gown-inventory', label: 'Gown Inventory', icon: '👗' },
+    { path: '/alterations', label: 'Alterations', icon: '✂️' },
+    { path: '/pickups', label: 'Pickups', icon: '📦' },
+    { path: '/vendor-orders', label: 'Vendor Orders', icon: '🏭' },
+  ]},
+  { group: 'Finance', items: [
+    { path: '/invoices', label: 'Invoices', icon: '🧾' },
+    { path: '/layaway', label: 'Layaway', icon: '💰' },
+  ]},
+  { group: 'Staff', items: [
+    { path: '/employee-scheduling', label: 'Scheduling', icon: '🗓️' },
+    { path: '/payroll', label: 'Payroll', icon: '💵' },
+  ]},
+  { group: 'Insights', items: [
+    { path: '/reports', label: 'Reports', icon: '📊' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
+  ]},
 ];
 
-const Layout: React.FC = () => (
-  <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a', color: '#f1f5f9', fontFamily: 'Inter, system-ui, sans-serif' }}>
-    <aside style={{ width: '240px', background: '#1e293b', padding: '24px 0', display: 'flex', flexDirection: 'column', borderRight: '1px solid #334155', flexShrink: 0 }}>
-      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #334155', marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#a855f7', margin: 0 }}>${projectName}</h1>
+// Match any nav item path against current route
+const navItems = NAV_GROUPS.flatMap(g => g.items);
+
+const Layout: React.FC = () => {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setTime(new Date()), 30000); return () => clearInterval(t); }, []);
+
+  const today = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const clock = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0d1117', color:'#e2e8f0', fontFamily:"'Inter', system-ui, -apple-system, sans-serif", overflow:'hidden' }}>
+
+      {/* ── Top Header Bar ── */}
+      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', height:'48px', background:'#161b26', borderBottom:'1px solid #21283a', padding:'0 20px', flexShrink:0, zIndex:100 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
+          <span style={{ fontWeight:800, fontSize:'15px', color:'#a855f7', letterSpacing:'-0.3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'200px' }}>${projectName}</span>
+          <span style={{ width:'1px', height:'20px', background:'#21283a' }} />
+          <span style={{ fontSize:'12px', color:'#64748b', fontWeight:500 }}>Back Office</span>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
+          <span style={{ fontSize:'12px', color:'#94a3b8' }}>{today}</span>
+          <span style={{ fontSize:'12px', color:'#64748b', fontWeight:700, fontVariantNumeric:'tabular-nums' }}>{clock}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:'8px', borderLeft:'1px solid #21283a', paddingLeft:'16px' }}>
+            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#7c3aed', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:700, color:'white' }}>M</div>
+            <span style={{ fontSize:'12px', color:'#94a3b8' }}>Manager</span>
+          </div>
+        </div>
+      </header>
+
+      <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
+        {/* ── Sidebar ── */}
+        <aside style={{ width:'196px', background:'#161b26', borderRight:'1px solid #21283a', display:'flex', flexDirection:'column', flexShrink:0, overflowY:'auto', overflowX:'hidden' }}>
+          {NAV_GROUPS.map(group => (
+            <div key={group.group} style={{ marginBottom:'4px' }}>
+              <div style={{ padding:'10px 14px 4px', fontSize:'10px', fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:'0.08em' }}>{group.group}</div>
+              {group.items.map(item => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/'}
+                  style={({ isActive }) => ({
+                    display:'flex', alignItems:'center', gap:'9px',
+                    padding:'7px 12px', margin:'1px 6px', borderRadius:'6px',
+                    textDecoration:'none', fontSize:'13px', fontWeight: isActive ? 600 : 400,
+                    color: isActive ? '#fff' : '#94a3b8',
+                    background: isActive ? '#7c3aed' : 'transparent',
+                    transition:'all 0.12s',
+                  })}
+                  onMouseEnter={e => { if (!(e.currentTarget as any)._active) (e.currentTarget as HTMLElement).style.background = '#1e293b'; }}
+                  onMouseLeave={e => { if (!(e.currentTarget as any)._active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <span style={{ fontSize:'14px', lineHeight:1, flexShrink:0 }}>{item.icon}</span>
+                  <span style={{ truncate:'ellipsis', overflow:'hidden', whiteSpace:'nowrap' }}>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </aside>
+
+        {/* ── Main Content ── */}
+        <main style={{ flex:1, overflow:'auto', background:'#0d1117', display:'flex', flexDirection:'column' }}>
+          {/* Sub-header breadcrumb bar */}
+          <div style={{ height:'38px', background:'#111827', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', padding:'0 20px', flexShrink:0 }}>
+            <span style={{ fontSize:'12px', color:'#475569' }}>
+              {navItems.find(n => n.path !== '/' && window.location.pathname.startsWith(n.path))?.label
+                ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'}
+            </span>
+          </div>
+          <div style={{ flex:1, overflow:'auto' }}>
+            <Outlet />
+          </div>
+        </main>
       </div>
-      <nav style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {navItems.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/'}
-            style={({ isActive }) => ({
-              display: 'block', padding: '10px 12px', borderRadius: '8px',
-              textDecoration: 'none', fontSize: '14px', fontWeight: 500,
-              color: isActive ? '#fff' : '#94a3b8',
-              background: isActive ? '#7c3aed' : 'transparent',
-              transition: 'all 0.15s',
-            })}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
-    <main style={{ flex: 1, overflow: 'auto', padding: '32px' }}>
-      <Outlet />
-    </main>
-  </div>
-);
+
+      {/* ── Status Bar ── */}
+      <div style={{ height:'24px', background:'#161b26', borderTop:'1px solid #21283a', display:'flex', alignItems:'center', padding:'0 16px', gap:'24px', flexShrink:0 }}>
+        <span style={{ fontSize:'11px', color:'#22c55e', display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#22c55e', display:'inline-block' }} />Online</span>
+        <span style={{ fontSize:'11px', color:'#475569' }}>v1.0.0</span>
+        <span style={{ fontSize:'11px', color:'#475569', marginLeft:'auto' }}>${projectName} POS &amp; Back Office</span>
+      </div>
+    </div>
+  );
+};
 
 export default Layout;`
 
