@@ -38,8 +38,9 @@ export type AgentCallback = (agents: AgentState[]) => void
 // ΓöÇΓöÇ Generate the injected boilerplate files ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function generateInjectedFiles(
   projectName: string,
-  pages: { path: string; name: string; route: string }[]
+  rawPages: { path: string; name: string; route: string }[]
 ): { path: string; content: string }[] {
+  const pages = rawPages.map(p => ({ ...p, route: '/' + p.name.toLowerCase().replace(/[^a-z0-9]/g, '-') }))
   const folderName = projectName.replace(/\s+/g, '-').toLowerCase()
   const getIcon = (n: string) => n.includes('dashboard')?'📊':n.includes('appointment')||n.includes('booking')?'📅':n.includes('customer')||n.includes('client')||n.includes('bride')?'👤':n.includes('sale')||n.includes('pos')?'💰':n.includes('gown')||n.includes('inventory')?'📦':n.includes('alteration')?'✂':n.includes('pickup')?'🚚':n.includes('vendor')||n.includes('order')?'🏪':n.includes('invoice')||n.includes('payment')||n.includes('layaway')?'🧾':n.includes('staff')||n.includes('employee')?'👥':n.includes('payroll')||n.includes('commission')?'💵':n.includes('schedule')||n.includes('shift')?'🕐':n.includes('report')||n.includes('analytic')?'📈':n.includes('setting')?'⚙':'📄'
   const navLinks = pages.map(p => `  { path: '${p.route}', label: '${p.name}', icon: '${getIcon(p.name.toLowerCase())}' }`).join(',\n')
