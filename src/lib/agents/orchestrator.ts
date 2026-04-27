@@ -221,8 +221,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   const viteConfig = `import { defineConfig } from 'vite'\nimport react from '@vitejs/plugin-react'\n\nexport default defineConfig({ plugins: [react()] })`
   const tailwindConfig = `/** @type {import('tailwindcss').Config} */\nexport default { content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'], theme: { extend: {} }, plugins: [] }`
   const postcssConfig = `export default { plugins: { tailwindcss: {}, autoprefixer: {} } }`
-  const indexCss = `@tailwind base;\n@tailwind components;\n@tailwind utilities;`
-  const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${projectName}</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>`
+  const indexCss = `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n*, *::before, *::after { box-sizing: border-box; }\nhtml, body, #root { height: 100%; margin: 0; padding: 0; background: #0d1117; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }\n::-webkit-scrollbar { width: 6px; height: 6px; }\n::-webkit-scrollbar-track { background: #0d1117; }\n::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }\n::-webkit-scrollbar-thumb:hover { background: #475569; }`
+  const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${projectName}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>`
   const vercelJson = JSON.stringify({ rewrites: [{ source: '/(.*)', destination: '/index.html' }] }, null, 2)
   const packageJson = JSON.stringify({
     name: folderName, private: true, version: '0.0.0', type: 'module',
