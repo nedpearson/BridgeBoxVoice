@@ -462,14 +462,39 @@ export const TEMPLATES: AppTemplate[] = [
 
   // ── Retail ──────────────────────────────────────────────────────────────────
   {
-    id: 'ret-pos',
-    name: 'Retail POS System',
+    id: 'ret-bridal',
+    name: 'Bridal Boutique Operations & POS',
     category: 'retail',
-    icon: '🏷️',
-    description: 'Clean retail point-of-sale system with inventory management, payroll, and ordering.',
-    tags: ['POS', 'Inventory', 'Payroll', 'Ordering'],
-    complexity: 'Pro',
-    prompt: `I want to build a retail POS (Point of Sale) system. It must have a clean layout with large badges and tabs. It should include comprehensive Inventory Management (Products, Categories, Brands, Barcode generation), Ordering (Sales and Purchase management, Quotations, Returns), Payroll and Staff management (User and Customer/Supplier management, Expenses tracking for payroll). The dashboard should have big badges for Total Sales, Total Purchase, Total Sales Return, and Total Purchase Return. It should also have built-in reporting for Inventory, Sales, and Expenses.`,
-    previewImage: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=800&q=80',
+    icon: '👗',
+    description: 'Comprehensive Bridal Boutique POS with multi-location inventory, appointments, alterations, and staff management.',
+    tags: ['Bridal', 'Appointments', 'Inventory', 'Multi-Location', 'Alterations', 'Payroll'],
+    complexity: 'Enterprise',
+    prompt: `I want to build a comprehensive Bridal Boutique Operations & POS application.
+
+CRITICAL DESIGN LAYOUT:
+The design MUST feature a dark side-navigation menu on the left with tabs like Dashboard, Till, Product Management, Inventory, Customers, Employees, Reports, and Setup. The main content area should have a clean, white background and use a "large card grid" layout acting as a submenu or dashboard. Each card should be large, white, with a huge bold center icon and text underneath (e.g., "Add a Vendor", "Purchase Orders", "Receiving", "View Inventory").
+
+FEATURES TO BUILD:
+1. Appointment Booking: Book, reschedule, and cancel bridal appointments. Associate gown selections, stylist, and notes. Send confirmation emails.
+2. Multi-Location Management: Manage 4 store locations (I Do BR, I Do Covington, Proper BR, Proper Covington) from one dashboard. Toggle between locations.
+3. Employee Scheduling: Create and manage weekly staff schedules per location. View who is working each day. Track hours.
+4. Gown Inventory Management: Track bridal gowns and dresses by designer, size, color, price, condition, and store location. Add photos, notes, and reservation status.
+5. Bridal Pickup Management: Track gown pickups — when ordered, arrival date, alteration status, pickup date, customer notified.
+6. Payroll Management: Track employee hours, pay rates, deductions, and generate weekly payroll summaries per location.
+7. Vendor Order Portal: Place and track orders to bridal vendors (Stella York, Maggie Sottero, Rebecca Ingram, etc.). Track order status, delivery dates, PO numbers.
+8. Customer Relationship Management: Full bride/customer profiles with wedding date, contact info, gown selections, notes, and appointment history.
+9. Alteration Tracking: Track each gown's alteration status, seamstress assigned, measurements, and completion date.
+10. Sales & Revenue Dashboard: Revenue by store, by month, and by designer. Commission tracking per stylist.
+11. Staff Directory: Employee profiles with role, store, contact info, pay rate, and schedule.
+12. Designer Catalog: Browse designers and their collections. Link gowns to designer records.
+13. Notifications & Reminders: Automated appointment reminders, pickup notifications, and low-stock alerts.
+14. Report Generation: Weekly sales reports, payroll summaries, inventory reports, and appointment logs.
+15. POS & Payment Recording: Record deposits, layaway payments, and final balances for each gown sale.
+16. Inter-Location Transfer: Transfer gowns between store locations. Track transfer history.
+17. Wish List & Favorites: Brides can have a wishlist of gowns they are considering.
+18. Calendar View: Full calendar showing appointments, pickups, staff schedules, and vendor delivery dates.
+19. Task Management: Daily task lists for staff per location.
+20. Settings & User Roles: Admin, Manager, and Stylist roles with appropriate access levels per location.`,
+    previewImage: 'https://images.unsplash.com/photo-1596452295697-36e4b953a925?auto=format&fit=crop&w=800&q=80',
   },
 ]
