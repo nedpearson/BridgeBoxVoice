@@ -408,15 +408,17 @@ export default function ProjectDetailPage() {
 
       // Save files for zip download (re-generate from orchestrator-produced result)
       // The orchestrator returns the final URL " also get files via a separate call
-      if (orchResult.state === 'READY' && orchResult.url) {
+      if (orchResult.url) { // save whenever any URL returned
         await supabase.from('projects').update({
           production_url: orchResult.url,
+          staging_url: orchResult.url,
           status: 'deployed'
         }).eq('id', project.id)
         setProject((prev: any) => prev ? {
           ...prev,
           web_app_url: orchResult.url,
           production_url: orchResult.url,
+          staging_url: orchResult.url,
           status: 'deployed'
         } : prev)
         const repairMsg = orchResult.totalRepairs > 0 ? ` (${orchResult.totalRepairs} auto-fix${orchResult.totalRepairs > 1 ? 'es' : ''} applied)` : ''
@@ -622,8 +624,8 @@ export default function ProjectDetailPage() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {(() => {
-              const liveUrl = (project as any).production_url || project.web_app_url
-              const hasLiveUrl = liveUrl && !liveUrl.startsWith('/') && liveUrl.includes('.')
+              const liveUrl = (project as any).production_url || (project as any).staging_url || project.web_app_url
+              const hasLiveUrl = liveUrl && typeof liveUrl === 'string' && liveUrl.length > 4 && (liveUrl.includes('.') || liveUrl.startsWith('http'))
 
               if (!hasLiveUrl && !previewHtml) return null;
 
