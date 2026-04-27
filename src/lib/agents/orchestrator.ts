@@ -1,11 +1,11 @@
-﻿/**
- * ╔══════════════════════════════════════════════════════════════════════╗
- * ║  SUPER AGENT ORCHESTRATOR                                            ║
- * ║  Coordinates all agents through the full build pipeline:            ║
- * ║                                                                      ║
- * ║  [SkeletonAgent] → [PageAgent] → [FileInjector] → [SanitizerAgent] ║
- * ║       → [BuildAgent] → [Deploy] → Live App with Error Boundaries    ║
- * ╚══════════════════════════════════════════════════════════════════════╝
+/**
+ * ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+ * Γòæ  SUPER AGENT ORCHESTRATOR                                            Γòæ
+ * Γòæ  Coordinates all agents through the full build pipeline:            Γòæ
+ * Γòæ                                                                      Γòæ
+ * Γòæ  [SkeletonAgent] ΓåÆ [PageAgent] ΓåÆ [FileInjector] ΓåÆ [SanitizerAgent] Γòæ
+ * Γòæ       ΓåÆ [BuildAgent] ΓåÆ [Deploy] ΓåÆ Live App with Error Boundaries    Γòæ
+ * ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
  */
 
 import { runSkeletonAgent } from './skeletonAgent'
@@ -35,17 +35,23 @@ export interface OrchestratorResult {
 export type StatusCallback = (stage: string, message: string, pct: number) => void
 export type AgentCallback = (agents: AgentState[]) => void
 
-// ── Generate the injected boilerplate files ───────────────────────────────────
+// ΓöÇΓöÇ Generate the injected boilerplate files ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function generateInjectedFiles(
   projectName: string,
   pages: { path: string; name: string; route: string }[]
 ): { path: string; content: string }[] {
   const folderName = projectName.replace(/\s+/g, '-').toLowerCase()
-  const navLinks = pages.map(p => { const n=p.name.toLowerCase(); const icon=n.includes('dashboard')?'chart':n.includes('appointment')||n.includes('booking')?'cal':n.includes('customer')||n.includes('client')||n.includes('bride')?'user':n.includes('sale')||n.includes('pos')?'dollar':n.includes('gown')||n.includes('inventory')||n.includes('stock')?'box':n.includes('alteration')?'scissors':n.includes('pickup')?'truck':n.includes('vendor')||n.includes('order')?'shop':n.includes('invoice')||n.includes('payment')||n.includes('layaway')?'receipt':n.includes('staff')||n.includes('employee')||n.includes('hr')?'users':n.includes('payroll')||n.includes('commission')?'dollar':n.includes('schedule')||n.includes('shift')?'clock':n.includes('report')||n.includes('analytic')?'chart':n.includes('setting')?'gear':'page'; return `  { path: '\', label: '\', icon: '\' }`; }).join(',\n')
+  const getIcon = (n: string) => n.includes('dashboard')?'📊':n.includes('appointment')||n.includes('booking')?'📅':n.includes('customer')||n.includes('client')||n.includes('bride')?'👤':n.includes('sale')||n.includes('pos')?'💰':n.includes('gown')||n.includes('inventory')?'📦':n.includes('alteration')?'✂':n.includes('pickup')?'🚚':n.includes('vendor')||n.includes('order')?'🏪':n.includes('invoice')||n.includes('payment')||n.includes('layaway')?'🧾':n.includes('staff')||n.includes('employee')?'👥':n.includes('payroll')||n.includes('commission')?'💵':n.includes('schedule')||n.includes('shift')?'🕐':n.includes('report')||n.includes('analytic')?'📈':n.includes('setting')?'⚙':'📄'
+  const navLinks = pages.map(p => `  { path: '${p.route}', label: '${p.name}', icon: '${getIcon(p.name.toLowerCase())}' }`).join(',\n')
   const pageImports = pages.map((p, i) => `import Page${i} from './${p.path.replace(/^src\//, '').replace(/\.tsx$/, '')}';`).join('\n')
   const firstRoute = pages[0]?.route ?? '/dashboard'
-  const pageRoutesArr = pages.map((p, i) => `          <Route path="\" element={<ErrorBoundary name="\"><Page\ /></ErrorBoundary>} />`)
-  const pageRoutes = [...pageRoutesArr, `          <Route index element={<Navigate to="\" replace />} />`, `          <Route path="*" element={<Navigate to="\" replace />} />`].join('\n')
+  const pageRoutes = [
+    ...pages.map((p, i) =>
+      `          <Route path="${p.route}" element={<ErrorBoundary name="${p.name}"><Page${i} /></ErrorBoundary>} />`
+    ),
+    `          <Route index element={<Navigate to="${firstRoute}" replace />} />`,
+    `          <Route path="*" element={<Navigate to="${firstRoute}" replace />} />`,
+  ].join('\n')
 
   const appTsx = `import React, { Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -134,7 +140,7 @@ const Layout: React.FC = () => {
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0d1117', color:'#e2e8f0', fontFamily:"'Inter', system-ui, -apple-system, sans-serif", overflow:'hidden' }}>
 
-      {/* ── Top Header Bar ── */}
+      {/* ΓöÇΓöÇ Top Header Bar ΓöÇΓöÇ */}
       <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', height:'48px', background:'#161b26', borderBottom:'1px solid #21283a', padding:'0 20px', flexShrink:0, zIndex:100 }}>
         <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
           <span style={{ fontWeight:800, fontSize:'15px', color:'#a855f7', letterSpacing:'-0.3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'200px' }}>${projectName}</span>
@@ -152,7 +158,7 @@ const Layout: React.FC = () => {
       </header>
 
       <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
-        {/* ── Sidebar ── */}
+        {/* ΓöÇΓöÇ Sidebar ΓöÇΓöÇ */}
         <aside style={{ width:'196px', background:'#161b26', borderRight:'1px solid #21283a', display:'flex', flexDirection:'column', flexShrink:0, overflowY:'auto', overflowX:'hidden' }}>
           {NAV_GROUPS.map(group => (
             <div key={group.group} style={{ marginBottom:'4px' }}>
@@ -181,12 +187,12 @@ const Layout: React.FC = () => {
           ))}
         </aside>
 
-        {/* ── Main Content ── */}
+        {/* ΓöÇΓöÇ Main Content ΓöÇΓöÇ */}
         <main style={{ flex:1, overflow:'auto', background:'#0d1117', display:'flex', flexDirection:'column' }}>
           {/* Sub-header breadcrumb bar */}
           <div style={{ height:'38px', background:'#111827', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', padding:'0 20px', flexShrink:0 }}>
             <span style={{ fontSize:'12px', color:'#475569' }}>
-            {(() => { const loc = location.pathname; return navItems.find(n => n.path !== '/' && loc.startsWith(n.path))?.label ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'; })()}
+              {navItems.find(n => n.path !== '/' && location.pathname.startsWith(n.path))?.label
                 ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'}
             </span>
           </div>
@@ -196,7 +202,7 @@ const Layout: React.FC = () => {
         </main>
       </div>
 
-      {/* ── Status Bar ── */}
+      {/* ΓöÇΓöÇ Status Bar ΓöÇΓöÇ */}
       <div style={{ height:'24px', background:'#161b26', borderTop:'1px solid #21283a', display:'flex', alignItems:'center', padding:'0 16px', gap:'24px', flexShrink:0 }}>
         <span style={{ fontSize:'11px', color:'#22c55e', display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#22c55e', display:'inline-block' }} />Online</span>
         <span style={{ fontSize:'11px', color:'#475569' }}>v1.0.0</span>
@@ -292,7 +298,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   ]
 }
 
-// ── File merge: agent files override AI files ─────────────────────────────────
+// ΓöÇΓöÇ File merge: agent files override AI files ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function mergeFiles(
   aiFiles: { path: string; content: string }[],
   injectedFiles: { path: string; content: string }[],
@@ -308,7 +314,7 @@ function mergeFiles(
   return [...map.entries()].map(([path, content]) => ({ path, content }))
 }
 
-// ── Main Orchestrator ─────────────────────────────────────────────────────────
+// ΓöÇΓöÇ Main Orchestrator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 export async function runOrchestrator(
   spec: Record<string, unknown>,
   projectName: string,
@@ -328,7 +334,7 @@ export async function runOrchestrator(
     if (idx >= 0) { agents[idx] = { ...agents[idx], ...updates }; emit() }
   }
 
-  // ── AGENT 1: Skeleton ─────────────────────────────────────────────────────
+  // ΓöÇΓöÇ AGENT 1: Skeleton ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('skeleton', { status: 'running', message: 'Generating app structure...' })
   onStatus('skeleton', 'Generating app structure...', 10)
   let skeleton
@@ -344,7 +350,7 @@ export async function runOrchestrator(
     return { url: null, state: 'ERROR', agents, totalRepairs: 0 }
   }
 
-  // ── AGENT 2: Pages ────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ AGENT 2: Pages ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('pages', { status: 'running', message: `Generating ${skeleton.pages.length} pages...` })
   onStatus('pages', `Generating ${skeleton.pages.length} pages in parallel...`, 25)
   let pageFiles: { path: string; content: string }[] = []
@@ -362,14 +368,14 @@ export async function runOrchestrator(
     onStatus('pages', `${pageFiles.length} pages generated`, 65)
   } catch (e: any) {
     setAgent('pages', { status: 'error', message: e.message })
-    // Don't abort — use stubs for all pages
+    // Don't abort ΓÇö use stubs for all pages
     pageFiles = skeleton.pages.map(p => ({
       path: p.path,
       content: generateSafeStub(p.name, p.route)
     }))
   }
 
-  // ── AGENT 3: File Injector ────────────────────────────────────────────────
+  // ΓöÇΓöÇ AGENT 3: File Injector ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('injector', { status: 'running', message: 'Injecting infrastructure files...' })
   onStatus('injector', 'Injecting App.tsx, Layout, package.json...', 70)
   const injectedFiles = generateInjectedFiles(projectName, skeleton.pages)
@@ -377,7 +383,7 @@ export async function runOrchestrator(
   setAgent('injector', { status: 'done', message: `${mergedFiles.length} total files ready` })
   onStatus('injector', `${mergedFiles.length} files ready`, 75)
 
-  // ── AGENT 4: Sanitizer + Pre-flight Validator ────────────────────────────
+  // ΓöÇΓöÇ AGENT 4: Sanitizer + Pre-flight Validator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('sanitizer', { status: 'running', message: 'Sanitizing all files...' })
   onStatus('sanitizer', 'Sanitizing imports, icons, stubs, and syntax...', 78)
   const sanitizerRepairs: string[] = []
@@ -416,7 +422,7 @@ export async function runOrchestrator(
   })
   onStatus('sanitizer', 'Pre-flight validation complete', 82)
 
-  // ── AGENT 5: SuperAgent Validation ──────────────────────────────────────────
+  // ΓöÇΓöÇ AGENT 5: SuperAgent Validation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('superAgent' as any, { status: 'running', message: 'SuperAgent validating all files...' })
   const { files: validatedFiles, result: superResult } = await runSuperAgent(
     sanitized,
@@ -429,7 +435,7 @@ export async function runOrchestrator(
   })
   onStatus('superAgent', superResult.summary, 86)
 
-  // ── AGENT 6: Build ────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ AGENT 6: Build ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('build', { status: 'running', message: 'Deploying to Vercel...' })
   onStatus('build', 'Self-healing deploy starting...', 88)
   const buildResult = await runBuildAgent(projectName, validatedFiles, (msg) => {
