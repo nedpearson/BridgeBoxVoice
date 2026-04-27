@@ -162,17 +162,21 @@ export default function ProjectDetailPage() {
     }
   }, [project?.status, project?.transcript, project?.id, project?.spec, updateProject])
 
-  // building ' deployed (simulated build phase)
+  // building ' deployed (simulated build phase -> now actually generates preview)
   useEffect(() => {
     if (project?.status === 'building' && project?.spec && !buildStarted.current) {
       buildStarted.current = true
 
-      const timer = setTimeout(async () => {
+      const runBuild = async () => {
         try {
+          const spec = typeof project.spec === 'string' ? JSON.parse(project.spec) : project.spec
+          const { generateAppPreview } = await import('../lib/anthropic')
+          const html = await generateAppPreview(spec)
+          
           setStageProgress(100)
-          await new Promise(r => setTimeout(r, 500))
+          setPreviewHtml(html)
 
-          // Mark as deployed " do NOT set a self-referencing local URL
+          // Mark as deployed
           const { error } = await supabase.from('projects').update({
             status: 'deployed'
           }).eq('id', project.id)
@@ -191,13 +195,15 @@ export default function ProjectDetailPage() {
           setProject(deployed)
           updateProject(project.id, { status: 'deployed' } as any)
           setDeployHistory([{ id: 'initial', project_id: project.id, platform: 'web', version: 'v1.0.0', status: 'success', url: '', created_at: new Date().toISOString() }])
-          toast.success('App spec deployed successfully!')
+          toast.success('App built successfully!')
         } catch (e: any) {
+          console.error('Build failed', e)
           toast.error('Build failed: ' + e.message)
+          setProject((p: any) => ({ ...p, status: 'failed' }))
         }
-      }, 4500)
+      }
 
-      return () => clearTimeout(timer)
+      runBuild()
     }
   }, [project?.status, project?.spec, project?.id, updateProject])
 
