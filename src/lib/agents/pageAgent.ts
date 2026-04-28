@@ -562,7 +562,7 @@ export async function runPageAgent(
           if (validatePageData(data)) {
             const isCalPage = /appointment|booking|schedule|calendar|shift|rota|event|meeting|timetable|planner|availability/i.test(page.name)
             const builder = isCalPage ? buildCalendarPage : buildPageFromData
-            const content = builder(page.name, page.route, data)
+            const content = builder(page.name, page.route, data, projectName)
             const sanitized = sanitizeFileContent(page.path, content)
             onStatus(`${page.name}: Done`)
             return { path: page.path, content: sanitized }

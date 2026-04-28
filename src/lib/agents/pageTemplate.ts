@@ -1,36 +1,47 @@
 /* eslint-disable */
 
 export interface PageData {
-
   fields: string[]
-
   records: Record<string, string | number>[]
-
   stats: { label: string; value: string | number }[]
-
   formFields: { key: string; label: string; type: 'text'|'date'|'select'|'textarea'|'number'; options?: string[] }[]
-
   subRecords: { id: number; parentId: number; title: string; date: string; status: string }[]
-
 }
+
+
+export const THEMES = [
+  { bg: 'bg-[#030712]', cardBg: 'bg-[#0B0F19]', navBg: 'bg-[#060913]', border: 'border-[#1E293B]', textNormal: 'text-slate-200', textMain: 'text-white', textSub: 'text-slate-500', textMuted: 'text-slate-400', inputBg: 'bg-[#131B2B]', hoverBg: 'hover:bg-[#1E293B]', accentBg: 'bg-blue-600', accentHover: 'hover:bg-blue-500', accentText: 'text-blue-400', shadow: 'shadow-blue-600/20' },
+  { bg: 'bg-stone-50', cardBg: 'bg-white', navBg: 'bg-stone-100', border: 'border-stone-200', textNormal: 'text-stone-700', textMain: 'text-stone-900', textSub: 'text-stone-500', textMuted: 'text-stone-400', inputBg: 'bg-stone-50', hoverBg: 'hover:bg-stone-100', accentBg: 'bg-rose-600', accentHover: 'hover:bg-rose-500', accentText: 'text-rose-600', shadow: 'shadow-rose-600/20' },
+  { bg: 'bg-zinc-50', cardBg: 'bg-white', navBg: 'bg-zinc-100', border: 'border-zinc-200', textNormal: 'text-zinc-700', textMain: 'text-zinc-900', textSub: 'text-zinc-500', textMuted: 'text-zinc-400', inputBg: 'bg-zinc-50', hoverBg: 'hover:bg-zinc-100', accentBg: 'bg-emerald-600', accentHover: 'hover:bg-emerald-500', accentText: 'text-emerald-600', shadow: 'shadow-emerald-600/20' },
+  { bg: 'bg-slate-950', cardBg: 'bg-slate-900', navBg: 'bg-slate-950', border: 'border-slate-800', textNormal: 'text-slate-300', textMain: 'text-slate-50', textSub: 'text-slate-500', textMuted: 'text-slate-400', inputBg: 'bg-slate-800', hoverBg: 'hover:bg-slate-700', accentBg: 'bg-violet-600', accentHover: 'hover:bg-violet-500', accentText: 'text-violet-400', shadow: 'shadow-violet-600/20' }
+];
+export const getTheme = (name: string | undefined) => THEMES[(name || '').split('').reduce((a,b)=>a+b.charCodeAt(0),0) % THEMES.length];
 
 export const STATUS_MAP = {}
 
 export function validatePageData(d: any): d is PageData {
-
   return d && Array.isArray(d.fields) && Array.isArray(d.records) && d.fields.length > 0
-
 }
 
-export function generateSafeStub(pageName: string, route: string): string {
-
+export function generateSafeStub(pageName: string, _route: string, projectName?: string): string {
+  const T = getTheme(projectName);
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
-
-  return `import React from 'react';\nexport default function ${safe}(){return <div style={{padding:'32px',color:'#e2e8f0'}}><h2 style={{margin:0}}>${pageName}</h2><p style={{color:'#64748b',marginTop:'8px'}}>Route: ${route}</p></div>;}`
-
+  return `import React from 'react';
+export default function ${safe}(){
+  return (
+    <div className="p-8 ${T.textNormal} h-full flex flex-col items-center justify-center">
+      <div className="w-16 h-16 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6">
+        <div className="${T.accentText} font-bold text-2xl">${safe[0]}</div>
+      </div>
+      <h2 className="text-2xl font-bold mb-2 ${T.textMain}">${pageName}</h2>
+      <p className="${T.textSub} ${T.inputBg} border ${T.border} px-4 py-2 rounded-lg font-mono text-xs mt-4">${_route}</p>
+    </div>
+  );
+}`
 }
 
-export function buildPageFromData(pageName: string, _route: string, data: PageData): string {
+export function buildPageFromData(pageName: string, _route: string, data: PageData, projectName?: string): string {
+  const T = getTheme(projectName);
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
   const fields = data.fields.filter(f => f !== 'id')
   const primaryField = fields[0] || 'name'
@@ -45,267 +56,328 @@ export function buildPageFromData(pageName: string, _route: string, data: PageDa
   const formJson = JSON.stringify(data.formFields || [])
   const emptyForm = '{' + (data.formFields || []).map(f => `"${f.key}":""`).join(',') + '}'
 
-  return `import React,{useState} from 'react';
-import {Plus,Search,ChevronRight,ChevronLeft,Edit2,Trash2,X,RefreshCw} from 'lucide-react';
+  return `import React, { useState } from 'react';
+import { Plus, Search, ChevronRight, ChevronLeft, Edit2, Trash2, X, Filter, MoreHorizontal, TrendingUp, ExternalLink } from 'lucide-react';
 
-let DATA=[],STATS=[],FF=[],FIELDS=[],MF=[];
-try{DATA=${dataJson};}catch(e){console.error('DATA',e);}
-try{STATS=${statsJson};}catch(e){}
-try{FIELDS=${fieldsJson};}catch(e){}
-try{MF=${moneyJson};}catch(e){}
-try{FF=${formJson};}catch(e){}
+const DATA = ${dataJson} || [];
+const STATS = ${statsJson} || [];
+const FF = ${formJson} || [];
+const FIELDS = ${fieldsJson} || [];
+const MF = ${moneyJson} || [];
 
-const PAGE='${pageName}';
-const PF='${primaryField}';
-const SF='${statusField}';
-const DF='${dateField}';
-const EMPTY=${emptyForm};
-const IS_DASH=PAGE.toLowerCase().includes('dashboard');
-const IS_SETTINGS=PAGE.toLowerCase().includes('settings');
+const PAGE = '${pageName}';
+const PF = '${primaryField}';
+const SF = '${statusField}';
+const DF = '${dateField}';
+const EMPTY = ${emptyForm};
+const IS_DASH = PAGE.toLowerCase().includes('dashboard');
 
-const SC={active:'#22c55e',confirmed:'#60a5fa',completed:'#22c55e',done:'#22c55e',pending:'#fbbf24',cancelled:'#ef4444','no-show':'#ef4444',scheduled:'#60a5fa',paid:'#22c55e',overdue:'#ef4444',delinquent:'#ef4444',inactive:'#64748b','on-hold':'#f59e0b',new:'#818cf8',layaway:'#a855f7','full-time':'#22c55e','part-time':'#60a5fa',seasonal:'#f59e0b'};
-const sc=v=>SC[String(v||'').toLowerCase()]||'#a855f7';
-const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
-const isMon=f=>MF.includes(f);
-const isSt=f=>SF&&f===SF;
-const fmt=v=>v===null||v===undefined?'-':String(v);
+const SC: Record<string, string> = { active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', confirmed: 'bg-blue-500/10 ${T.accentText} border-blue-500/20', completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', done: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20', cancelled: 'bg-red-500/10 text-red-400 border-red-500/20', 'no-show': 'bg-red-500/10 text-red-400 border-red-500/20', scheduled: 'bg-blue-500/10 ${T.accentText} border-blue-500/20', paid: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', overdue: 'bg-red-500/10 text-red-400 border-red-500/20', delinquent: 'bg-red-500/10 text-red-400 border-red-500/20' };
+const sc = (v: any) => SC[String(v || '').toLowerCase()] || 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+const fk = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+const isMon = (f: string) => MF.includes(f);
+const isSt = (f: string) => SF && f === SF;
+const fmt = (v: any) => v === null || v === undefined ? '-' : String(v);
 
-const ROOT={display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"};
-const BTN={display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer',border:'none'};
-const CARD={background:'linear-gradient(145deg,#0f1a35,#080d1c)',border:'1px solid #1e2d45',borderRadius:'16px',padding:'20px'};
-
-function Badge({v}){
-  const c=sc(v);
-  return React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:c+'20',color:c,border:'1px solid '+c+'40',whiteSpace:'nowrap'}},
-    React.createElement('span',{style:{width:'5px',height:'5px',borderRadius:'50%',background:c,flexShrink:0}}),
-    fmt(v)
+function Badge({ v }: { v: any }) {
+  const c = sc(v);
+  return (
+    <span className={"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap " + c}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-75" />
+      {fmt(v)}
+    </span>
   );
 }
 
-export default function ${safe}(){
-  const [items,setItems]=useState(DATA);
-  const [q,setQ]=useState('');
-  const [sel,setSel]=useState(null);
-  const [form,setForm]=useState(EMPTY);
-  const [showForm,setShowForm]=useState(false);
+export default function ${safe}() {
+  const [items, setItems] = useState<any[]>(DATA);
+  const [q, setQ] = useState('');
+  const [sel, setSel] = useState<any | null>(null);
+  const [form, setForm] = useState<any>(EMPTY);
+  const [showForm, setShowForm] = useState(false);
 
-  const rows=q?items.filter(r=>Object.values(r).some(v=>String(v||'').toLowerCase().includes(q.toLowerCase()))):items;
+  const rows = q ? items.filter(r => Object.values(r).some(v => String(v || '').toLowerCase().includes(q.toLowerCase()))) : items;
 
-  const save=()=>{
-    if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));
-    else setItems(it=>[...it,{...form,id:Date.now()}]);
-    setShowForm(false);setForm(EMPTY);
+  const save = () => {
+    if (form.id) setItems(it => it.map(i => i.id === form.id ? { ...i, ...form } : i));
+    else setItems(it => [...it, { ...form, id: Date.now() }]);
+    setShowForm(false); setForm(EMPTY);
   };
 
-  const del=(id)=>{setItems(it=>it.filter(i=>i.id!==id));if(sel&&sel.id===id)setSel(null);};
+  const del = (id: any) => { setItems(it => it.filter(i => i.id !== id)); if (sel && sel.id === id) setSel(null); };
 
-  // DETAIL VIEW
-  if(sel){
-    return React.createElement('div',{style:{...ROOT,overflowY:'hidden'}},
-      // Header
-      React.createElement('div',{style:{padding:'16px 24px',background:'#0d1626',borderBottom:'1px solid #1e2d45',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},
-          React.createElement('button',{onClick:()=>setSel(null),style:{...BTN,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',padding:'7px 14px'}},
-            React.createElement(ChevronLeft,{size:13}),'Back'
-          ),
-          React.createElement('div',null,
-            React.createElement('div',{style:{fontSize:'20px',fontWeight:900,color:'#fff'}},fmt(sel[PF])),
-            React.createElement('div',{style:{fontSize:'12px',color:'#475569',marginTop:'2px'}},PAGE+' / '+fmt(sel[PF]))
-          )
-        ),
-        React.createElement('div',{style:{display:'flex',gap:'8px'}},
-          SF&&sel[SF]&&React.createElement(Badge,{v:sel[SF]}),
-          React.createElement('button',{onClick:()=>{setForm({...sel});setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},
-            React.createElement(Edit2,{size:13}),'Edit'
-          ),
-          React.createElement('button',{onClick:()=>{del(sel.id);},style:{...BTN,background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)'}},
-            React.createElement(Trash2,{size:13})
-          )
-        )
-      ),
-      // Body - two panel
-      React.createElement('div',{style:{display:'flex',flex:1,overflow:'hidden'}},
-        // Left panel - fields
-        React.createElement('div',{style:{flex:'1 1 65%',overflowY:'auto',padding:'20px',display:'flex',flexDirection:'column',gap:'14px'}},
-          React.createElement('div',{style:CARD},
-            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}},'Record Information'),
-            React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px'}},
-              Object.entries(sel).filter(([k])=>k!=='id').map(([k,v])=>
-                React.createElement('div',{key:k,style:{background:'#080d1c',border:'1px solid #1a2538',borderRadius:'12px',padding:'14px'}},
-                  React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(k)),
-                  isSt(k)?React.createElement(Badge,{v}):
-                  isMon(k)?React.createElement('div',{style:{fontSize:'22px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}},fmt(v)):
-                  React.createElement('div',{style:{fontSize:'14px',fontWeight:600,color:'#e2e8f0'}},fmt(v))
-                )
-              )
-            )
-          )
-        ),
-        // Right panel - summary + actions
-        React.createElement('div',{style:{flex:'0 0 260px',overflowY:'auto',padding:'20px 20px 20px 0',display:'flex',flexDirection:'column',gap:'12px'}},
-          MF.length>0&&React.createElement('div',{style:CARD},
-            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}},'Financial Summary'),
-            MF.map(f=>React.createElement('div',{key:f,style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}},
-              React.createElement('span',{style:{fontSize:'12px',color:'#94a3b8'}},fk(f)),
-              React.createElement('span',{style:{fontSize:'18px',fontWeight:900,color:'#4ade80',fontFamily:'monospace'}},fmt(sel[f]))
-            ))
-          ),
-          React.createElement('div',{style:CARD},
-            React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'14px'}},'Quick Actions'),
-            React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}},
-              React.createElement('button',{onClick:()=>{setForm({...sel});setShowForm(true);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(124,58,237,.1)',color:'#c084fc',border:'1px solid rgba(124,58,237,.25)'}},React.createElement(Edit2,{size:13}),'Edit Record'),
-              React.createElement('button',{onClick:()=>setSel(null),style:{...BTN,width:'100%',justifyContent:'center',background:'#0d1626',color:'#94a3b8',border:'1px solid #1e2d45'}},React.createElement(ChevronLeft,{size:13}),'Back to List'),
-              React.createElement('button',{onClick:()=>{del(sel.id);},style:{...BTN,width:'100%',justifyContent:'center',background:'rgba(239,68,68,.06)',color:'#f87171',border:'1px solid rgba(239,68,68,.15)'}},React.createElement(Trash2,{size:13}),'Delete')
-            )
-          )
-        )
-      )
+  if (sel) {
+    return (
+      <div className="flex flex-col h-full ${T.bg} ${T.textNormal} font-sans overflow-hidden">
+        <div className="px-6 py-5 ${T.cardBg} border-b ${T.border} flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSel(null)} className="p-2 ${T.hoverBg} ${T.textMuted} hover:${T.textMain} rounded-xl transition-colors">
+              <ChevronLeft size={20} />
+            </button>
+            <div>
+              <div className="text-2xl font-black ${T.textMain} tracking-tight">{fmt(sel[PF])}</div>
+              <div className="text-[11px] font-bold uppercase tracking-widest ${T.textSub} mt-1">{PAGE} / {fmt(sel[PF])}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {SF && sel[SF] && <Badge v={sel[SF]} />}
+            <button onClick={() => { setForm({ ...sel }); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2 ${T.inputBg} ${T.hoverBg} ${T.textMain} text-sm font-bold rounded-xl border ${T.border} transition-all">
+              <Edit2 size={14} /> Edit
+            </button>
+            <button onClick={() => del(sel.id)} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-xl border border-red-500/20 transition-all">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-6">
+            <div className="${T.cardBg} border ${T.border} rounded-3xl p-8 shadow-2xl shadow-black/40">
+              <div className="text-[11px] font-black ${T.textSub} uppercase tracking-widest mb-6 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" /> Record Information
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Object.entries(sel).filter(([k]) => k !== 'id').map(([k, v]) => (
+                  <div key={k} className="${T.inputBg}/50 border ${T.border}/50 rounded-2xl p-5 hover:${T.border} transition-colors">
+                    <div className="text-[10px] font-bold ${T.textSub} uppercase tracking-widest mb-2">{fk(k)}</div>
+                    {isSt(k) ? <Badge v={v} /> :
+                     isMon(k) ? <div className="text-xl font-black text-emerald-400 font-mono tracking-tight">{fmt(v)}</div> :
+                     <div className="text-sm font-semibold ${T.textNormal}">{fmt(v)}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {MF.length > 0 && (
+            <div className="w-80 overflow-y-auto p-6 pt-8 pr-8 bg-[#080B14] border-l ${T.border} flex flex-col gap-6 shrink-0">
+              <div className="bg-gradient-to-br from-[#131B2B] to-[#0B0F19] border ${T.border} rounded-3xl p-6 relative overflow-hidden shadow-xl shadow-black/20">
+                <div className="absolute top-0 right-0 p-4 opacity-5"><TrendingUp size={80} /></div>
+                <div className="text-[10px] font-black ${T.textSub} uppercase tracking-widest mb-6 relative z-10">Financial Summary</div>
+                <div className="space-y-5 relative z-10">
+                  {MF.map(f => (
+                    <div key={f} className="flex flex-col gap-1 border-b ${T.border}/50 pb-3 last:border-0 last:pb-0">
+                      <span className="text-xs ${T.textMuted} font-bold uppercase tracking-wider">{fk(f)}</span>
+                      <span className="text-2xl font-black text-emerald-400 font-mono tracking-tight">{fmt(sel[f])}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {showForm && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="${T.cardBg} border ${T.border} rounded-3xl p-8 w-full max-w-lg shadow-2xl">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-2xl font-black ${T.textMain} tracking-tight">{form.id ? 'Edit Record' : 'New Record'}</h3>
+                <button onClick={() => setShowForm(false)} className="p-2 ${T.textMuted} hover:${T.textMain} rounded-xl ${T.hoverBg} transition-colors"><X size={20} /></button>
+              </div>
+              <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2">
+                {FF.map((f: any) => (
+                  <div key={f.key}>
+                    <label className="block text-[10px] font-bold ${T.textMuted} uppercase tracking-widest mb-2">{fk(f.key)}</label>
+                    {f.type === 'select' ? (
+                      <select value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors">
+                        {(f.options || []).map((o: string) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : f.type === 'textarea' ? (
+                      <textarea value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} rows={3} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors resize-none" />
+                    ) : (
+                      <input type={f.type || 'text'} value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t ${T.border}">
+                <button onClick={() => setShowForm(false)} className="px-6 py-3 text-sm font-bold ${T.textMuted} hover:${T.textMain} transition-colors">Cancel</button>
+                <button onClick={save} className="px-6 py-3 ${T.accentBg} ${T.accentHover} ${T.textMain} text-sm font-bold rounded-2xl shadow-lg ${T.shadow} transition-all">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
-  
-  // SETTINGS VIEW
-  if(IS_SETTINGS){
-    return React.createElement('div',{style:{...ROOT,display:'flex',flexDirection:'row'}},
-      React.createElement('div',{style:{width:'240px',background:'#0d1626',borderRight:'1px solid #1e2d45',padding:'24px 16px',display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}},
-        React.createElement('div',{style:{fontSize:'11px',fontWeight:800,color:'#475569',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'12px',paddingLeft:'12px'}},'Configuration'),
-        ['General','Store Details','Taxes & Fees','Payment Providers','Staff Permissions','Notifications'].map((tab,i)=>
-          React.createElement('button',{key:tab,style:{...BTN,background:i===0?'rgba(124,58,237,.1)':'transparent',color:i===0?'#c084fc':'#94a3b8',border:i===0?'1px solid rgba(124,58,237,.2)':'1px solid transparent',justifyContent:'flex-start',padding:'10px 14px'}},tab)
-        )
-      ),
-      React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'32px 48px'}},
-        React.createElement('div',{style:{maxWidth:'700px'}},
-          React.createElement('h2',{style:{margin:'0 0 24px',fontSize:'24px',fontWeight:900,color:'#fff'}},'General Settings'),
-          React.createElement('div',{style:{...CARD,padding:'28px',display:'flex',flexDirection:'column',gap:'20px'}},
-            FF.length>0?FF.map(f=>
-              React.createElement('div',{key:f.key},
-                React.createElement('label',{style:{display:'block',fontSize:'12px',fontWeight:700,color:'#94a3b8',marginBottom:'8px'}},fk(f.key)),
-                React.createElement('input',{defaultValue:DATA[0]?DATA[0][f.key]:'',style:{width:'100%',padding:'12px 16px',background:'#080c14',border:'1px solid #1e2d45',borderRadius:'10px',color:'#fff',fontSize:'14px',outline:'none'}})
-              )
-            ):React.createElement('div',{style:{color:'#94a3b8',fontSize:'14px'}},'No configuration fields defined.'),
-            React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',marginTop:'12px'}},
-              React.createElement('button',{style:{...BTN,background:'#7c3aed',color:'#fff',padding:'10px 20px'}},'Save Changes')
-            )
-          )
-        )
-      )
+  if (IS_DASH) {
+    return (
+      <div className="flex flex-col h-full ${T.bg} ${T.textNormal} overflow-y-auto p-6 md:p-10 space-y-10 font-sans">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-4xl font-black ${T.textMain} tracking-tight mb-2">{PAGE}</h2>
+            <p className="text-sm font-medium ${T.textSub}">Welcome back. Here is your personalized overview.</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {STATS.map((s: any, i: number) => (
+            <div key={i} className="bg-gradient-to-br from-[#131B2B] to-[#0B0F19] border ${T.border} rounded-3xl p-6 relative overflow-hidden group hover:border-[#334155] transition-colors shadow-xl shadow-black/20">
+              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity"><TrendingUp size={64} /></div>
+              <div className="text-[11px] font-black ${T.textSub} uppercase tracking-widest mb-4 relative z-10">{s.label}</div>
+              <div className="text-4xl font-black ${T.textMain} tracking-tight relative z-10">{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {items.length > 0 && (
+          <div className="${T.cardBg} border ${T.border} rounded-3xl shadow-2xl shadow-black/40 overflow-hidden flex flex-col">
+            <div className="px-8 py-6 border-b ${T.border} flex items-center justify-between ${T.navBg}">
+              <h3 className="text-lg font-black ${T.textMain} tracking-tight">Recent Activity</h3>
+              <button className="text-xs font-bold ${T.accentText} hover:text-blue-300 flex items-center gap-1.5 transition-colors uppercase tracking-widest">View All <ExternalLink size={14} /></button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="${T.inputBg}/30">
+                    {FIELDS.slice(0, 5).map((f: string) => (
+                      <th key={f} className="px-8 py-5 text-[10px] font-black ${T.textSub} uppercase tracking-widest border-b ${T.border}">{fk(f)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1E293B]">
+                  {items.slice(0, 8).map((row: any, i: number) => (
+                    <tr key={i} onClick={() => setSel(row)} className="hover:${T.inputBg}/50 cursor-pointer transition-colors group">
+                      {FIELDS.slice(0, 5).map((f: string, j: number) => (
+                        <td key={f} className="px-8 py-5">
+                          {isSt(f) ? <Badge v={row[f]} /> :
+                           isMon(f) ? <span className="font-mono text-sm font-black text-emerald-400 tracking-tight">{fmt(row[f])}</span> :
+                           <span className={"text-sm font-semibold " + (j === 0 ? "${T.textMain}" : "${T.textMuted}")}>{fmt(row[f])}</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
-  // DASHBOARD VIEW
-  if(IS_DASH){
-    return React.createElement('div',{style:{...ROOT,overflowY:'auto',padding:'24px',gap:'20px'}},
-      React.createElement('div',{style:{fontSize:'22px',fontWeight:900,color:'#fff',marginBottom:'4px'}},PAGE+' Overview'),
-      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}},
-        STATS.map((s,i)=>React.createElement('div',{key:i,style:{...CARD,padding:'22px'}},
-          React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'10px'}},s.label),
-          React.createElement('div',{style:{fontSize:'36px',fontWeight:900,color:'#fff',lineHeight:1}},s.value)
-        ))
-      ),
-      items.length>0&&React.createElement('div',{style:CARD},
-        React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'16px'}},'Recent Records'),
-        React.createElement('table',{style:{width:'100%',borderCollapse:'collapse'}},
-          React.createElement('thead',null,React.createElement('tr',null,
-            FIELDS.slice(0,5).map(f=>React.createElement('th',{key:f,style:{textAlign:'left',padding:'8px 12px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',borderBottom:'1px solid #1a2538'}},fk(f)))
-          )),
-          React.createElement('tbody',null,
-            items.slice(0,10).map((row,i)=>React.createElement('tr',{key:i,onClick:()=>setSel(row),style:{borderBottom:'1px solid #111827',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#0d1626',onMouseLeave:e=>e.currentTarget.style.background='transparent'},
-              FIELDS.slice(0,5).map(f=>React.createElement('td',{key:f,style:{padding:'10px 12px'}},
-                isSt(f)?React.createElement(Badge,{v:row[f]}):
-                isMon(f)?React.createElement('span',{style:{color:'#4ade80',fontWeight:800,fontFamily:'monospace'}},fmt(row[f])):
-                React.createElement('span',{style:{color:'#94a3b8',fontSize:'13px'}},fmt(row[f]))
-              ))
-            ))
-          )
-        )
-      )
-    );
-  }
+  return (
+    <div className="flex flex-col h-full ${T.bg} ${T.textNormal} font-sans">
+      {STATS.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 border-b ${T.border} ${T.navBg} shrink-0">
+          {STATS.map((s: any, i: number) => (
+            <div key={i} className="px-8 py-6 border-r ${T.border} last:border-r-0 flex flex-col justify-center relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 text-[#1E293B] opacity-20 group-hover:opacity-40 transition-opacity"><TrendingUp size={80} /></div>
+              <div className="text-[10px] font-black ${T.textSub} uppercase tracking-widest mb-2 relative z-10">{s.label}</div>
+              <div className="text-3xl font-black ${T.textMain} tracking-tight relative z-10">{s.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div className="px-8 py-5 ${T.cardBg} border-b ${T.border} flex items-center justify-between shrink-0 gap-6">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 ${T.textSub}" size={16} />
+          <input 
+            value={q} 
+            onChange={e => setQ(e.target.value)} 
+            placeholder={"Search " + PAGE.toLowerCase() + "..."} 
+            className="w-full pl-11 pr-4 py-3 ${T.inputBg} border ${T.border} rounded-2xl text-sm font-medium ${T.textNormal} placeholder:${T.textSub} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-inner"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:block text-[11px] font-bold uppercase tracking-widest ${T.textSub}">{rows.length} records</div>
+          <button className="p-3 ${T.inputBg} border ${T.border} ${T.textMuted} hover:${T.textMain} rounded-2xl transition-colors shadow-sm"><Filter size={16} /></button>
+          <button onClick={() => { setForm(EMPTY); setShowForm(true); }} className="flex items-center gap-2 px-5 py-3 ${T.accentBg} ${T.accentHover} ${T.textMain} text-sm font-black uppercase tracking-wider rounded-2xl shadow-lg ${T.shadow} transition-all">
+            <Plus size={16} strokeWidth={3} /> <span className="hidden sm:inline">New</span>
+          </button>
+        </div>
+      </div>
 
-  // LIST VIEW
-  return React.createElement('div',{style:{...ROOT}},
-    // KPI bar
-    STATS.length>0&&React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',background:'#090d1a',flexShrink:0,borderBottom:'1px solid #1a2538'}},
-      STATS.map((s,i)=>React.createElement('div',{key:i,style:{padding:'20px 24px',borderRight:'1px solid #1a2538'}},
-        React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}},s.label),
-        React.createElement('div',{style:{fontSize:'28px',fontWeight:900,color:'#fff',lineHeight:1}},s.value)
-      ))
-    ),
-    // Toolbar
-    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'10px',padding:'12px 20px',background:'#080c18',borderBottom:'1px solid #1a2538',flexShrink:0}},
-      React.createElement('div',{style:{position:'relative',flex:1,maxWidth:'300px'}},
-        React.createElement(Search,{size:13,style:{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',color:'#374151',pointerEvents:'none'}}),
-        React.createElement('input',{value:q,onChange:e=>setQ(e.target.value),placeholder:'Search '+PAGE.toLowerCase()+'...',style:{width:'100%',paddingLeft:'32px',paddingRight:'12px',paddingTop:'8px',paddingBottom:'8px',background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
-      ),
-      React.createElement('span',{style:{fontSize:'12px',color:'#374151',marginLeft:'auto'}},rows.length+' '+PAGE.toLowerCase()),
-      React.createElement('button',{onClick:()=>{setForm(EMPTY);setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},
-        React.createElement(Plus,{size:13}),'New'
-      )
-    ),
-    // Table
-    React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'0 20px 20px'}},
-      rows.length===0
-        ?React.createElement('div',{style:{textAlign:'center',padding:'80px',color:'#374151',fontSize:'14px'}},'No records found')
-        :React.createElement('table',{style:{width:'100%',borderCollapse:'collapse',marginTop:'12px'}},
-          React.createElement('thead',null,
-            React.createElement('tr',{style:{borderBottom:'2px solid #1a2538'}},
-              React.createElement('th',{style:{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em'}},fk(PF)),
-              FIELDS.filter(f=>f!==PF).slice(0,4).map(f=>React.createElement('th',{key:f,style:{textAlign:'left',padding:'10px 14px',fontSize:'10px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em'}},fk(f))),
-              React.createElement('th',{style:{width:'60px'}})
-            )
-          ),
-          React.createElement('tbody',null,
-            rows.map((row,idx)=>{
-              const sv=SF?fmt(row[SF]):'';
-              const c=sc(sv);
-              return React.createElement('tr',{key:row.id||idx,onClick:()=>setSel(row),style:{borderBottom:'1px solid #111827',cursor:'pointer',transition:'background .1s'},onMouseEnter:e=>e.currentTarget.style.background='#0d1626',onMouseLeave:e=>e.currentTarget.style.background='transparent'},
-                React.createElement('td',{style:{padding:'12px 14px',borderLeft:'3px solid '+c}},
-                  React.createElement('div',{style:{fontSize:'14px',fontWeight:700,color:'#fff'}},fmt(row[PF])),
-                  DF&&row[DF]&&React.createElement('div',{style:{fontSize:'11px',color:'#475569',marginTop:'2px'}},fmt(row[DF]))
-                ),
-                FIELDS.filter(f=>f!==PF).slice(0,4).map(f=>React.createElement('td',{key:f,style:{padding:'12px 14px'}},
-                  isSt(f)?React.createElement(Badge,{v:row[f]}):
-                  isMon(f)?React.createElement('span',{style:{color:'#4ade80',fontWeight:800,fontFamily:'monospace',fontSize:'14px'}},fmt(row[f])):
-                  React.createElement('span',{style:{color:'#94a3b8',fontSize:'13px'}},fmt(row[f]))
-                )),
-                React.createElement('td',{style:{padding:'12px 14px',textAlign:'right'}},
-                  React.createElement('button',{onClick:e=>{e.stopPropagation();setForm({...row});setShowForm(true);},style:{padding:'5px 12px',borderRadius:'7px',fontSize:'12px',fontWeight:600,border:'1px solid #1e2d45',background:'#0d1626',color:'#94a3b8',cursor:'pointer'}},'Edit')
-                )
-              );
-            })
-          )
-        )
-    ),
-    // FORM MODAL
-    showForm&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}},
-      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'480px',maxWidth:'90vw',maxHeight:'80vh',overflowY:'auto'},onClick:e=>e.stopPropagation()},
-        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},
-          React.createElement('h3',{style:{margin:0,fontSize:'16px',fontWeight:800,color:'#fff'}},form.id?'Edit '+fmt(form[PF]):'New '+PAGE.replace(/s$/,'')),
-          React.createElement('button',{onClick:()=>setShowForm(false),style:{background:'none',border:'none',color:'#475569',cursor:'pointer',padding:'4px'}},React.createElement(X,{size:16}))
-        ),
-        React.createElement('div',{style:{display:'grid',gap:'14px'}},
-          FF.map(f=>React.createElement('div',{key:f.key},
-            React.createElement('label',{style:{display:'block',fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(f.key)),
-            f.type==='select'
-              ?React.createElement('select',{value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none'}},
-                (f.options||[]).map(o=>React.createElement('option',{key:o,value:o},o))
-              )
-              :React.createElement('input',{type:f.type||'text',value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
-          ))
-        ),
-        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}},
-          React.createElement('button',{onClick:()=>setShowForm(false),style:{...BTN,background:'#1e293b',color:'#94a3b8',border:'1px solid #334155'}},'Cancel'),
-          React.createElement('button',{onClick:save,style:{...BTN,background:'#7c3aed',color:'#fff'}},'Save')
-        )
-      )
-    )
+      <div className="flex-1 overflow-auto p-6 md:p-8 ${T.bg}">
+        {rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-20 h-20 rounded-3xl ${T.inputBg} border ${T.border} flex items-center justify-center mb-6 shadow-xl"><Search size={32} className="${T.textSub}" /></div>
+            <h3 className="text-2xl font-black ${T.textMain} tracking-tight mb-3">No records found</h3>
+            <p className="${T.textSub} text-sm font-medium max-w-md">We could not find anything matching your search. Try adjusting your filters or create a new record.</p>
+          </div>
+        ) : (
+          <div className="${T.cardBg} border ${T.border} rounded-3xl overflow-hidden shadow-2xl shadow-black/40">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="${T.navBg} border-b ${T.border}">
+                  <th className="px-8 py-5 text-[10px] font-black ${T.textSub} uppercase tracking-widest">{fk(PF)}</th>
+                  {FIELDS.filter(f => f !== PF).slice(0, 4).map((f: string) => (
+                    <th key={f} className="px-8 py-5 text-[10px] font-black ${T.textSub} uppercase tracking-widest">{fk(f)}</th>
+                  ))}
+                  <th className="px-8 py-5 w-16"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1E293B]">
+                {rows.map((row: any, idx: number) => {
+                  const sv = SF ? fmt(row[SF]) : '';
+                  const c = sc(sv);
+                  const borderColor = c.split(' ').find(x => x.startsWith('border-'))?.replace('border-', 'bg-') || 'bg-blue-500';
+                  return (
+                    <tr key={row.id || idx} onClick={() => setSel(row)} className="cursor-pointer group transition-colors hover:${T.inputBg}/80 bg-transparent">
+                      <td className="px-8 py-5 relative">
+                        <div className={"absolute left-0 top-0 bottom-0 w-1.5 opacity-0 group-hover:opacity-100 transition-opacity " + borderColor} />
+                        <div className="text-sm font-black ${T.textMain}">{fmt(row[PF])}</div>
+                        {DF && row[DF] && <div className="text-[11px] font-bold ${T.textSub} mt-1">{fmt(row[DF])}</div>}
+                      </td>
+                      {FIELDS.filter(f => f !== PF).slice(0, 4).map((f: string) => (
+                        <td key={f} className="px-8 py-5">
+                          {isSt(f) ? <Badge v={row[f]} /> :
+                           isMon(f) ? <span className="font-mono text-sm font-black text-emerald-400 tracking-tight">{fmt(row[f])}</span> :
+                           <span className="text-sm font-semibold ${T.textMuted}">{fmt(row[f])}</span>}
+                        </td>
+                      ))}
+                      <td className="px-8 py-5 text-right">
+                        <button onClick={(e) => { e.stopPropagation(); setForm({ ...row }); setShowForm(true); }} className="opacity-0 group-hover:opacity-100 p-2.5 ${T.textMuted} hover:${T.textMain} ${T.hoverBg} rounded-xl transition-all">
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="${T.cardBg} border ${T.border} rounded-3xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black ${T.textMain} tracking-tight">{form.id ? 'Edit Record' : 'New ' + PAGE.replace(/s$/, '')}</h3>
+              <button onClick={() => setShowForm(false)} className="p-2 ${T.textMuted} hover:${T.textMain} rounded-xl ${T.hoverBg} transition-colors"><X size={20} /></button>
+            </div>
+            <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2">
+              {FF.map((f: any) => (
+                <div key={f.key}>
+                  <label className="block text-[10px] font-bold ${T.textMuted} uppercase tracking-widest mb-2">{fk(f.key)}</label>
+                  {f.type === 'select' ? (
+                    <select value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors">
+                      {(f.options || []).map((o: string) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : f.type === 'textarea' ? (
+                    <textarea value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} rows={3} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors resize-none" />
+                  ) : (
+                    <input type={f.type || 'text'} value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 mt-8 pt-6 border-t ${T.border}">
+              <button onClick={() => setShowForm(false)} className="px-6 py-3 text-sm font-bold ${T.textMuted} hover:${T.textMain} transition-colors">Cancel</button>
+              <button onClick={save} className="px-6 py-3 ${T.accentBg} ${T.accentHover} ${T.textMain} text-sm font-bold rounded-2xl shadow-lg ${T.shadow} transition-all">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 `
 }
 
-
-export function buildCalendarPage(pageName: string, _route: string, data: PageData): string {
+export function buildCalendarPage(pageName: string, _route: string, data: PageData, projectName?: string): string {
+  const T = getTheme(projectName);
   const safe = pageName.replace(/[^a-zA-Z0-9]/g, '')
   const fields = data.fields.filter(f => f !== 'id')
   const dateField = fields.find(f => /date|time|start/i.test(f)) || fields[1] || 'date'
@@ -313,157 +385,189 @@ export function buildCalendarPage(pageName: string, _route: string, data: PageDa
   const statusField = fields.find(f => /status|state|stage/i.test(f)) || ''
 
   const dataJson = JSON.stringify(data.records).replace(/</g,'\\u003c').replace(/>/g,'\\u003e')
-  const statsJson = JSON.stringify(data.stats)
   const formJson = JSON.stringify(data.formFields || [])
-  const emptyForm = '{' + (data.formFields || []).map(f => `"${f.key}":""`).join(',') + '}'
+  const emptyForm = '{' + (data.formFields || []).map(f => '"' + f.key + '":""').join(',') + '}'
 
-  return `import React,{useState} from 'react';
-import {Plus,Search,ChevronRight,ChevronLeft,Edit2,Trash2,X,Calendar,Clock} from 'lucide-react';
+  return `import React, { useState } from 'react';
+import { Plus, ChevronRight, ChevronLeft, X, Calendar, Clock, MapPin, User, Edit2 } from 'lucide-react';
 
-let DATA=[],STATS=[],FF=[];
-try{DATA=${dataJson};}catch(e){}
-try{STATS=${statsJson};}catch(e){}
-try{FF=${formJson};}catch(e){}
+const DATA = ${dataJson} || [];
+const FF = ${formJson} || [];
 
-const PAGE='${pageName}';
-const PF='${primaryField}';
-const SF='${statusField}';
-const DF='${dateField}';
-const EMPTY=${emptyForm};
+const PAGE = '${pageName}';
+const PF = '${primaryField}';
+const SF = '${statusField}';
+const DF = '${dateField}';
+const EMPTY = ${emptyForm};
 
-const MO=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const SC={active:'#22c55e',confirmed:'#60a5fa',completed:'#22c55e',done:'#22c55e',pending:'#fbbf24',cancelled:'#ef4444','no-show':'#ef4444',scheduled:'#60a5fa',paid:'#22c55e',overdue:'#ef4444',delinquent:'#ef4444'};
-const sc=v=>SC[String(v||'').toLowerCase()]||'#a855f7';
-const fk=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()).trim();
-const fmt=v=>v===null||v===undefined?'-':String(v);
+const MO = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-const ROOT={display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'#080c14',color:'#e2e8f0',fontFamily:"'Inter',system-ui,sans-serif"};
-const BTN={display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',fontSize:'13px',fontWeight:700,cursor:'pointer',border:'none'};
+const SC: Record<string, string> = { active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', confirmed: 'bg-blue-500/10 ${T.accentText} border-blue-500/20', completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', done: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20', cancelled: 'bg-red-500/10 text-red-400 border-red-500/20', 'no-show': 'bg-red-500/10 text-red-400 border-red-500/20', scheduled: 'bg-blue-500/10 ${T.accentText} border-blue-500/20', paid: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', overdue: 'bg-red-500/10 text-red-400 border-red-500/20', delinquent: 'bg-red-500/10 text-red-400 border-red-500/20' };
+const sc = (v: any) => SC[String(v || '').toLowerCase()] || 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+const fk = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+const fmt = (v: any) => v === null || v === undefined ? '-' : String(v);
 
-export default function ${safe}(){
-  const [items,setItems]=useState(DATA);
-  const [view,setView]=useState('month');
-  const [cur,setCur]=useState(new Date());
-  const [showForm,setShowForm]=useState(false);
-  const [form,setForm]=useState(EMPTY);
-  const [sel,setSel]=useState(null);
+export default function ${safe}() {
+  const [items, setItems] = useState<any[]>(DATA);
+  const [view, setView] = useState('month');
+  const [cur, setCur] = useState(new Date());
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<any>(EMPTY);
+  const [sel, setSel] = useState<any|null>(null);
 
-  const y=cur.getFullYear(),mo=cur.getMonth();
+  const y = cur.getFullYear(), mo = cur.getMonth();
   
-  const save=()=>{
-    if(form.id)setItems(it=>it.map(i=>i.id===form.id?{...i,...form}:i));
-    else setItems(it=>[...it,{...form,id:Date.now()}]);
-    setShowForm(false);setForm(EMPTY);
+  const save = () => {
+    if (form.id) setItems(it => it.map(i => i.id === form.id ? { ...i, ...form } : i));
+    else setItems(it => [...it, { ...form, id: Date.now() }]);
+    setShowForm(false); setForm(EMPTY);
   };
 
-  const nav=d=>{
-    const n=new Date(cur);
-    if(view==='month')n.setMonth(mo+d);
-    else if(view==='week')n.setDate(cur.getDate()+d*7);
-    else n.setDate(cur.getDate()+d);
+  const nav = (d: number) => {
+    const n = new Date(cur);
+    if (view === 'month') n.setMonth(mo + d);
+    else if (view === 'week') n.setDate(cur.getDate() + d * 7);
+    else n.setDate(cur.getDate() + d);
     setCur(n);
   };
 
-  const evOn=d=>items.filter(r=>{
-    try{return new Date(r[DF]).toDateString()===d.toDateString();}
-    catch{return false;}
+  const evOn = (d: Date) => items.filter(r => {
+    try { return new Date(r[DF]).toDateString() === d.toDateString(); }
+    catch { return false; }
   });
 
-  const fd=new Date(y,mo,1).getDay();
-  const dim=new Date(y,mo+1,0).getDate();
-  const cells=[...Array(fd).fill(null),...Array.from({length:dim},(_,i)=>new Date(y,mo,i+1))];
+  const fd = new Date(y, mo, 1).getDay();
+  const dim = new Date(y, mo + 1, 0).getDate();
+  const cells = [...Array(fd).fill(null), ...Array.from({ length: dim }, (_, i) => new Date(y, mo, i + 1))];
   
-  const ws=new Date(cur);ws.setDate(cur.getDate()-cur.getDay());
-  const wk=Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return d;});
+  const ws = new Date(cur); ws.setDate(cur.getDate() - cur.getDay());
+  const wk = Array.from({ length: 7 }, (_, i) => { const d = new Date(ws); d.setDate(ws.getDate() + i); return d; });
 
-  const hdr=view==='month'?MO[mo]+' '+y:view==='week'?'Week of '+wk[0].toLocaleDateString('en-US',{month:'short',day:'numeric'}):cur.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const hdr = view === 'month' ? MO[mo] + ' ' + y : view === 'week' ? 'Week of ' + wk[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : cur.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  return React.createElement('div',{style:ROOT},
-    // Top bar
-    React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px',background:'#0d1626',borderBottom:'1px solid #1a2538',flexShrink:0}},
-      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:'16px'}},
-        React.createElement('div',{style:{fontSize:'20px',fontWeight:900,color:'#fff'}},hdr),
-        React.createElement('div',{style:{display:'flex',gap:'4px'}},
-          React.createElement('button',{onClick:()=>nav(-1),style:{...BTN,padding:'6px',background:'#1e293b',color:'#94a3b8'}},React.createElement(ChevronLeft,{size:16})),
-          React.createElement('button',{onClick:()=>setCur(new Date()),style:{...BTN,padding:'6px 12px',background:'#1e293b',color:'#94a3b8'}},'Today'),
-          React.createElement('button',{onClick:()=>nav(1),style:{...BTN,padding:'6px',background:'#1e293b',color:'#94a3b8'}},React.createElement(ChevronRight,{size:16}))
-        )
-      ),
-      React.createElement('div',{style:{display:'flex',gap:'12px'}},
-        React.createElement('div',{style:{display:'flex',background:'#080c14',borderRadius:'8px',padding:'4px',border:'1px solid #1e293b'}},
-          ['month','week','day'].map(v=>
-            React.createElement('button',{key:v,onClick:()=>setView(v),style:{padding:'4px 12px',background:view===v?'#1e293b':'transparent',color:view===v?'#fff':'#64748b',border:'none',borderRadius:'6px',fontSize:'12px',fontWeight:700,cursor:'pointer',textTransform:'capitalize'}},v)
-          )
-        ),
-        React.createElement('button',{onClick:()=>{setForm(EMPTY);setShowForm(true);},style:{...BTN,background:'#7c3aed',color:'#fff'}},React.createElement(Plus,{size:13}),'New')
-      )
-    ),
-    
-    // Calendar body
-    React.createElement('div',{style:{flex:1,overflow:'auto',padding:'20px'}},
-      view==='month'&&React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1a2538',borderRadius:'16px',overflow:'hidden'}},
-        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:'1px solid #1a2538',background:'#080c14'}},
-          WD.map(d=>React.createElement('div',{key:d,style:{padding:'12px',textAlign:'center',fontSize:'11px',fontWeight:800,color:'#475569',textTransform:'uppercase'}},d))
-        ),
-        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'minmax(120px,auto)'}},
-          cells.map((d,i)=>{
-            const evs=d?evOn(d):[];
-            return React.createElement('div',{key:i,style:{borderRight:i%7!==6?'1px solid #1a2538':'none',borderBottom:i<cells.length-7?'1px solid #1a2538':'none',padding:'8px',background:d&&d.toDateString()===new Date().toDateString()?'rgba(124,58,237,.05)':'transparent'}},
-              d&&React.createElement('div',{style:{fontSize:'12px',fontWeight:700,color:d.toDateString()===new Date().toDateString()?'#a855f7':'#94a3b8',marginBottom:'8px',textAlign:'right',padding:'4px'}},d.getDate()),
-              React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'4px'}},
-                evs.map((ev,ei)=>React.createElement('div',{key:ei,onClick:()=>setSel(ev),style:{background:sc(ev[SF])+'20',borderLeft:'3px solid '+sc(ev[SF]),padding:'4px 8px',borderRadius:'4px',fontSize:'11px',fontWeight:600,color:'#e2e8f0',cursor:'pointer',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},fmt(ev[PF])))
-              )
-            )
-          })
-        )
-      )
-    ),
+  return (
+    <div className="flex flex-col h-full ${T.bg} ${T.textNormal} font-sans">
+      <div className="px-8 py-6 ${T.cardBg} border-b ${T.border} flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-8">
+          <div className="text-3xl font-black ${T.textMain} tracking-tight">{hdr}</div>
+          <div className="flex items-center ${T.inputBg} rounded-2xl border ${T.border} p-1.5 shadow-inner">
+            <button onClick={() => nav(-1)} className="p-2 ${T.hoverBg} ${T.textMuted} hover:${T.textMain} rounded-xl transition-colors"><ChevronLeft size={18} /></button>
+            <button onClick={() => setCur(new Date())} className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-slate-300 hover:${T.textMain} transition-colors">Today</button>
+            <button onClick={() => nav(1)} className="p-2 ${T.hoverBg} ${T.textMuted} hover:${T.textMain} rounded-xl transition-colors"><ChevronRight size={18} /></button>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center ${T.inputBg} rounded-2xl border ${T.border} p-1.5 shadow-inner">
+            {['month', 'week', 'day'].map(v => (
+              <button 
+                key={v} 
+                onClick={() => setView(v)} 
+                className={"px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all " + (view === v ? "bg-[#1E293B] ${T.textMain} shadow-md" : "${T.textSub} hover:text-slate-300")}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { setForm(EMPTY); setShowForm(true); }} className="flex items-center gap-2 px-5 py-3 ${T.accentBg} ${T.accentHover} ${T.textMain} text-sm font-black uppercase tracking-wider rounded-2xl shadow-lg ${T.shadow} transition-all">
+            <Plus size={16} strokeWidth={3} /> New Event
+          </button>
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6 md:p-8 ${T.bg}">
+        {view === 'month' && (
+          <div className="${T.cardBg} border ${T.border} rounded-3xl overflow-hidden shadow-2xl shadow-black/40">
+            <div className="grid grid-cols-7 border-b ${T.border} ${T.navBg}">
+              {WD.map(d => <div key={d} className="py-4 text-center text-[10px] font-black ${T.textSub} uppercase tracking-widest">{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 auto-rows-[minmax(140px,auto)] bg-[#1E293B] gap-px">
+              {cells.map((d, i) => {
+                if (!d) return <div key={i} className="${T.navBg}"></div>;
+                const isT = d.toDateString() === new Date().toDateString();
+                const evs = evOn(d);
+                return (
+                  <div key={i} className={"p-3 min-h-[140px] transition-colors hover:${T.inputBg} " + (isT ? "${T.cardBg}" : "${T.cardBg}")}>
+                    <div className={"w-8 h-8 flex items-center justify-center rounded-2xl text-sm font-black mb-3 " + (isT ? "${T.accentBg} ${T.textMain} shadow-lg shadow-blue-500/20" : "${T.textMuted}")}>
+                      {d.getDate()}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {evs.map(e => (
+                        <div key={e.id} onClick={() => setSel(e)} className="px-3 py-2 ${T.inputBg} border ${T.border} rounded-xl text-xs font-bold text-slate-300 truncate cursor-pointer hover:border-blue-500 hover:${T.textMain} transition-all shadow-sm">
+                          {fmt(e[PF])}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
-    // Form Modal
-    showForm&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100}},
-      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'480px'},onClick:e=>e.stopPropagation()},
-        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},
-          React.createElement('h3',{style:{margin:0,fontSize:'16px',fontWeight:800,color:'#fff'}},form.id?'Edit':'New Event'),
-          React.createElement('button',{onClick:()=>setShowForm(false),style:{background:'none',border:'none',color:'#475569',cursor:'pointer'}},React.createElement(X,{size:16}))
-        ),
-        React.createElement('div',{style:{display:'grid',gap:'14px'}},
-          FF.map(f=>React.createElement('div',{key:f.key},
-            React.createElement('label',{style:{display:'block',fontSize:'11px',fontWeight:700,color:'#374151',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}},fk(f.key)),
-            React.createElement('input',{value:form[f.key]||'',onChange:e=>setForm(fm=>({...fm,[f.key]:e.target.value})),style:{width:'100%',padding:'10px 12px',background:'#080d1c',border:'1px solid #1e2d45',borderRadius:'10px',color:'#e2e8f0',fontSize:'13px',outline:'none',boxSizing:'border-box'}})
-          ))
-        ),
-        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}},
-          React.createElement('button',{onClick:()=>setShowForm(false),style:{...BTN,background:'#1e293b',color:'#94a3b8'}},'Cancel'),
-          React.createElement('button',{onClick:save,style:{...BTN,background:'#7c3aed',color:'#fff'}},'Save')
-        )
-      )
-    ),
+      {sel && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="${T.cardBg} border ${T.border} rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="p-8 border-b ${T.border} relative ${T.navBg}">
+              <button onClick={() => setSel(null)} className="absolute top-6 right-6 p-2 ${T.textSub} hover:${T.textMain} rounded-xl ${T.hoverBg} transition-colors"><X size={18} /></button>
+              <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-5 ${T.accentText} shadow-lg shadow-blue-500/10">
+                <Calendar size={28} />
+              </div>
+              <h3 className="text-2xl font-black ${T.textMain} mb-2 tracking-tight">{fmt(sel[PF])}</h3>
+              <p className="text-[11px] font-bold uppercase tracking-widest ${T.textSub}">{new Date(sel[DF]).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+            </div>
+            <div className="p-8 space-y-6">
+              {Object.entries(sel).filter(([k]) => k !== 'id' && k !== PF && k !== DF).map(([k, v]) => (
+                <div key={k} className="flex flex-col gap-2">
+                  <span className="text-[10px] font-bold ${T.textSub} uppercase tracking-widest">{fk(k)}</span>
+                  {k === SF ? (
+                    <div><span className={"inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border " + sc(v)}>{fmt(v)}</span></div>
+                  ) : (
+                    <span className="text-sm font-semibold ${T.textNormal}">{fmt(v)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="p-6 border-t ${T.border} ${T.navBg} flex gap-3">
+              <button onClick={() => { setForm(sel); setShowForm(true); setSel(null); }} className="flex-1 flex justify-center items-center gap-2 py-3 ${T.inputBg} ${T.hoverBg} border ${T.border} ${T.textMain} text-sm font-bold rounded-2xl transition-colors"><Edit2 size={16} /> Edit Event</button>
+              <button onClick={() => { setItems(it => it.filter(i => i.id !== sel.id)); setSel(null); }} className="px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-2xl transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-    // Detail Modal
-    sel&&React.createElement('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.7)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100}},
-      React.createElement('div',{style:{background:'#0d1626',border:'1px solid #1e2d45',borderRadius:'20px',padding:'28px',width:'400px'},onClick:e=>e.stopPropagation()},
-        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'24px'}},
-          React.createElement('div',null,
-            React.createElement('h3',{style:{margin:0,fontSize:'20px',fontWeight:900,color:'#fff'}},fmt(sel[PF])),
-            React.createElement('p',{style:{margin:'4px 0 0',fontSize:'13px',color:'#94a3b8'}},fmt(sel[DF]))
-          ),
-          React.createElement('button',{onClick:()=>setSel(null),style:{background:'none',border:'none',color:'#475569',cursor:'pointer'}},React.createElement(X,{size:16}))
-        ),
-        React.createElement('div',{style:{display:'grid',gap:'16px',background:'#080c14',padding:'16px',borderRadius:'12px',border:'1px solid #1a2538'}},
-          Object.entries(sel).filter(([k])=>k!=='id'&&k!==PF&&k!==DF).map(([k,v])=>
-            React.createElement('div',{key:k},
-              React.createElement('div',{style:{fontSize:'10px',fontWeight:700,color:'#475569',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}},fk(k)),
-              React.createElement('div',{style:{fontSize:'14px',color:'#e2e8f0',fontWeight:600}},fmt(v))
-            )
-          )
-        ),
-        React.createElement('div',{style:{display:'flex',gap:'10px',marginTop:'24px'}},
-          React.createElement('button',{onClick:()=>{setForm({...sel});setSel(null);setShowForm(true);},style:{...BTN,flex:1,justifyContent:'center',background:'#7c3aed',color:'#fff'}},React.createElement(Edit2,{size:13}),'Edit'),
-          React.createElement('button',{onClick:()=>{setItems(it=>it.filter(i=>i.id!==sel.id));setSel(null);},style:{...BTN,flex:1,justifyContent:'center',background:'rgba(239,68,68,.1)',color:'#f87171',border:'1px solid rgba(239,68,68,.2)'}},React.createElement(Trash2,{size:13}),'Delete')
-        )
-      )
-    )
+      {showForm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="${T.cardBg} border ${T.border} rounded-3xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black ${T.textMain} tracking-tight">{form.id ? 'Edit Event' : 'New Event'}</h3>
+              <button onClick={() => setShowForm(false)} className="p-2 ${T.textMuted} hover:${T.textMain} rounded-xl ${T.hoverBg} transition-colors"><X size={20} /></button>
+            </div>
+            <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2">
+              {FF.map((f: any) => (
+                <div key={f.key}>
+                  <label className="block text-[10px] font-bold ${T.textMuted} uppercase tracking-widest mb-2">{fk(f.key)}</label>
+                  {f.type === 'select' ? (
+                    <select value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors">
+                      {(f.options || []).map((o: string) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : f.type === 'textarea' ? (
+                    <textarea value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} rows={3} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors resize-none" />
+                  ) : (
+                    <input type={f.type || 'text'} value={form[f.key] || ''} onChange={e => setForm((fm: any) => ({ ...fm, [f.key]: e.target.value }))} className="w-full px-4 py-3.5 ${T.inputBg} border ${T.border} rounded-2xl ${T.textNormal} text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 mt-8 pt-6 border-t ${T.border}">
+              <button onClick={() => setShowForm(false)} className="px-6 py-3 text-sm font-bold ${T.textMuted} hover:${T.textMain} transition-colors">Cancel</button>
+              <button onClick={save} className="px-6 py-3 ${T.accentBg} ${T.accentHover} ${T.textMain} text-sm font-bold rounded-2xl shadow-lg ${T.shadow} transition-all">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 `

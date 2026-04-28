@@ -17,6 +17,7 @@ import StatusPage from './pages/StatusPage'
 import TeamPage from './pages/TeamPage'
 import HelpPage from './pages/HelpPage'
 import CapturesPage from './pages/CapturesPage'
+import ArchitectPage from './pages/ArchitectPage'
 import { runPlatformSuperAgent } from './lib/agents/platformSuperAgent'
 
 // Handles Supabase OAuth redirect (/auth/callback?code=...) and exchanges the code for a session
@@ -69,6 +70,7 @@ function AppRoutes({ session, loading }: { session: Session | null; loading: boo
           <Route path="enterprise" element={<EnterprisePage workspaceId={session.user.user_metadata?.workspace_id ?? 'default'} />} />
           <Route path="team" element={<TeamPage />} />
           <Route path="captures" element={<CapturesPage />} />
+          <Route path="architect" element={<ArchitectPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

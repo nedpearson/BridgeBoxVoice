@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 import { useStore } from '../../store/appStore'
 import {
-  LayoutDashboard, Store, BarChart3, CreditCard, Settings, LogOut, Mic, ChevronRight, Shield, Users, HelpCircle, Camera, QrCode, X
+  LayoutDashboard, Store, BarChart3, CreditCard, Settings, LogOut, Mic, ChevronRight, Shield, Users, HelpCircle, Camera, QrCode, X, Wand2
 } from 'lucide-react'
 import QRCode from 'react-qr-code'
 
@@ -21,6 +21,7 @@ const nav = [
 ]
 
 const enterpriseNav = [
+  { to: '/architect', label: 'AI Architect', icon: Wand2, accent: true },
   { to: '/team', label: 'Team', icon: Users },
   { to: '/enterprise', label: 'Enterprise', icon: Shield, accent: true },
   { to: '/help', label: 'Help Center', icon: HelpCircle },

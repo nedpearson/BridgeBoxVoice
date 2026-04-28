@@ -38,10 +38,72 @@ export type AgentCallback = (agents: AgentState[]) => void
 // ΓöÇΓöÇ Generate the injected boilerplate files ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function generateInjectedFiles(
   projectName: string,
-  rawPages: { path: string; name: string; route: string }[]
+  rawPages: { path: string; name: string; route: string }[],
+  spec: Record<string, unknown>
 ): { path: string; content: string }[] {
   const pages = rawPages.map(p => ({ ...p, route: '/' + p.name.toLowerCase().replace(/[^a-z0-9]/g, '-') }))
   const folderName = projectName.replace(/\s+/g, '-').toLowerCase()
+  const industry = (spec.industry as string || spec.title as string || '').toLowerCase()
+  
+  // Theme Generator
+  let theme = {
+    bg: '#0d1117',
+    surface: '#161b26',
+    surfaceAlt: '#111827',
+    border: '#21283a',
+    text: '#e2e8f0',
+    textMuted: '#64748b',
+    primary: '#7c3aed',
+    primaryLight: '#a855f7',
+    headerBg: '#161b26',
+    sidebarBg: '#161b26',
+    cardBg: 'linear-gradient(145deg, #0f1a35, #080d1c)'
+  }
+
+  if (industry.includes('bridal') || industry.includes('salon') || industry.includes('spa')) {
+    theme = {
+      bg: '#fdfbf7',
+      surface: '#ffffff',
+      surfaceAlt: '#faf9f6',
+      border: '#e5e0d8',
+      text: '#2d3748',
+      textMuted: '#718096',
+      primary: '#d53f8c',
+      primaryLight: '#ed64a6',
+      headerBg: '#ffffff',
+      sidebarBg: '#faf9f6',
+      cardBg: '#ffffff'
+    }
+  } else if (industry.includes('law') || industry.includes('legal') || industry.includes('finance') || industry.includes('accounting')) {
+    theme = {
+      bg: '#f8fafc',
+      surface: '#ffffff',
+      surfaceAlt: '#f1f5f9',
+      border: '#e2e8f0',
+      text: '#0f172a',
+      textMuted: '#64748b',
+      primary: '#0ea5e9',
+      primaryLight: '#38bdf8',
+      headerBg: '#ffffff',
+      sidebarBg: '#0f172a',
+      cardBg: '#ffffff'
+    }
+  } else if (industry.includes('restaurant') || industry.includes('cafe') || industry.includes('food')) {
+    theme = {
+      bg: '#fffbeb',
+      surface: '#ffffff',
+      surfaceAlt: '#fef3c7',
+      border: '#fde68a',
+      text: '#451a03',
+      textMuted: '#78350f',
+      primary: '#dc2626',
+      primaryLight: '#ef4444',
+      headerBg: '#ffffff',
+      sidebarBg: '#ffffff',
+      cardBg: '#ffffff'
+    }
+  }
+
   const getIcon = (n: string) => n.includes('dashboard')?'📊':n.includes('appointment')||n.includes('booking')?'📅':n.includes('customer')||n.includes('client')||n.includes('bride')?'👤':n.includes('sale')||n.includes('pos')?'💰':n.includes('gown')||n.includes('inventory')?'📦':n.includes('alteration')?'✂':n.includes('pickup')?'🚚':n.includes('vendor')||n.includes('order')?'🏪':n.includes('invoice')||n.includes('payment')||n.includes('layaway')?'🧾':n.includes('staff')||n.includes('employee')?'👥':n.includes('payroll')||n.includes('commission')?'💵':n.includes('schedule')||n.includes('shift')?'🕐':n.includes('report')||n.includes('analytic')?'📈':n.includes('setting')?'⚙':'📄'
   const navLinks = pages.map(p => `  { path: '${p.route}', label: '${p.name}', icon: '${getIcon(p.name.toLowerCase())}' }`).join(',\n')
   const pageImports = pages.map((p, i) => `import Page${i} from './${p.path.replace(/^src\//, '').replace(/\.tsx$/, '')}';`).join('\n')
@@ -105,9 +167,8 @@ const ALL_PAGES = [
 ${navLinks}
 ];
 
-// Categorize pages into sidebar groups based on their names
-function categorize(pages) {
-  const ops = [], inv = [], fin = [], staff = [], insights = [];
+function categorize(pages: any[]) {
+  const ops: any[] = [], inv: any[] = [], fin: any[] = [], staff: any[] = [], insights: any[] = [];
   for (const p of pages) {
     const n = (p.label || '').toLowerCase();
     if (n.includes('dashboard') || n.includes('appointment') || n.includes('booking') || n.includes('customer') || n.includes('client') || n.includes('sale') || n.includes('pos') || n.includes('bride') || n.includes('transaction')) ops.push(p);
@@ -126,8 +187,6 @@ function categorize(pages) {
 }
 
 const NAV_GROUPS = categorize(ALL_PAGES);
-
-// Match any nav item path against current route
 const navItems = NAV_GROUPS.flatMap(g => g.items);
 
 const Layout: React.FC = () => {
@@ -139,31 +198,29 @@ const Layout: React.FC = () => {
   const clock = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0d1117', color:'#e2e8f0', fontFamily:"'Inter', system-ui, -apple-system, sans-serif", overflow:'hidden' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'var(--color-bg)', color:'var(--color-text)', fontFamily:"'Inter', system-ui, -apple-system, sans-serif", overflow:'hidden' }}>
 
-      {/* ΓöÇΓöÇ Top Header Bar ΓöÇΓöÇ */}
-      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', height:'48px', background:'#161b26', borderBottom:'1px solid #21283a', padding:'0 20px', flexShrink:0, zIndex:100 }}>
+      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', height:'48px', background:'var(--color-header-bg)', borderBottom:'1px solid var(--color-border)', padding:'0 20px', flexShrink:0, zIndex:100 }}>
         <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
-          <span style={{ fontWeight:800, fontSize:'15px', color:'#a855f7', letterSpacing:'-0.3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'200px' }}>${projectName}</span>
-          <span style={{ width:'1px', height:'20px', background:'#21283a' }} />
-          <span style={{ fontSize:'12px', color:'#64748b', fontWeight:500 }}>Back Office</span>
+          <span style={{ fontWeight:800, fontSize:'15px', color:'var(--color-primary-light)', letterSpacing:'-0.3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'200px' }}>${projectName}</span>
+          <span style={{ width:'1px', height:'20px', background:'var(--color-border)' }} />
+          <span style={{ fontSize:'12px', color:'var(--color-text-muted)', fontWeight:500 }}>Back Office</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
-          <span style={{ fontSize:'12px', color:'#94a3b8' }}>{today}</span>
-          <span style={{ fontSize:'12px', color:'#64748b', fontWeight:700, fontVariantNumeric:'tabular-nums' }}>{clock}</span>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px', borderLeft:'1px solid #21283a', paddingLeft:'16px' }}>
-            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#7c3aed', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:700, color:'white' }}>M</div>
-            <span style={{ fontSize:'12px', color:'#94a3b8' }}>Manager</span>
+          <span style={{ fontSize:'12px', color:'var(--color-text-muted)' }}>{today}</span>
+          <span style={{ fontSize:'12px', color:'var(--color-text-muted)', fontWeight:700, fontVariantNumeric:'tabular-nums' }}>{clock}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:'8px', borderLeft:'1px solid var(--color-border)', paddingLeft:'16px' }}>
+            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'var(--color-primary)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:700, color:'white' }}>M</div>
+            <span style={{ fontSize:'12px', color:'var(--color-text-muted)' }}>Manager</span>
           </div>
         </div>
       </header>
 
       <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
-        {/* ΓöÇΓöÇ Sidebar ΓöÇΓöÇ */}
-        <aside style={{ width:'196px', background:'#161b26', borderRight:'1px solid #21283a', display:'flex', flexDirection:'column', flexShrink:0, overflowY:'auto', overflowX:'hidden' }}>
+        <aside style={{ width:'196px', background:'var(--color-sidebar-bg)', borderRight:'1px solid var(--color-border)', display:'flex', flexDirection:'column', flexShrink:0, overflowY:'auto', overflowX:'hidden' }}>
           {NAV_GROUPS.map(group => (
             <div key={group.group} style={{ marginBottom:'4px' }}>
-              <div style={{ padding:'10px 14px 4px', fontSize:'10px', fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:'0.08em' }}>{group.group}</div>
+              <div style={{ padding:'10px 14px 4px', fontSize:'10px', fontWeight:700, color:'var(--color-text-muted)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{group.group}</div>
               {group.items.map(item => (
                 <NavLink
                   key={item.path}
@@ -173,26 +230,22 @@ const Layout: React.FC = () => {
                     display:'flex', alignItems:'center', gap:'9px',
                     padding:'7px 12px', margin:'1px 6px', borderRadius:'6px',
                     textDecoration:'none', fontSize:'13px', fontWeight: isActive ? 600 : 400,
-                    color: isActive ? '#fff' : '#94a3b8',
-                    background: isActive ? '#7c3aed' : 'transparent',
+                    color: isActive ? 'white' : 'var(--color-text-muted)',
+                    background: isActive ? 'var(--color-primary)' : 'transparent',
                     transition:'all 0.12s',
                   })}
-                  onMouseEnter={e => { if (!(e.currentTarget as any)._active) (e.currentTarget as HTMLElement).style.background = '#1e293b'; }}
-                  onMouseLeave={e => { if (!(e.currentTarget as any)._active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                 >
                   <span style={{ fontSize:'14px', lineHeight:1, flexShrink:0 }}>{item.icon}</span>
-                  <span style={{ truncate:'ellipsis', overflow:'hidden', whiteSpace:'nowrap' }}>{item.label}</span>
+                  <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.label}</span>
                 </NavLink>
               ))}
             </div>
           ))}
         </aside>
 
-        {/* ΓöÇΓöÇ Main Content ΓöÇΓöÇ */}
-        <main style={{ flex:1, overflow:'auto', background:'#0d1117', display:'flex', flexDirection:'column' }}>
-          {/* Sub-header breadcrumb bar */}
-          <div style={{ height:'38px', background:'#111827', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', padding:'0 20px', flexShrink:0 }}>
-            <span style={{ fontSize:'12px', color:'#475569' }}>
+        <main style={{ flex:1, overflow:'auto', background:'var(--color-bg)', display:'flex', flexDirection:'column' }}>
+          <div style={{ height:'38px', background:'var(--color-surface-alt)', borderBottom:'1px solid var(--color-border)', display:'flex', alignItems:'center', padding:'0 20px', flexShrink:0 }}>
+            <span style={{ fontSize:'12px', color:'var(--color-text-muted)' }}>
               {navItems.find(n => n.path !== '/' && location.pathname.startsWith(n.path))?.label
                 ?? navItems.find(n => n.path === '/')?.label ?? 'Dashboard'}
             </span>
@@ -203,33 +256,79 @@ const Layout: React.FC = () => {
         </main>
       </div>
 
-      {/* ΓöÇΓöÇ Status Bar ΓöÇΓöÇ */}
-      <div style={{ height:'24px', background:'#161b26', borderTop:'1px solid #21283a', display:'flex', alignItems:'center', padding:'0 16px', gap:'24px', flexShrink:0 }}>
+      <div style={{ height:'24px', background:'var(--color-header-bg)', borderTop:'1px solid var(--color-border)', display:'flex', alignItems:'center', padding:'0 16px', gap:'24px', flexShrink:0 }}>
         <span style={{ fontSize:'11px', color:'#22c55e', display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#22c55e', display:'inline-block' }} />Online</span>
-        <span style={{ fontSize:'11px', color:'#475569' }}>v1.0.0</span>
-        <span style={{ fontSize:'11px', color:'#475569', marginLeft:'auto' }}>${projectName} POS &amp; Back Office</span>
+        <span style={{ fontSize:'11px', color:'var(--color-text-muted)' }}>v1.0.0</span>
+        <span style={{ fontSize:'11px', color:'var(--color-text-muted)', marginLeft:'auto' }}>${projectName} POS &amp; Back Office</span>
       </div>
     </div>
   );
-};
+}
 
 export default Layout;`
 
-  const mainTsx = `import React from 'react'
-import ReactDOM from 'react-dom/client'
-import './index.css'
-import App from './App'
+  const mainTsx = `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
-)`
+);`
 
-  const viteConfig = `import { defineConfig } from 'vite'\nimport react from '@vitejs/plugin-react'\n\nexport default defineConfig({ plugins: [react()] })`
-  const tailwindConfig = `/** @type {import('tailwindcss').Config} */\nexport default { content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'], theme: { extend: {} }, plugins: [] }`
+  const viteConfig = `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['lucide-react', 'recharts', 'date-fns', 'react-big-calendar']
+        }
+      }
+    }
+  }
+});`
+
+  const tailwindConfig = `/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: { extend: {} },
+  plugins: [],
+}`
+
   const postcssConfig = `export default { plugins: { tailwindcss: {}, autoprefixer: {} } }`
-  const indexCss = `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n*, *::before, *::after { box-sizing: border-box; }\nhtml, body, #root { height: 100%; margin: 0; padding: 0; background: #0d1117; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }\n::-webkit-scrollbar { width: 6px; height: 6px; }\n::-webkit-scrollbar-track { background: #0d1117; }\n::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }\n::-webkit-scrollbar-thumb:hover { background: #475569; }`
+
+  const indexCss = `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: ${theme.bg};
+  --color-surface: ${theme.surface};
+  --color-surface-alt: ${theme.surfaceAlt};
+  --color-border: ${theme.border};
+  --color-text: ${theme.text};
+  --color-text-muted: ${theme.textMuted};
+  --color-primary: ${theme.primary};
+  --color-primary-light: ${theme.primaryLight};
+  --color-header-bg: ${theme.headerBg};
+  --color-sidebar-bg: ${theme.sidebarBg};
+  --color-card-bg: ${theme.cardBg};
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; background: var(--color-bg); color: var(--color-text); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }`
+
   const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${projectName}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>`
   const vercelJson = JSON.stringify({ rewrites: [{ source: '/(.*)', destination: '/index.html' }] }, null, 2)
   const packageJson = JSON.stringify({
@@ -320,7 +419,7 @@ export async function runOrchestrator(
   spec: Record<string, unknown>,
   projectName: string,
   onStatus: StatusCallback,
-  onAgents: AgentCallback
+  onAgentState: AgentCallback
 ): Promise<OrchestratorResult> {
   const agents: AgentState[] = [
     { name: 'skeleton', label: 'Skeleton Agent', status: 'idle', message: 'Waiting...', repairs: [] },
@@ -329,7 +428,7 @@ export async function runOrchestrator(
     { name: 'sanitizer',label: 'Sanitizer Agent',status: 'idle', message: 'Waiting...', repairs: [] },
     { name: 'build',    label: 'Build Agent',    status: 'idle', message: 'Waiting...', repairs: [] },
   ]
-  const emit = () => onAgents([...agents])
+  const emit = () => onAgentState([...agents])
   const setAgent = (name: AgentName, updates: Partial<AgentState>) => {
     const idx = agents.findIndex(a => a.name === name)
     if (idx >= 0) { agents[idx] = { ...agents[idx], ...updates }; emit() }
@@ -358,7 +457,7 @@ export async function runOrchestrator(
   try {
     pageFiles = await runPageAgent(skeleton.pages, spec, projectName, (msg) => {
       setAgent('pages', { message: msg })
-      onStatus('pages', msg, 60)
+      onStatus('pages', 'pages', 60)
     })
     const stubCount = pageFiles.filter(f => f.content.includes('Record A')).length
     setAgent('pages', {
@@ -379,7 +478,7 @@ export async function runOrchestrator(
   // ΓöÇΓöÇ AGENT 3: File Injector ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   setAgent('injector', { status: 'running', message: 'Injecting infrastructure files...' })
   onStatus('injector', 'Injecting App.tsx, Layout, package.json...', 70)
-  const injectedFiles = generateInjectedFiles(projectName, skeleton.pages)
+  const injectedFiles = generateInjectedFiles(projectName, skeleton.pages, spec)
   const mergedFiles = mergeFiles(skeleton.files, injectedFiles, pageFiles)
   setAgent('injector', { status: 'done', message: `${mergedFiles.length} total files ready` })
   onStatus('injector', `${mergedFiles.length} files ready`, 75)

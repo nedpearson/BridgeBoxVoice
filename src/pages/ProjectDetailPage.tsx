@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/appStore'
 import { Globe, Smartphone, Monitor, Trash2, Download, ExternalLink, ChevronLeft,
-  Clock, Code2, Rocket, Settings, Link2, FileText, CheckCircle, Play, RefreshCw, Layers, Archive, QrCode, X
+  Clock, Code2, Rocket, Settings, Link2, FileText, CheckCircle, Play, RefreshCw, Layers, Archive, QrCode, X, Check
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -14,6 +14,7 @@ import TemplateGallery from '../components/templates/TemplateGallery'
 import { AppTemplate } from '../data/templates'
 import VoiceRecorder from '../components/voice/VoiceRecorder'
 import IntegrationsTab from '../components/IntegrationsTab'
+import ProjectPipeline from '../components/pipeline/ProjectPipeline'
 
 type Tab = 'overview' | 'spec' | 'preview' | 'deployments' | 'integrations' | 'settings'
 
@@ -83,6 +84,7 @@ export default function ProjectDetailPage() {
   const [buildElapsed, setBuildElapsed] = useState('')
   const [buildRemaining, setBuildRemaining] = useState('')
   const [_agentStates, setAgentStates] = useState<any[]>([])
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'desktop'>('desktop')
 
   const ACTIVE_STATUSES = ['recording', 'analyzing', 'building']
 
@@ -685,56 +687,28 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Ã¢â‚¬Ã¢â‚¬ Pipeline Progress Banner Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬ */}
-        {['recording', 'analyzing', 'building'].includes(project.status) && (() => {
-          const stages = [
-            { key: 'recording', label: 'Recording', desc: 'Capturing your voice description', color: 'blue' },
-            { key: 'analyzing', label: 'Analyzing',  desc: 'AI is extracting requirements', color: 'amber' },
-            { key: 'building',  label: 'Building',   desc: project.status === 'building' && buildStage ? buildStage : 'Generating your application', color: 'purple' },
-          ]
-          const currentIdx = stages.findIndex(s => s.key === project.status)
-          const current = stages[currentIdx]
-          const barColor = current.color === 'blue' ? 'bg-blue-500' : current.color === 'amber' ? 'bg-amber-400' : 'bg-purple-500'
-          const glowColor = current.color === 'blue' ? 'shadow-blue-500/40' : current.color === 'amber' ? 'shadow-amber-400/40' : 'shadow-purple-500/40'
-          
-          const displayProgress = project.status === 'building' && buildingApp ? buildPct : stageProgress;
-          
-          return (
-            <div className="mt-4 bg-[#0B0F19]/70 border border-[#1E293B] rounded-xl px-5 py-4">
-              {/* Stage pills */}
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                {stages.map((s, i) => (
-                  <div key={s.key} className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-                      i < currentIdx
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : i === currentIdx
-                          ? `${current.color === 'blue' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : current.color === 'amber' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'} animate-pulse`
-                          : 'bg-slate-800/50 text-slate-600 border-slate-700/50'
-                    }`}>
-                      {i < currentIdx ? 'done' : i === currentIdx ? '...' : ''} {s.label}
-                    </div>
-                    {i < stages.length - 1 && <span className="text-slate-700 text-xs">&#8250;</span>}
-                  </div>
-                ))}
-                <span className="ml-auto text-xs text-slate-500 truncate max-w-[200px] sm:max-w-md">{current.desc}...</span>
+
+        {project.status === 'deployed' && (
+          <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <Check size={16} />
               </div>
-              {/* Progress bar */}
-              <div className="h-1.5 w-full bg-[#131B2B] rounded-full overflow-hidden border border-[#1E293B]">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${barColor} shadow-sm ${glowColor}`}
-                  style={{ width: `${displayProgress}%` }}
-                />
-              </div>
-              <div className="flex justify-between mt-1.5">
-                <span className="text-xs text-slate-600">Step {currentIdx + 1} of {stages.length}</span>
-                <span className={`text-xs font-mono font-semibold ${
-                  current.color === 'blue' ? 'text-blue-400' : current.color === 'amber' ? 'text-amber-400' : 'text-purple-400'
-                }`}>{displayProgress}%</span>
+              <div>
+                <p className="text-white font-semibold text-sm">Build Complete!</p>
+                <p className="text-emerald-400 text-xs mt-0.5">Your multi-agent build finished successfully.</p>
               </div>
             </div>
-          )
-        })()}
+            <a
+              href={project.web_app_url ?? `${window.location.origin}/project/${project.id}?tab=deployments`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-900/20"
+            >
+              <ExternalLink size={14} /> Open App
+            </a>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-1 mt-5 -mb-5 border-b border-transparent">
@@ -883,6 +857,11 @@ export default function ProjectDetailPage() {
                     <span className="text-slate-600 text-xs">" AI-generated functional prototype</span>
                   </div>
                   <div className="flex gap-2">
+                    <div className="flex bg-[#0B0F19] rounded-lg border border-[#1E293B] overflow-hidden mr-2">
+                      <button onClick={() => setPreviewDevice('desktop')} className={`px-2.5 py-1.5 transition-colors ${previewDevice === 'desktop' ? 'bg-[#1E293B] text-white' : 'text-slate-500 hover:text-slate-300'}`} title="Desktop"><Monitor size={14} /></button>
+                      <button onClick={() => setPreviewDevice('tablet')} className={`px-2.5 py-1.5 transition-colors ${previewDevice === 'tablet' ? 'bg-[#1E293B] text-white' : 'text-slate-500 hover:text-slate-300'}`} title="Tablet"><Monitor size={14} className="rotate-90" /></button>
+                      <button onClick={() => setPreviewDevice('mobile')} className={`px-2.5 py-1.5 transition-colors ${previewDevice === 'mobile' ? 'bg-[#1E293B] text-white' : 'text-slate-500 hover:text-slate-300'}`} title="Mobile"><Smartphone size={14} /></button>
+                    </div>
                     <button
                       onClick={handleBuildFullApp}
                       disabled={buildingApp}
@@ -947,11 +926,16 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                <div className="flex-1 rounded-2xl overflow-hidden border border-[#1E293B] bg-[#0B0F19]" style={{ minHeight: '70vh' }}>
+                <div className="flex-1 rounded-2xl overflow-hidden border border-[#1E293B] bg-[#05080f] flex justify-center items-start pt-4 pb-4" style={{ minHeight: '70vh' }}>
                   <iframe
                     srcDoc={previewHtml}
-                    className="w-full h-full"
-                    style={{ minHeight: '70vh', border: 'none' }}
+                    className="h-full bg-white transition-all duration-300"
+                    style={{ 
+                      width: previewDevice === 'mobile' ? '375px' : previewDevice === 'tablet' ? '768px' : '100%',
+                      minHeight: '70vh', 
+                      border: previewDevice !== 'desktop' ? '1px solid #1E293B' : 'none',
+                      borderRadius: previewDevice !== 'desktop' ? '16px' : '0'
+                    }}
                     sandbox="allow-scripts allow-same-origin"
                     title="App Preview"
                   />
@@ -964,7 +948,10 @@ export default function ProjectDetailPage() {
 
         {/* Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬ OVERVIEW Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬Ã¢â‚¬ */}
         {tab === 'overview' && (
-          <div className="space-y-6 max-w-4xl">
+          <div className="space-y-6 w-full">
+            {/* ─── Autonomous Project Pipeline ────────────────────────────────────────── */}
+            <ProjectPipeline projectId={project.id} project={project} />
+
             {/* AI Summary */}
             {spec?.description && (
               <div className="bg-[#131B2B] border border-[#1E293B] rounded-2xl p-6">
